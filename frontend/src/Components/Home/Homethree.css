@@ -1,0 +1,313 @@
+.why-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  background: linear-gradient(135deg, #ffffff, #f8f8f8, #ffffff);
+  color: #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  font-family: 'Poppins', sans-serif;
+}
+
+.why-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23FF8A00' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.5;
+}
+
+.why-circle-container {
+  position: relative;
+  width: 800px;
+  height: 800px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.why-center-box {
+  position: relative;
+  width: 320px;
+  height: 320px;
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  text-align: center;
+  z-index: 10;
+  box-shadow: 0 10px 40px rgba(255, 107, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.why-center-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, rgba(255, 107, 0, 0.05) 0%, rgba(255, 107, 0, 0) 70%);
+  border-radius: 20px;
+  z-index: -1;
+}
+
+.why-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #FF6B00;
+  margin-bottom: 10px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  letter-spacing: -0.5px;
+}
+
+.why-subtitle {
+  font-size: 1rem;
+  color: #666;
+  font-weight: 300;
+  margin-bottom: 20px;
+}
+
+.why-features-circle {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.why-card {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  background: white;
+  border-radius: 16px;
+  text-align: center;
+  padding: 20px;
+  color: #333;
+  box-shadow: 0 10px 30px rgba(255, 107, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transform-origin: center center;
+  top: 50%;
+  left: 50%;
+  margin-left: -90px; /* Half of width */
+  margin-top: -90px; /* Half of height */
+}
+
+.why-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(90deg, #FF6B00, #FF9E00);
+  border-radius: 16px 16px 0 0;
+}
+
+.why-card:hover {
+  transform: scale(1.1) !important;
+  box-shadow: 0 20px 40px rgba(255, 107, 0, 0.2);
+  z-index: 5;
+}
+
+.why-icon {
+  font-size: 2.2rem;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #FF6B00, #FF9E00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: block;
+  position: relative;
+}
+
+.why-icon::after {
+  content: '';
+  position: absolute;
+  width: 45px;
+  height: 45px;
+  background: rgba(255, 107, 0, 0.1);
+  border-radius: 50%;
+  z-index: -1;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.why-card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #FF6B00;
+}
+
+.why-card-description {
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* Stats section styling */
+.why-stats {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 15px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-number {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #FF6B00;
+  margin-bottom: 2px;
+  background: linear-gradient(135deg, #FF6B00, #FF9E00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Add responsive styles */
+@media (max-width: 1200px) {
+  .why-circle-container {
+    width: 700px;
+    height: 700px;
+  }
+}
+
+@media (max-width: 992px) {
+  .why-circle-container {
+    width: 600px;
+    height: 600px;
+  }
+  
+  .why-card {
+    width: 160px;
+    height: 160px;
+    padding: 15px;
+    margin-left: -80px;
+    margin-top: -80px;
+  }
+  
+  .why-center-box {
+    width: 280px;
+    height: 280px;
+    padding: 25px;
+  }
+  
+  .why-title {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .why-circle-container {
+    width: 500px;
+    height: 500px;
+  }
+  
+  .why-card {
+    width: 140px;
+    height: 140px;
+    padding: 12px;
+    margin-left: -70px;
+    margin-top: -70px;
+  }
+  
+  .why-icon {
+    font-size: 1.8rem;
+  }
+  
+  .why-card-title {
+    font-size: 0.9rem;
+  }
+  
+  .why-card-description {
+    font-size: 0.75rem;
+  }
+  
+  .why-center-box {
+    width: 240px;
+    height: 240px;
+    padding: 20px;
+  }
+  
+  .why-title {
+    font-size: 1.6rem;
+  }
+  
+  .why-subtitle {
+    font-size: 0.9rem;
+  }
+  
+  .why-stats {
+    gap: 15px;
+  }
+  
+  .stat-number {
+    font-size: 1.4rem;
+  }
+  
+  .stat-label {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .why-container {
+    height: auto;
+    padding: 60px 15px;
+  }
+  
+  .why-circle-container {
+    width: 100%;
+    height: auto;
+    flex-direction: column;
+  }
+  
+  .why-center-box {
+    width: 280px;
+    height: auto;
+    padding: 25px;
+    margin-bottom: 30px;
+  }
+  
+  .why-features-circle {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    width: 100%;
+    max-width: 320px;
+  }
+  
+  .why-card {
+    position: relative;
+    width: 100%;
+    height: 160px;
+    margin: 0;
+    top: 0;
+    left: 0;
+  }
+}
