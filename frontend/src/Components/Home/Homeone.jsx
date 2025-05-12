@@ -1,259 +1,148 @@
-import React, { useEffect } from 'react';
-import { gsap } from 'gsap';
+import React, { useEffect, useRef, useLayoutEffect } from 'react';
 import './Homeone.css';
+import studentImg from '../Images/Laptop.png'; // You can replace this with a URL or different image
+import { gsap } from 'gsap';
 
-const Homeone = () => {
-  useEffect(() => {
-    // Text animations
-    const textTimeline = gsap.timeline();
+const LandingPage = () => {
+  const circleRef = useRef(null);
+  const dashCircle1Ref = useRef(null);
+  const dashCircle2Ref = useRef(null);
+  const cardRefs = useRef([]);
+  const imageContainerRef = useRef(null);
+  
+  // Store animation instances to kill them on cleanup
+  const animationsRef = useRef([]);
+
+  // Use useLayoutEffect to ensure animations are set up before browser paint
+  useLayoutEffect(() => {
+    // Clear any existing animations to prevent duplicates
+    if (animationsRef.current.length) {
+      animationsRef.current.forEach(anim => anim.kill());
+      animationsRef.current = [];
+    }
     
-    textTimeline
-      .to(".line-1", {
-        x: 0,
-        opacity: 1,
-        duration: 1.5,
-        ease: "power2.out"
-      })
-      .to(".line-2", {
-        x: 0,
-        opacity: 1,
-        duration: 1.5,
-        ease: "power2.out"
-      }, "-=1")
-      .to(".line-3", {
-        x: 0,
-        opacity: 1,
-        duration: 1.5,
-        ease: "power2.out"
-      }, "-=1")
-      .to(".genius-paragraph", {
-        y: 0,
-        opacity: 1,
-        duration: 1,
-        ease: "power2.out"
-      })
-      .to(".small-paragraph", {
-        y: 0,
-        opacity: 1,
-        duration: 1,
-        ease: "power2.out"
-      }, "-=0.5")
-      .to(".cta-button", {
-        y: 0,
-        opacity: 1,
-        duration: 1,
-        ease: "power2.out"
-      }, "-=0.5");
+    // Reset the cardRefs array if component re-renders
+    cardRefs.current = [];
+    
+    // Animation for the dashed circles
+    const circle1Anim = gsap.to(dashCircle1Ref.current, {
+      rotation: 360,
+      duration: 20,
+      repeat: -1,
+      ease: "none"
+    });
+    
+    const circle2Anim = gsap.to(dashCircle2Ref.current, {
+      rotation: -360,
+      duration: 15,
+      repeat: -1,
+      ease: "none"
+    });
+    
+    // Store animations for cleanup
+    animationsRef.current.push(circle1Anim, circle2Anim);
+    
+    return () => {
+      // Cleanup animations when component unmounts
+      animationsRef.current.forEach(anim => anim.kill());
+    };
+  }, []);
+  
+  // This effect runs after the DOM is fully updated
+  useEffect(() => {
+    // Animation for the small cards
+    cardRefs.current.forEach((card, index) => {
+      const cardAnim = gsap.from(card, {
+        y: 50,
+        opacity: 0,
+        duration: 0.8,
+        delay: 0.2 * index,
+        ease: "power3.out"
+      });
+      animationsRef.current.push(cardAnim);
+    });
 
-    // Logo animation
-    gsap.from(".academy-logo", {
-      y: -50,
+    // Animation for the main image
+    const imageAnim = gsap.from(imageContainerRef.current, {
+      scale: 0.8,
       opacity: 0,
       duration: 1.2,
-      ease: "power3.out",
-      delay: 0.5
+      ease: "elastic.out(1, 0.5)"
     });
+    animationsRef.current.push(imageAnim);
+  }, []);
 
-    // Course-related messages that appear and disappear
-    const courses = [
-      "Web Development",
-      "Data Science",
-      "Cloud Computing",
-      "Cybersecurity",
-      "UI/UX Design",
-      "Mobile App Development",
-      "DevOps",
-      "Machine Learning",
-      "Full Stack Development",
-      "Network Administration",
-      "Digital Marketing",
-      "Software Testing"
-    ];
-
-    const activities = [
-      "Enrolling for",
-      "New batch starting for",
-      "Limited seats for",
-      "Practical training in",
-      "Industry experts teaching",
-      "Placement assistance for",
-      "Advanced certification in",
-      "Weekend batches for",
-      "Project-based learning in",
-      "Career guidance for",
-      "Internship opportunities in",
-      "Live workshops on"
-    ];
-
-    function createMultipleMessages() {
-      const count = Math.floor(Math.random() * 2) + 2; // 2-3 messages
-      const usedPositions = [];
-      
-      for(let i = 0; i < count; i++) {
-        setTimeout(() => {
-          const activity = activities[Math.floor(Math.random() * activities.length)];
-          const course = courses[Math.floor(Math.random() * courses.length)];
-          const message = `${activity} ${course}`;
-          
-          const messageEl = document.createElement('div');
-          messageEl.className = 'floating-message';
-          
-          messageEl.innerHTML = `
-            <div class="status-dot"></div>
-            <span class="message-text">${message}</span>
-          `;
-
-          let x, y;
-          let attempts = 0;
-          const padding = 20;
-          const maxX = window.innerWidth - 300;
-          const maxY = window.innerHeight - 60;
-          
-          do {
-            x = padding + Math.random() * (maxX - padding * 2);
-            y = padding + Math.random() * (maxY - padding * 2);
-            attempts++;
-          } while (
-            usedPositions.some(pos => 
-              Math.abs(pos.x - x) < 320 && 
-              Math.abs(pos.y - y) < 70
-            ) && 
-            attempts < 10
-          );
-
-          usedPositions.push({ x, y });
-          
-          messageEl.style.left = `${x}px`;
-          messageEl.style.top = `${y}px`;
-          
-          document.querySelector('.genius-main-container').appendChild(messageEl);
-
-          gsap.timeline()
-            .to(messageEl, {
-              opacity: 1,
-              y: 0,
-              scale: 1,
-              duration: 0.8,
-              ease: "power3.out"
-            })
-            .to(messageEl, {
-              opacity: 0,
-              y: -20,
-              scale: 0.95,
-              duration: 0.6,
-              delay: 3,
-              ease: "power3.in",
-              onComplete: () => {
-                messageEl.remove();
-                const index = usedPositions.findIndex(pos => pos.x === x && pos.y === y);
-                if (index > -1) usedPositions.splice(index, 1);
-              }
-            });
-
-          gsap.to(messageEl.querySelector('.status-dot'), {
-            opacity: 0.5,
-            duration: 0.8,
-            repeat: -1,
-            yoyo: true,
-            ease: "power2.inOut"
-          });
-
-        }, i * 400);
-      }
+  // Function to add cards to the refs array
+  const addToRefs = (el) => {
+    if (el && !cardRefs.current.includes(el)) {
+      cardRefs.current.push(el);
     }
-
-    function startFloatingMessages() {
-      setTimeout(() => {
-        createMultipleMessages();
-        setInterval(createMultipleMessages, 4000);
-      }, 1000);
-    }
-
-    textTimeline.call(startFloatingMessages);
-
-    // Ring animations
-    const ringTimeline = gsap.timeline({
-      repeat: -1,
-      yoyo: true,
-      repeatDelay: 1
-    });
-
-    document.querySelectorAll('.genius-ring').forEach((ring, index) => {
-      ringTimeline.to(ring, {
-        scale: 1,
-        opacity: 0.5,
-        duration: 0.8,
-        ease: "power2.out"
-      }, index * 0.2);
-    });
-
-    gsap.to('.genius-ring', {
-      rotate: 360,
-      duration: 30,
-      repeat: -1,
-      ease: "none",
-      stagger: {
-        each: 0.5,
-        from: "start"
-      }
-    });
-
-    gsap.to('.genius-ring', {
-      boxShadow: '0 0 30px rgba(255, 107, 0, 0.15)',
-      duration: 2,
-      repeat: -1,
-      yoyo: true,
-      stagger: {
-        each: 0.3,
-        from: "center"
-      }
-    });
-    
-    // Cleanup function to prevent memory leaks
-    return () => {
-      // Clear any intervals or timeouts
-      const intervals = window._intervals || [];
-      intervals.forEach(clearInterval);
-    };
-  }, []); // Empty dependency array ensures this runs once on component mount
+  };
 
   return (
-    <div className="genius-main-container">
-      <div className="academy-logo">
-        <div className="logo-icon">M</div>
-        <span>Miracle IT</span>
-      </div>
-      
-      <div className="decorative-circle circle1"></div>
-      <div className="decorative-circle circle2"></div>
-      
-      <div className="genius-ring-container">
-        <div className="genius-ring genius-ring1"></div>
-        <div className="genius-ring genius-ring2"></div>
-        <div className="genius-ring genius-ring3"></div>
-        <div className="genius-ring genius-ring4"></div>
-        <div className="genius-ring genius-ring5"></div>
-        <div className="genius-ring genius-ring6"></div>
+    <section className="landing">
+      <div className="content">
+        <h1>
+          Up Your <span className="highlight">Skills</span><br />
+          To <span className="highlight">Advance</span> Your<br />
+          <span className="highlight">Career</span> Path
+        </h1>
+        <p>
+          Get hands-on training in the latest technologies and boost your professional journey with our expert-led courses.
+        </p>
+        <button className="btn-primary">Get Started</button>
+
+        <div className="features">
+          <div className="feature-item">💬 Public Speaking</div>
+          <div className="feature-item">🎯 Career-Oriented</div>
+          <div className="feature-item">💡 Creative Thinking</div>
+        </div>
+
+        <div className="partners">
+          <p><strong>250+ Collaboration</strong></p>
+          <div className="logos">
+            <span>duolingo</span>
+            <span>Codecov</span>
+            <span>UserTesting</span>
+            <span>Magic Leap</span>
+          </div>
+        </div>
       </div>
 
-      <div className="genius-content">
-        <h1>
-          <span className="text-line line-1">
-            <span className="highlight">Welcome to</span>
-          </span>
-          <span className="text-line line-2">
-            Miracle IT Career
-          </span>
-          <span className="text-line line-3">
-            <span className="highlight">Academy</span>
-          </span>
-        </h1>
-        <p className="genius-paragraph">Building IT careers through expert training and mentorship.</p>
-        <p className="small-paragraph">Join our industry-focused courses and transform your future in the world of technology.</p>
-        <button className="cta-button">Explore Courses</button>
+      <div className="image-section" ref={imageContainerRef}>
+        {/* Animated circles */}
+        <div className="circle-container">
+          <div className="solid-circle" ref={circleRef}></div>
+          <div className="dashed-circle circle1" ref={dashCircle1Ref}></div>
+          <div className="dashed-circle circle2" ref={dashCircle2Ref}></div>
+        </div>
+        
+        <img src={studentImg} alt="Student" />
+        
+        <div className="badge top-left" ref={addToRefs}>📹 200+<br />Video Courses</div>
+        <div className="badge top-right" ref={addToRefs}>👨‍🏫 250+<br />Tutors</div>
+        <div className="badge bottom" ref={addToRefs}>📘 250+<br />Online Courses</div>
+        
+        {/* Additional small cards */}
+        <div className="small-card card1" ref={addToRefs}>
+          <span className="card-icon">🚀</span>
+          <span className="card-text">Fast Learning</span>
+        </div>
+        <div className="small-card card2" ref={addToRefs}>
+          <span className="card-icon">🏆</span>
+          <span className="card-text">Top Rated</span>
+        </div>
+        <div className="small-card card3" ref={addToRefs}>
+          <span className="card-icon">💻</span>
+          <span className="card-text">Hands-on</span>
+        </div>
+        <div className="small-card card4" ref={addToRefs}>
+          <span className="card-icon">🔄</span>
+          <span className="card-text">Updated</span>
+        </div>
       </div>
-    </div>
+    </section>
   );
 };
 
-export default Homeone;
+export default LandingPage;
