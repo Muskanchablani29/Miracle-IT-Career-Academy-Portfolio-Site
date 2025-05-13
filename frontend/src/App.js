@@ -5,6 +5,7 @@ import Login from './Components/Profile/Login';
 import StudentDashboard from './Components/Pages/StudentDashboard';
 import FacultyDashboard from './Components/Pages/FacultDashboard';
 import AdminDashboard from './Components/Pages/AdminDashboard';
+import About from './Components/About/About'
 import MainPage from './Components/Pages/MainPage';
 import Home from './Components/Home/Home';
 import Navbar from './Components/Navbar';
@@ -19,6 +20,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/about" element={<About />} />
           <Route path="/student" element={<StudentDashboard />} />
           <Route path="/faculty" element={<FacultyDashboard />} />
           <Route path="/admin" element={<AdminDashboard />} />

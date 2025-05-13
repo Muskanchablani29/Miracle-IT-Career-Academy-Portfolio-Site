@@ -9,6 +9,7 @@ const LandingPage = () => {
   const dashCircle2Ref = useRef(null);
   const cardRefs = useRef([]);
   const imageContainerRef = useRef(null);
+  const headingRef = useRef(null);
   
   // Store animation instances to kill them on cleanup
   const animationsRef = useRef([]);
@@ -24,7 +25,7 @@ const LandingPage = () => {
     // Reset the cardRefs array if component re-renders
     cardRefs.current = [];
     
-    // Animation for the dashed circles
+    // Animation for the dashed circles - continuous rotation
     const circle1Anim = gsap.to(dashCircle1Ref.current, {
       rotation: 360,
       duration: 20,
@@ -50,26 +51,35 @@ const LandingPage = () => {
   
   // This effect runs after the DOM is fully updated
   useEffect(() => {
-    // Animation for the small cards
+    // Animation for the heading
+    const headingAnim = gsap.from(headingRef.current, {
+      y: 30,
+      opacity: 0,
+      duration: 1,
+      ease: "power3.out"
+    });
+    
+    // Animation for the small cards with staggered effect - only initial entrance
     cardRefs.current.forEach((card, index) => {
       const cardAnim = gsap.from(card, {
-        y: 50,
+        y: 40,
         opacity: 0,
-        duration: 0.8,
-        delay: 0.2 * index,
-        ease: "power3.out"
+        duration: 0.7,
+        delay: 0.15 * index,
+        ease: "power2.out"
       });
       animationsRef.current.push(cardAnim);
     });
 
-    // Animation for the main image
+    // Animation for the main image with a professional entrance
     const imageAnim = gsap.from(imageContainerRef.current, {
-      scale: 0.8,
+      scale: 0.95,
       opacity: 0,
       duration: 1.2,
-      ease: "elastic.out(1, 0.5)"
+      ease: "power3.out"
     });
-    animationsRef.current.push(imageAnim);
+    
+    animationsRef.current.push(headingAnim, imageAnim);
   }, []);
 
   // Function to add cards to the refs array
@@ -82,7 +92,7 @@ const LandingPage = () => {
   return (
     <section className="landing">
       <div className="content">
-        <h1>
+        <h1 ref={headingRef}>
           Up Your <span className="highlight">Skills</span><br />
           To <span className="highlight">Advance</span> Your<br />
           <span className="highlight">Career</span> Path
@@ -123,7 +133,7 @@ const LandingPage = () => {
         <div className="badge top-right" ref={addToRefs}>👨‍🏫 250+<br />Tutors</div>
         <div className="badge bottom" ref={addToRefs}>📘 250+<br />Online Courses</div>
         
-        {/* Additional small cards */}
+        {/* Additional small cards with improved positioning */}
         <div className="small-card card1" ref={addToRefs}>
           <span className="card-icon">🚀</span>
           <span className="card-text">Fast Learning</span>

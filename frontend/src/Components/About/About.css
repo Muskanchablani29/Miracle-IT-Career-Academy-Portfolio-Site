@@ -1,22 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-:where([class^="ri-"])::before { content: "\f3c2"; }
-
-body {
-  margin: 0;
-  font-family: 'Poppins', sans-serif;
-  background-color: #f8f9fa;
-  color: #333;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
+/* About.css */
 
 .hero-section {
   background-image: url('https://readdy.ai/api/search-image?query=modern%2520computer%2520lab%2520with%2520students%2520learning%2520technology%2C%2520bright%2520and%2520clean%2520environment%2C%2520blue%2520and%2520white%2520color%2520scheme%2C%2520professional%2520setting%2C%2520high-tech%2520equipment%2C%2520students%2520engaged%2520in%2520learning%2C%2520inspirational%2520educational%2520atmosphere%2C%2520natural%2520lighting&width=1200&height=600&seq=1&orientation=landscape');
