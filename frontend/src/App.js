@@ -10,6 +10,7 @@ import MainPage from './Components/Pages/MainPage';
 import Home from './Components/Home/Home';
 import Navbar from './Components/Navbar';
 import { UserProvider } from './Components/UserContext';
+import Courses from './Components/Pages/Courses';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route path="/student" element={<StudentDashboard />} />
           <Route path="/faculty" element={<FacultyDashboard />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/courses" element={<Courses />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Router>

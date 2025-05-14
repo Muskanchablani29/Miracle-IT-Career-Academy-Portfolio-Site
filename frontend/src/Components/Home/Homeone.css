@@ -1,15 +1,4 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
 
-body {
-  font-family: 'Poppins', 'Segoe UI', sans-serif;
-  background-color: #ffffff;
-  color: #333;
-  line-height: 1.6;
-}
 
 .landing {
   display: flex;
@@ -19,7 +8,7 @@ body {
   flex-wrap: wrap;
   overflow: hidden;
   background: linear-gradient(135deg, #ffffff 0%, #f0fff7 100%);
-  min-height: 100vh;
+  height: 80vh; /* Changed from min-height to exactly 100vh */
   position: relative;
 }
 
@@ -36,25 +25,21 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-h1 {
+.main-heading {
   font-size: 3.5rem;
   margin-bottom: 1.8rem;
   font-weight: 800;
   line-height: 1.2;
-  background: linear-gradient(90deg, #66CDAA 0%, #3CB371 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-fill-color: transparent;
+  color: #000000; /* Black color for normal text */
   letter-spacing: -0.5px;
-  text-shadow: 0 5px 15px rgba(102, 205, 170, 0.15);
+  position: relative;
+  z-index: 10;
+  display: inline-block;
 }
 
 .highlight {
   position: relative;
-  color: #66CDAA;
-  -webkit-text-fill-color: #66CDAA;
-  text-fill-color: #66CDAA;
+  color: #2E8B57; /* Darker sea green for highlighted text */
   font-weight: 900;
   display: inline-block;
   padding: 0 5px;
@@ -64,31 +49,29 @@ h1 {
   content: '';
   position: absolute;
   width: 100%;
-  height: 8px;
-  background-color: rgba(102, 205, 170, 0.25);
-  bottom: 8px;
+  height: 3px;
+  background-color: #2E8B57; /* Solid line under highlighted text */
+  bottom: 0;
   left: 0;
   z-index: -1;
-  border-radius: 10px;
   transition: all 0.3s ease;
 }
 
-h1:hover .highlight::after {
-  height: 12px;
-  background-color: rgba(102, 205, 170, 0.35);
-  bottom: 6px;
+.main-heading:hover .highlight::after {
+  height: 5px;
+  background-color: #1D6B45; /* Darker on hover */
 }
 
 p {
   margin-bottom: 2rem;
-  color: #555;
+  color: #000000; /* Changed to black color for normal text */
   font-size: 1.1rem;
   line-height: 1.7;
 }
 
 .btn-primary {
   padding: 1rem 2.2rem;
-  background: linear-gradient(90deg, #66CDAA 0%, #3CB371 100%);
+  background: linear-gradient(90deg, #98FB98 0%, #3CB371 100%);
   color: #fff;
   border: none;
   border-radius: 50px;
@@ -97,7 +80,7 @@ p {
   cursor: pointer;
   margin-bottom: 2.8rem;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 8px 20px rgba(102, 205, 170, 0.35);
+  box-shadow: 0 8px 20px rgba(152, 251, 152, 0.35);
   position: relative;
   overflow: hidden;
   letter-spacing: 0.5px;
@@ -117,7 +100,7 @@ p {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, #3CB371 0%, #66CDAA 100%);
+  background: linear-gradient(90deg, #3CB371 0%, #98FB98 100%);
   opacity: 0;
   z-index: -1;
   transition: opacity 0.5s ease;
@@ -156,22 +139,22 @@ p {
 }
 
 .feature-item {
-  background-color: rgba(102, 205, 170, 0.1);
+  background-color: rgba(152, 251, 152, 0.1);
   padding: 0.7rem 1.2rem;
   border-radius: 30px;
   font-size: 1rem;
-  color: #66CDAA;
+  color: #98FB98;
   white-space: nowrap;
   transition: all 0.3s ease;
-  border: 1px solid rgba(102, 205, 170, 0.2);
+  border: 1px solid rgba(152, 251, 152, 0.2);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
 }
 
 .feature-item:hover {
   transform: translateY(-5px);
-  background-color: #66CDAA;
+  background-color: #98FB98;
   color: white;
-  box-shadow: 0 5px 15px rgba(102, 205, 170, 0.3);
+  box-shadow: 0 5px 15px rgba(152, 251, 152, 0.3);
 }
 
 .partners p {
@@ -198,7 +181,7 @@ p {
 }
 
 .logos span:hover {
-  color: #66CDAA;
+  color: #98FB98;
 }
 
 .logos span::after {
@@ -208,7 +191,7 @@ p {
   height: 2px;
   bottom: 0;
   left: 0;
-  background-color: #66CDAA;
+  background-color: #98FB98;
   transition: width 0.3s ease;
 }
 
@@ -220,7 +203,7 @@ p {
   position: relative;
   flex: 1;
   text-align: center;
-  min-height: 550px;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -251,7 +234,7 @@ p {
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.12);
   transition: all 0.5s ease;
   transform-style: preserve-3d;
-  filter: drop-shadow(0 15px 30px rgba(102, 205, 170, 0.2));
+  filter: drop-shadow(0 15px 30px rgba(152, 251, 152, 0.2));
   border: 5px solid rgba(255, 255, 255, 0.9);
 }
 
@@ -274,11 +257,11 @@ p {
   position: absolute;
   width: 320px;
   height: 320px;
-  background: radial-gradient(circle, rgba(102, 205, 170, 0.25) 0%, rgba(102, 205, 170, 0.08) 70%);
+  background: radial-gradient(circle, rgba(152, 251, 152, 0.6) 0%, rgba(152, 251, 152, 0.3) 70%);
   border-radius: 50%;
   z-index: 1;
-  filter: blur(8px);
-  /* No animation for solid circle as requested */
+  filter: blur(5px);
+  /* Increased opacity to make it more visible */
 }
 
 .dashed-circle {
@@ -291,14 +274,14 @@ p {
 .circle1 {
   width: 400px;
   height: 400px;
-  border: 3px dashed rgba(102, 205, 170, 0.5);
+  border: 3px dashed rgba(152, 251, 152, 0.5);
   animation: rotate-clockwise 20s linear infinite, glow 3s infinite alternate;
 }
 
 .circle2 {
   width: 480px;
   height: 480px;
-  border: 2px dashed rgba(102, 205, 170, 0.3);
+  border: 2px dashed rgba(152, 251, 152, 0.3);
   animation: rotate-counter 15s linear infinite;
 }
 
@@ -313,13 +296,13 @@ p {
 }
 
 @keyframes glow {
-  0% { box-shadow: 0 0 10px rgba(102, 205, 170, 0.3); }
-  100% { box-shadow: 0 0 30px rgba(102, 205, 170, 0.6); }
+  0% { box-shadow: 0 0 10px rgba(152, 251, 152, 0.3); }
+  100% { box-shadow: 0 0 30px rgba(152, 251, 152, 0.6); }
 }
 
 .badge {
   position: absolute;
-  background: linear-gradient(135deg, #66CDAA 0%, #3CB371 100%);
+  background: linear-gradient(135deg, #98FB98 0%, #3CB371 100%);
   color: white;
   padding: 1rem 1.4rem;
   border-radius: 20px;
@@ -328,7 +311,7 @@ p {
   line-height: 1.4;
   text-align: left;
   z-index: 10;
-  box-shadow: 0 10px 25px rgba(102, 205, 170, 0.3);
+  box-shadow: 0 10px 25px rgba(152, 251, 152, 0.3);
   transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   backdrop-filter: blur(10px);
   border: 2px solid rgba(255, 255, 255, 0.4);
@@ -344,8 +327,8 @@ p {
 
 .badge:hover {
   transform: translateY(-10px) scale(1.08);
-  box-shadow: 0 20px 40px rgba(102, 205, 170, 0.4);
-  background: linear-gradient(135deg, #66CDAA 0%, #3CB371 100%);
+  box-shadow: 0 20px 40px rgba(152, 251, 152, 0.4);
+  background: linear-gradient(135deg, #98FB98 0%, #3CB371 100%);
 }
 
 .badge.top-left {
@@ -389,20 +372,20 @@ p {
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
   z-index: 10;
   transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  border: 1px solid rgba(102, 205, 170, 0.2);
+  border: 1px solid rgba(152, 251, 152, 0.2);
   /* No floating animation as requested */
 }
 
 .small-card:hover {
   transform: translateY(-8px) scale(1.05);
-  box-shadow: 0 20px 40px rgba(102, 205, 170, 0.2);
-  border-color: rgba(102, 205, 170, 0.4);
+  box-shadow: 0 20px 40px rgba(152, 251, 152, 0.2);
+  border-color: rgba(152, 251, 152, 0.4);
   background: linear-gradient(135deg, #ffffff 0%, #f0fff7 100%);
 }
 
 .card-icon {
   font-size: 1.5rem;
-  background: linear-gradient(135deg, rgba(102, 205, 170, 0.15) 0%, rgba(102, 205, 170, 0.25) 100%);
+  background: linear-gradient(135deg, rgba(152, 251, 152, 0.15) 0%, rgba(152, 251, 152, 0.25) 100%);
   width: 48px;
   height: 48px;
   display: flex;
@@ -410,13 +393,13 @@ p {
   justify-content: center;
   border-radius: 15px;
   transition: all 0.4s ease;
-  box-shadow: 0 5px 15px rgba(102, 205, 170, 0.1);
+  box-shadow: 0 5px 15px rgba(152, 251, 152, 0.1);
 }
 
 .small-card:hover .card-icon {
-  background: linear-gradient(135deg, rgba(102, 205, 170, 0.25) 0%, rgba(102, 205, 170, 0.4) 100%);
+  background: linear-gradient(135deg, rgba(152, 251, 152, 0.25) 0%, rgba(152, 251, 152, 0.4) 100%);
   transform: rotate(10deg) scale(1.1);
-  box-shadow: 0 8px 20px rgba(102, 205, 170, 0.2);
+  box-shadow: 0 8px 20px rgba(152, 251, 152, 0.2);
 }
 
 .card-text {
@@ -583,4 +566,40 @@ p {
     width: 85%;
     height: 85%;
   }
+}
+
+/* Media query updates for main-heading */
+@media (max-width: 1200px) {
+  .main-heading {
+    font-size: 2.8rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .main-heading {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-heading {
+    font-size: 2.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-heading {
+    font-size: 1.8rem;
+  }
+}
+/* Simplified heading container without box effect */
+.content h1 {
+  position: relative;
+}
+
+/* Simplified heading container */
+.heading-container {
+  position: relative;
+  margin-bottom: 1.8rem;
+  z-index: 5;
 }

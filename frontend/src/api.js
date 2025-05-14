@@ -12,4 +12,14 @@ API.interceptors.request.use(config => {
   return config;
 });
 
+export const fetchCategories = () => API.get('categories/');
+
+export const fetchCourses = (categoryId) => {
+  let url = 'courses/';
+  if (categoryId) {
+    url += `?category=${categoryId}`;
+  }
+  return API.get(url);
+};
+
 export default API;

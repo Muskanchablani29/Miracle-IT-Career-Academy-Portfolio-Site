@@ -51,12 +51,22 @@ const LandingPage = () => {
   
   // This effect runs after the DOM is fully updated
   useEffect(() => {
-    // Animation for the heading
+    // Animation for the heading with enhanced visibility
     const headingAnim = gsap.from(headingRef.current, {
       y: 30,
-      opacity: 0,
+      opacity: 1,
       duration: 1,
-      ease: "power3.out"
+      ease: "power3.out",
+      onComplete: () => {
+        // Add a subtle pulse animation to draw attention to the heading
+        gsap.to(headingRef.current, {
+          scale: 1.02,
+          duration: 1.5,
+          repeat: 1,
+          yoyo: true,
+          ease: "power1.inOut"
+        });
+      }
     });
     
     // Animation for the small cards with staggered effect - only initial entrance
@@ -92,11 +102,13 @@ const LandingPage = () => {
   return (
     <section className="landing">
       <div className="content">
-        <h1 ref={headingRef}>
-          Up Your <span className="highlight">Skills</span><br />
-          To <span className="highlight">Advance</span> Your<br />
-          <span className="highlight">Career</span> Path
-        </h1>
+        <div className="heading-container">
+          <h1 ref={headingRef} className="main-heading">
+            Up Your <span className="highlight">Skills</span><br />
+            To <span className="highlight">Advance</span> Your<br />
+            <span className="highlight">Career</span> Path
+          </h1>
+        </div>
         <p>
           Get hands-on training in the latest technologies and boost your professional journey with our expert-led courses.
         </p>
@@ -108,15 +120,7 @@ const LandingPage = () => {
           <div className="feature-item">💡 Creative Thinking</div>
         </div>
 
-        <div className="partners">
-          <p><strong>250+ Collaboration</strong></p>
-          <div className="logos">
-            <span>duolingo</span>
-            <span>Codecov</span>
-            <span>UserTesting</span>
-            <span>Magic Leap</span>
-          </div>
-        </div>
+  
       </div>
 
       <div className="image-section" ref={imageContainerRef}>
