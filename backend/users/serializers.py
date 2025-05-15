@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser, Student, Faculty, Admin, Category, Course
+from .models import CustomUser, Student, Faculty, Admin
 from django.contrib.auth.password_validation import validate_password
 
 class UserSerializer(serializers.ModelSerializer):
@@ -29,15 +29,3 @@ class RegisterSerializer(serializers.ModelSerializer):
         elif role == 'admin':
             Admin.objects.create(user=user)
         return user
-
-class CategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Category
-        fields = ['id', 'name', 'description']
-
-class CourseSerializer(serializers.ModelSerializer):
-    category = CategorySerializer(read_only=True)
-
-    class Meta:
-        model = Course
-        fields = ['id', 'title', 'description', 'category', 'language', 'video', 'youtube_playlist_id']
