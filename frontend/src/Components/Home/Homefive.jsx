@@ -99,51 +99,62 @@ export default function Homefive() {
       }, 3000);
     };
 
-    // Initialize feature list animation with slide effect
+    // Initialize feature list animation with sequential line animation
     const startFeatureAnimation = () => {
       const features = document.querySelectorAll('.feature-item');
       if (!features.length) return;
 
-      // Reset all features
-      features.forEach(feature => {
+      // Hide all features initially
+      features.forEach((feature, idx) => {
         feature.style.opacity = '0';
-        feature.style.transform = 'translateX(-100%)';
-        feature.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+        feature.style.transform = 'translateY(20px)';
+        feature.style.position = 'relative';
+        feature.style.display = 'none';
+        feature.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
       });
 
-      let index = 0;
-      let currentVisible = [];
+      const maxVisible = 4; // Maximum number of visible items
+      let nextIndex = 0;
+      const visibleItems = [];
 
       const showNextFeature = () => {
-        if (index < features.length) {
-          // Show new feature from right
-          features[index].style.opacity = '1';
-          features[index].style.transform = 'translateX(0)';
-          currentVisible.push(features[index]);
+        if (visibleItems.length >= maxVisible) {
+          // Remove first item with animation
+          const itemToRemove = visibleItems.shift();
+          itemToRemove.style.opacity = '0';
+          itemToRemove.style.transform = 'translateY(-20px)';
           
-          // If we have more than 3 visible items, remove the oldest one
-          if (currentVisible.length > 3) {
-            const oldestFeature = currentVisible.shift();
-            oldestFeature.style.opacity = '0';
-            oldestFeature.style.transform = 'translateX(-100%)';
-          }
-          
-          index++;
-          setTimeout(showNextFeature, 1200);
-        } else {
-          // Reset for continuous animation
+          // Hide it after animation completes
           setTimeout(() => {
-            features.forEach(feature => {
-              feature.style.opacity = '0';
-              feature.style.transform = 'translateX(-100%)';
-            });
-            index = 0;
-            currentVisible = [];
-            setTimeout(showNextFeature, 500);
-          }, 2000);
+            itemToRemove.style.display = 'none';
+          }, 500);
         }
+
+        // Get next feature to show
+        const nextFeature = features[nextIndex];
+        
+        // Prepare it for animation
+        nextFeature.style.display = 'flex';
+        nextFeature.style.opacity = '0';
+        nextFeature.style.transform = 'translateY(20px)';
+        
+        // Trigger animation after a small delay
+        setTimeout(() => {
+          nextFeature.style.opacity = '1';
+          nextFeature.style.transform = 'translateY(0)';
+        }, 50);
+        
+        // Add to visible items
+        visibleItems.push(nextFeature);
+        
+        // Update index for next item
+        nextIndex = (nextIndex + 1) % features.length;
+        
+        // Continue animation
+        setTimeout(showNextFeature, 2000);
       };
 
+      // Start the animation
       showNextFeature();
     };
 
@@ -165,16 +176,14 @@ export default function Homefive() {
 
   return (
     <div id="student-ai-assistant" style={{
-      backgroundImage: `linear-gradient(135deg, rgba(0, 51, 102, 0.45), rgba(0, 0, 0, 0.37)), url('https://openaimaster.com/wp-content/uploads/2023/10/a-detailed-portrait-of-a-white-teacher-talking-wit-min-1600x1067.jpg')`,
+      background: `linear-gradient(135deg, rgba(0, 51, 102, 0.66), rgba(0, 0, 0, 0.5)), url('https://openaimaster.com/wp-content/uploads/2023/10/a-detailed-portrait-of-a-white-teacher-talking-wit-min-1600x1067.jpg')`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
-      minHeight: '800px' // Increased height
+      minHeight: '670px' // Increased height
     }}>
-      <div className="main-heading-ai" style={{ textAlign: 'center', width: '100%', display: 'flex', justifyContent: 'center' }}>AI Assistant</div>
-      <div className="ai-description">
-        <p>Your intelligent companion for learning, productivity, and problem-solving. Powered by advanced machine learning algorithms, our AI Assistant adapts to your needs and provides personalized support for all your tasks.</p>
-      </div>
-      <div className="assistant-container" style={{ height: '650px' }}> {/* Increased container height */}
+      <div className="main-heading-ai" style={{ textAlign: 'center', width: '100%', display: 'flex', justifyContent: 'center', fontSize: '2.5rem', textDecoration: 'underline' }}>AI Assistant</div>
+      
+      <div className="assistant-container" style={{ height: '600px' }}> {/* Reduced container height */}
         <div className="animation-side" style={{ flex: '1.3' }}> {/* Enlarged animation side */}
           <div className="ai-interface" style={{ transform: 'scale(1.2)', transformOrigin: 'center center' }}> {/* Enlarged animation */}
             <div className="circle-container">
@@ -187,6 +196,7 @@ export default function Homefive() {
               <div className="particle" style={{ right: 0, top: '50%' }}></div>
               <div className="particle" style={{ top: '25%', right: '25%' }}></div>
               <div className="particle" style={{ bottom: '25%', left: '25%' }}></div>
+              <div className="particle" style={{ bottom: '53%', left: '1  5%' }}></div>
             </div>
             <div className="center-core">
               <div className="core-icon"></div>
@@ -196,47 +206,68 @@ export default function Homefive() {
         </div>
         <div className="content-side">
           <h1 className="assistant-heading" style={{ textAlign: 'center', width: '100%' }}>Student AI Assistant</h1>
-          <ul className="feature-list" style={{ maxHeight: 'fit-content', overflowY: 'hidden' }}>
-            <li className="feature-item" style={{ maxWidth: '90%', animation: 'fadeRotate 0.7s forwards', transformOrigin: 'top' }}> {/* Reduced card width */}
+          <ul className="feature-list" style={{ maxHeight: '60vh', overflowY: 'hidden' }}>
+            <li className="feature-item" style={{ maxWidth: '90%' }}>
               <span className="check-icon"><FaCheck /></span>
               <div className="feature-content">
                 <span className="feature-text">Performance Analysis & Insights</span>
                 <p className="feature-description">Get detailed analysis of your academic performance with actionable insights.</p>
               </div>
             </li>
-            <li className="feature-item" style={{ maxWidth: '90%', animation: 'fadeRotate 0.7s 0.2s forwards', transformOrigin: 'top', opacity: 0 }}> {/* Reduced card width */}
+            <li className="feature-item" style={{ maxWidth: '90%' }}>
               <span className="check-icon"><FaCheck /></span>
               <div className="feature-content">
                 <span className="feature-text">Personalized Study Plans</span>
                 <p className="feature-description">Custom learning paths tailored to your learning style and goals.</p>
               </div>
             </li>
-            <li className="feature-item" style={{ maxWidth: '90%', animation: 'fadeRotate 0.7s 0.4s forwards', transformOrigin: 'top', opacity: 0 }}> {/* Reduced card width */}
+            <li className="feature-item" style={{ maxWidth: '90%' }}>
               <span className="check-icon"><FaCheck /></span>
               <div className="feature-content">
                 <span className="feature-text">24/7 Learning Support</span>
                 <p className="feature-description">Round-the-clock assistance whenever you need help with your studies.</p>
               </div>
             </li>
-            <li className="feature-item" style={{ maxWidth: '90%', animation: 'fadeRotate 0.7s 0.6s forwards', transformOrigin: 'top', opacity: 0 }}> {/* Reduced card width */}
+            <li className="feature-item" style={{ maxWidth: '90%' }}>
               <span className="check-icon"><FaCheck /></span>
               <div className="feature-content">
                 <span className="feature-text">AI-Powered Study Recommendations</span>
                 <p className="feature-description">Smart resource suggestions based on your learning patterns.</p>
               </div>
             </li>
-            <li className="feature-item" style={{ maxWidth: '90%', animation: 'fadeRotate 0.7s 0.8s forwards', transformOrigin: 'top', opacity: 0 }}> {/* Reduced card width */}
+            <li className="feature-item" style={{ maxWidth: '90%' }}>
               <span className="check-icon"><FaCheck /></span>
               <div className="feature-content">
                 <span className="feature-text">Interactive Learning Exercises</span>
                 <p className="feature-description">Engage with dynamic content that adapts to your progress.</p>
               </div>
             </li>
-            <li className="feature-item" style={{ maxWidth: '90%', animation: 'fadeRotate 0.7s 1s forwards', transformOrigin: 'top', opacity: 0 }}> {/* Reduced card width */}
+            <li className="feature-item" style={{ maxWidth: '90%' }}> {/* Removed animation that was causing issues */}
               <span className="check-icon"><FaCheck /></span>
               <div className="feature-content">
                 <span className="feature-text">Progress Tracking Dashboard</span>
                 <p className="feature-description">Visualize your improvement with comprehensive analytics.</p>
+              </div>
+            </li>
+            <li className="feature-item" style={{ maxWidth: '90%' }}>
+              <span className="check-icon"><FaCheck /></span>
+              <div className="feature-content">
+                <span className="feature-text">Smart Content Recommendations</span>
+                <p className="feature-description">Receive tailored learning materials based on your progress and learning style.</p>
+              </div>
+            </li>
+            <li className="feature-item" style={{ maxWidth: '90%' }}>
+              <span className="check-icon"><FaCheck /></span>
+              <div className="feature-content">
+                <span className="feature-text">Interactive Practice Sessions</span>
+                <p className="feature-description">Engage with AI-powered practice questions that adapt to your skill level.</p>
+              </div>
+            </li>
+            <li className="feature-item" style={{ maxWidth: '90%' }}>
+              <span className="check-icon"><FaCheck /></span>
+              <div className="feature-content">
+                <span className="feature-text">Progress Tracking</span>
+                <p className="feature-description">Monitor your improvement over time with detailed analytics and visualizations.</p>
               </div>
             </li>
           </ul>
