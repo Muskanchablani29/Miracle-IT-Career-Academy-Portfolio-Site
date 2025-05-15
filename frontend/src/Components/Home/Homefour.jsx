@@ -103,18 +103,22 @@ export default function Homefour() {
     }
   ];
 
-  // Autoplay functionality with improved performance
+  // Continuous autoplay functionality
   useEffect(() => {
     let interval;
     if (autoplay && sliderRef.current) {
       interval = setInterval(() => {
-        if (sliderRef.current.scrollLeft + sliderRef.current.offsetWidth >= sliderRef.current.scrollWidth - 100) {
-          // Smooth reset to beginning
+        // Calculate the width of one card (including margin)
+        const cardWidth = sliderRef.current.offsetWidth / 3;
+        
+        if (sliderRef.current.scrollLeft + sliderRef.current.offsetWidth >= sliderRef.current.scrollWidth - 20) {
+          // When reaching the end, smoothly reset to beginning
           sliderRef.current.scrollTo({ left: 0, behavior: 'smooth' });
         } else {
-          sliderRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+          // Scroll by exactly one card width
+          sliderRef.current.scrollBy({ left: cardWidth, behavior: 'smooth' });
         }
-      }, 2500); // Faster autoplay
+      }, 3000); // Autoplay interval
     }
     return () => clearInterval(interval);
   }, [autoplay]);
@@ -151,17 +155,6 @@ export default function Homefour() {
     sliderRef.current.scrollLeft = initialScrollLeft - walk;
   };
 
-  // Slider navigation buttons
-  const handleScrollLeft = () => {
-    if (!sliderRef.current) return;
-    sliderRef.current.scrollBy({ left: -300, behavior: 'smooth' });
-  };
-
-  const scrollRight = () => {
-    if (!sliderRef.current) return;
-    sliderRef.current.scrollBy({ left: 300, behavior: 'smooth' });
-  };
-
   return (
     <section className="popular-courses-section">
       <div className="container">
@@ -171,10 +164,6 @@ export default function Homefour() {
         </div>
 
         <div className="courses-slider-container">
-          <button className="slider-nav-btn prev-btn" onClick={handleScrollLeft}>
-            <i className="fas fa-chevron-left"></i>
-          </button>
-          
           <div 
             className="courses-slider" 
             ref={sliderRef}
@@ -218,10 +207,6 @@ export default function Homefour() {
               </div>
             ))}
           </div>
-          
-          <button className="slider-nav-btn next-btn" onClick={scrollRight}>
-            <i className="fas fa-chevron-right"></i>
-          </button>
         </div>
 
         <div className="view-all-container">

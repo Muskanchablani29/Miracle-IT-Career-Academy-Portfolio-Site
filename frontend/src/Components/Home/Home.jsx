@@ -3,6 +3,7 @@ import Homeone from './Homeone.jsx'
 import Hometwo from './Hometwo.jsx'
 import Homethree from './Homethree.jsx'
 import Homefour from './Homefour.jsx'
+import Homefive from './Homefive.jsx'
 
 
 export default function Home() {
@@ -12,6 +13,7 @@ export default function Home() {
     {/* <Hometwo /> */}
     <Homethree />
     <Homefour />
+    <Homefive />
     </>
     
   )

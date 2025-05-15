@@ -1,18 +1,18 @@
-/* Professional Navbar Styling with white and orange color theme */
 :root {
-  --primary-color: #ff6600;
-  --primary-light: #ff8533;
-  --primary-dark: #e65c00;
-  --primary-bg-light: rgba(255, 102, 0, 0.1);
-  --primary-bg-medium: rgba(255, 102, 0, 0.2);
-  --text-dark: #333333;
-  --text-light: #ffffff;
-  --shadow-color: rgba(255, 165, 0, 0.3);
+  --background-color: #FFFFFF;
+  --primary-color: #FF4500;
+  --secondary-color: #0033CC;
+  --accent-color: #FF7F50;
+  --card-background: #FFF5E6;
+  --cta-button: #FF4500;
+  --text-primary: #000000;
+  --text-secondary: #555555;
+  --shadow-color: rgba(255, 69, 0, 0.3);
   --transition-standard: all 0.3s ease;
 }
 
 .navbar {
-  background-color: var(--text-light);
+  background-color: var(--background-color);
   padding: 1rem 2rem;
   display: flex;
   justify-content: space-between;
@@ -30,6 +30,11 @@
   align-items: center;
 }
 
+.nav-left img {
+  max-height: 50px;
+  width: auto;
+}
+
 .logon-text {
   color: var(--primary-color);
   text-decoration: none;
@@ -42,7 +47,7 @@
 }
 
 .logon-text:hover {
-  color: var(--primary-light);
+  color: var(--accent-color);
   transform: scale(1.05);
 }
 
@@ -81,7 +86,7 @@
 
 .nav-list li a,
 .dashboard-toggle {
-  color: var(--text-dark);
+  color: var(--text-primary);
   text-decoration: none;
   font-weight: 500;
   padding: 0.6rem 1rem;
@@ -117,12 +122,12 @@
 .nav-list li a:hover,
 .dashboard-toggle:hover {
   color: var(--primary-color);
-  background-color: var(--primary-bg-light);
+  background-color: var(--card-background);
 }
 
 .logout-button {
-  background-color: var(--primary-color);
-  color: var(--text-light);
+  background-color: var(--cta-button);
+  color: var(--card-background);
   border: none;
   font-weight: 600;
   cursor: pointer;
@@ -136,14 +141,14 @@
 }
 
 .logout-button:hover {
-  background-color: var(--primary-dark);
+  background-color: var(--secondary-color);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(255, 102, 0, 0.4);
+  box-shadow: 0 4px 8px rgba(255, 69, 0, 0.4);
 }
 
 .logout-button:active {
   transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(255, 102, 0, 0.4);
+  box-shadow: 0 2px 4px rgba(255, 69, 0, 0.4);
 }
 
 .logout-button::before {
@@ -168,12 +173,12 @@
 
 /* Extended navbar styling */
 .extended-navbar {
-  background-color: #fff7e6;
+  background-color: var(--card-background);
   padding: 1rem 2rem;
-  box-shadow: 0 4px 6px -1px rgba(255, 165, 0, 0.2);
+  box-shadow: 0 4px 6px -1px rgba(255, 69, 0, 0.2);
   animation: slideDown 0.3s ease-out forwards;
   overflow: hidden;
-  border-top: 1px solid rgba(255, 165, 0, 0.1);
+  border-top: 1px solid rgba(255, 69, 0, 0.1);
 }
 
 @keyframes slideDown {
@@ -204,29 +209,29 @@
 }
 
 .extended-nav-list li a {
-  color: var(--text-dark);
+  color: var(--text-primary);
   text-decoration: none;
   font-weight: 500;
   padding: 0.7rem 1.3rem;
   border-radius: 8px;
   display: block;
   transition: var(--transition-standard);
-  background-color: var(--primary-bg-light);
-  border: 1px solid rgba(255, 102, 0, 0.3);
+  background-color: var(--card-background);
+  border: 1px solid rgba(255, 69, 0, 0.3);
   text-align: center;
 }
 
 .extended-nav-list li a:hover {
-  background-color: var(--primary-bg-medium);
-  border-color: rgba(255, 102, 0, 0.5);
+  background-color: var(--accent-color);
+  border-color: rgba(255, 69, 0, 0.5);
   color: var(--primary-color);
   transform: translateY(-2px);
-  box-shadow: 0 3px 6px rgba(255, 102, 0, 0.2);
+  box-shadow: 0 3px 6px rgba(255, 69, 0, 0.2);
 }
 
 .extended-nav-list li a:active {
   transform: translateY(0);
-  box-shadow: 0 1px 3px rgba(255, 102, 0, 0.2);
+  box-shadow: 0 1px 3px rgba(255, 69, 0, 0.2);
 }
 
 /* Responsive adjustments */

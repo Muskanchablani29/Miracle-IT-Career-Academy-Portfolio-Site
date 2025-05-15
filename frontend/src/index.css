@@ -1,7 +1,21 @@
+:root {
+  --primary-color: #3EB489; /* Mint Green */
+  --secondary-color: #2E8B57; /* Darker Mint Green */
+  --accent-color: #A3D9A5; /* Light Mint Green */
+  --background-color: #FFFFFF; /* White Background */
+  --card-background: #E6F2E6; /* Very Light Mint Green */
+  --text-primary: #3EB489; /* Mint Green Text */
+  --cta-button: #3EB489; /* Mint Green Button */
+  --warning-alert: #FFB74D; /* Amber Warning (unchanged) */
+}
+
 html, body {
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100%;
   overflow-x: hidden;
+  background-color: var(--background-color);
+  color: var(--text-primary);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }

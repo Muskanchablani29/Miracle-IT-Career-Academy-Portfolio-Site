@@ -103,7 +103,7 @@ const LandingPage = () => {
     <section className="landing">
       <div className="content">
         <div className="heading-container">
-          <h1 ref={headingRef} className="main-heading">
+          <h1 ref={headingRef} className="main-heading-one">
             Up Your <span className="highlight">Skills</span><br />
             To <span className="highlight">Advance</span> Your<br />
             <span className="highlight">Career</span> Path
@@ -114,10 +114,10 @@ const LandingPage = () => {
         </p>
         <button className="btn-primary">Get Started</button>
 
-        <div className="features">
-          <div className="feature-item">💬 Public Speaking</div>
-          <div className="feature-item">🎯 Career-Oriented</div>
-          <div className="feature-item">💡 Creative Thinking</div>
+        <div className="features-page-one">
+          <div className="feature-item-one">💬 Public Speaking</div>
+          <div className="feature-item-one">🎯 Career-Oriented</div>
+          <div className="feature-item-one">💡 Creative Thinking</div>
         </div>
 
   

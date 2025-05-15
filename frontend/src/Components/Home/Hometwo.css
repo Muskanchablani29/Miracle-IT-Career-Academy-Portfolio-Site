@@ -1,25 +1,23 @@
 /* Hometwo.css - Modern dark theme with neon accents */
 
 :root {
-  --bg-dark: #121212;
-  --bg-card: #1e1e1e;
-  --bg-input: #2d2d2d;
-  --text-primary: #ffffff;
-  --text-secondary: #b3b3b3;
-  --text-tertiary: #808080;
-  --accent-admin: #00e5ff;
-  --accent-faculty: #bb86fc;
-  --accent-student: #03dac6;
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --background-color: #F5F5F5;
+  --card-background: #FFFFFF;
+  --text-primary: #1A1A1A;
+  --text-secondary: #6B7280;
+  --primary-color: #0F4C81;
+  --secondary-color: #00A8E8;
+  --highlight-color: #FDC500;
+  --shadow-sm: 0 2px 8px rgba(15, 76, 129, 0.3);
+  --shadow-md: 0 4px 12px rgba(15, 76, 129, 0.4);
+  --shadow-lg: 0 8px 24px rgba(15, 76, 129, 0.5);
   --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 /* Base section styling */
 .role-section {
   padding: 4rem 0;
-  background-color: var(--bg-dark);
+  background-color: var(--background-color);
   color: var(--text-primary);
   min-height: 100vh;
   opacity: 0;
@@ -45,15 +43,15 @@
 }
 
 .section-badge {
-  background: rgba(0, 229, 255, 0.1);
-  color: var(--accent-admin);
+  background: rgba(0, 168, 232, 0.1);
+  color: var(--secondary-color);
   font-size: 0.8rem;
   font-weight: 500;
   padding: 0.4rem 1rem;
   border-radius: 20px;
   display: inline-block;
   margin-bottom: 1rem;
-  border: 1px solid rgba(0, 229, 255, 0.2);
+  border: 1px solid rgba(0, 168, 232, 0.2);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -62,7 +60,7 @@
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: 1rem;
-  background: linear-gradient(90deg, var(--accent-admin), var(--accent-faculty));
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   position: relative;
@@ -78,19 +76,19 @@
 
 /* Tabs container */
 .tabs-container {
-  background-color: var(--bg-card);
+  background-color: var(--card-background);
   border-radius: 12px;
   overflow: hidden;
   box-shadow: var(--shadow-lg);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid #e5e7eb;
 }
 
 /* Tab navigation */
 .tab-navigation {
   display: flex;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(15, 76, 129, 0.1);
   position: relative;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .tab-btn {
@@ -122,11 +120,11 @@
 }
 
 .tab-btn.active {
-  color: var(--accent-admin);
+  color: var(--primary-color);
 }
 
 .tab-btn:nth-child(2).active {
-  color: var(--accent-faculty);
+  color: var(--secondary-color);
 }
 
 .tab-btn:nth-child(3).active {
@@ -137,7 +135,7 @@
   position: absolute;
   bottom: 0;
   height: 3px;
-  background: var(--accent-admin);
+  background: var(--primary-color);
   transition: all 0.3s ease;
 }
 
@@ -149,7 +147,7 @@
 .tab-btn:nth-child(2).active ~ .tab-indicator {
   left: 33.33%;
   width: 33.33%;
-  background: var(--accent-faculty);
+  background: var(--secondary-color);
 }
 
 .tab-btn:nth-child(3).active ~ .tab-indicator {

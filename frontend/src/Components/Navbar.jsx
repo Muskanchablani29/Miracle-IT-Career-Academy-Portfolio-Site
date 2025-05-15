@@ -2,6 +2,7 @@ import React, { useContext, useState, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserContext } from './UserContext';
 import './Navbar.css';
+import logo from './Images/Logo-miracle.png'
 
 // Move static data outside component to prevent recreation on each render
 const ROLE_DASHBOARD_LINKS = {
@@ -92,7 +93,7 @@ const Navbar = () => {
     <>
       <nav className="navbar">
         <div className="nav-left">
-          <Link to="/" className="logon-text">Logon</Link>
+          <img src={logo} alt="" />
         </div>
         <div className="nav-right">
           <ul className="nav-list">
