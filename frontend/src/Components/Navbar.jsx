@@ -33,48 +33,10 @@ const Navbar = () => {
     navigate('/');
   }, [setUser, navigate]);
 
-  // Memoize static JSX elements
-  const commonLinks = useMemo(() => (
-    <>
-      <li><Link to="/">Home</Link></li>
-      <li><Link to="/about">About</Link></li>
-      <li><Link to="/services">Services</Link></li>
-      <li><Link to="/courses">Courses</Link></li>
-    </>
-  ), []);
-
-  const guestLinks = useMemo(() => (
-    <>
-      <li><Link to="/login">Login</Link></li>
-      <li><Link to="/signup">Signup</Link></li>
-    </>
-  ), []);
-
-  const logoutButton = useMemo(() => (
-    <li><button onClick={handleLogout} className="logout-button">Logout</button></li>
-  ), [handleLogout]);
-
   // Toggle dashboard visibility
   const toggleDashboard = useCallback(() => {
     setDashboardOpen(prevState => !prevState);
   }, []);
-
-  // Memoize right nav items to prevent unnecessary re-renders
-  const rightNavItems = useMemo(() => {
-    if (!user) return guestLinks;
-    
-    return (
-      <>
-        <li>
-          <button className="dashboard-toggle" onClick={toggleDashboard}>
-            {/* More efficient way to capitalize */}
-            {user.role[0].toUpperCase() + user.role.slice(1)} Dashboard
-          </button>
-        </li>
-        {logoutButton}
-      </>
-    );
-  }, [user, guestLinks, logoutButton, toggleDashboard]);
 
   // Memoize dashboard links based on user role
   const dashboardLinks = useMemo(() => {
@@ -97,8 +59,8 @@ const Navbar = () => {
         </div>
         <div className="nav-right">
           <ul className="nav-list">
-            {commonLinks}
-            {rightNavItems}
+            <li><Link to="/explore">Explore</Link></li>
+            <li><Link to="/signup">Register</Link></li>
           </ul>
         </div>
       </nav>
