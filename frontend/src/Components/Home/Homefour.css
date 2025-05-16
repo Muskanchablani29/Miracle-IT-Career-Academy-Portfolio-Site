@@ -308,7 +308,38 @@
 }
 
 /* Responsive Styles */
-@media (max-width: 768px) {
+/* Large Desktops (1200px and up) */
+@media (min-width: 1200px) {
+  .container {
+    max-width: 1140px;
+  }
+}
+
+/* Medium Desktops (992px to 1199px) */
+@media (max-width: 1199px) and (min-width: 992px) {
+  .container {
+    max-width: 960px;
+  }
+  
+  .section-header h2 {
+    font-size: 34px;
+  }
+  
+  .course-slide {
+    width: calc(33.333% - 20px);
+  }
+  
+  .course-title {
+    font-size: 18px;
+  }
+}
+
+/* Tablets (768px to 991px) */
+@media (max-width: 991px) and (min-width: 768px) {
+  .container {
+    max-width: 720px;
+  }
+  
   .section-header h2 {
     font-size: 32px;
   }
@@ -318,13 +349,107 @@
   }
   
   .course-slide {
-    width: calc(100% - 20px);
+    width: calc(50% - 20px);
+  }
+  
+  .course-image {
+    height: 180px;
+  }
+  
+  .course-title {
+    font-size: 17px;
+    height: 48px;
+  }
+  
+  .enroll-btn {
+    padding: 10px 16px;
+    font-size: 13px;
   }
 }
 
-@media (max-width: 992px) and (min-width: 769px) {
+/* Mobile Landscape (576px to 767px) */
+@media (max-width: 767px) and (min-width: 576px) {
+  .container {
+    max-width: 540px;
+  }
+  
+  .section-header h2 {
+    font-size: 28px;
+  }
+  
+  .section-header p {
+    font-size: 15px;
+  }
+  
   .course-slide {
-    width: calc(50% - 20px);
+    width: calc(100% - 20px);
+    margin-bottom: 20px;
+  }
+  
+  .course-content {
+    padding: 20px;
+  }
+  
+  .view-all-btn {
+    padding: 12px 28px;
+  }
+}
+
+/* Mobile Portrait (575px and below) */
+@media (max-width: 575px) {
+  .container {
+    padding: 0 15px;
+  }
+  
+  .section-header {
+    margin-bottom: 40px;
+  }
+  
+  .section-header h2 {
+    font-size: 26px;
+  }
+  
+  .section-header p {
+    font-size: 14px;
+  }
+  
+  .course-slide {
+    width: calc(100% - 20px);
+    margin-bottom: 20px;
+  }
+  
+  .course-image {
+    height: 160px;
+  }
+  
+  .course-content {
+    padding: 15px;
+  }
+  
+  .course-title {
+    font-size: 16px;
+    height: 44px;
+    margin-bottom: 10px;
+  }
+  
+  .course-meta, .course-stats {
+    font-size: 12px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+  }
+  
+  .course-price span {
+    font-size: 18px;
+  }
+  
+  .enroll-btn {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+  
+  .view-all-btn {
+    padding: 10px 24px;
+    font-size: 14px;
   }
 }
 /* Professional UI enhancements */

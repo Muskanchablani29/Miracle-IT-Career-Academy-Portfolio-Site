@@ -380,6 +380,56 @@
 }
 
 /* Responsive Design */
+/* Large devices (desktops, less than 1200px) */
+@media (max-width: 1200px) {
+  .ai-interface {
+    width: 340px;
+    height: 340px;
+  }
+  
+  .message-container {
+    width: 300px;
+  }
+  
+  .main-heading-ai {
+    font-size: 2.2rem;
+  }
+  
+  .assistant-heading {
+    font-size: 1.8rem;
+  }
+}
+
+/* Medium devices (tablets, less than 992px) */
+@media (max-width: 992px) {
+  #student-ai-assistant {
+    height: auto;
+    min-height: 700px;
+  }
+  
+  .assistant-container {
+    gap: 1rem;
+  }
+  
+  .ai-interface {
+    width: 320px;
+    height: 320px;
+  }
+  
+  .feature-text {
+    font-size: 1rem;
+  }
+  
+  .feature-description {
+    font-size: 0.85rem;
+  }
+  
+  .ai-description p {
+    font-size: 1rem;
+  }
+}
+
+/* Small devices (landscape phones, less than 768px) */
 @media (max-width: 768px) {
   #student-ai-assistant {
     height: auto;
@@ -417,6 +467,91 @@
   
   .feature-item {
     padding: 12px;
+    width: 100%;
+  }
+  
+  .main-heading-ai {
+    font-size: 2rem;
+    padding: 0 1rem;
+  }
+}
+
+/* Extra small devices (phones, less than 576px) */
+@media (max-width: 576px) {
+  #student-ai-assistant {
+    min-height: 500px;
+    padding: 0.5rem 0;
+  }
+  
+  .ai-interface {
+    width: 260px;
+    height: 260px;
+  }
+  
+  .message-container {
+    width: 240px;
+  }
+  
+  .main-heading-ai {
+    font-size: 1.8rem;
+    margin: 0.5rem auto;
+  }
+  
+  .assistant-heading {
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+  }
+  
+  .feature-item {
+    margin-bottom: 0.8rem;
+  }
+  
+  .check-icon {
+    min-width: 28px;
+    height: 28px;
+    margin-right: 10px;
+  }
+  
+  .feature-text {
+    font-size: 0.9rem;
+  }
+  
+  .feature-description {
+    font-size: 0.8rem;
+  }
+  
+  .ai-description {
+    padding: 0.8rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .ai-description p {
+    font-size: 0.9rem;
+  }
+}
+
+/* Very small devices (small phones, less than 400px) */
+@media (max-width: 400px) {
+  .ai-interface {
+    width: 220px;
+    height: 220px;
+  }
+  
+  .message-container {
+    width: 200px;
+  }
+  
+  .main-heading-ai {
+    font-size: 1.6rem;
+  }
+  
+  .assistant-heading {
+    font-size: 1.3rem;
+  }
+  
+  .content-side {
+    gap: 1.5rem;
+    padding: 0.5rem;
   }
 }
 @keyframes slideOut {

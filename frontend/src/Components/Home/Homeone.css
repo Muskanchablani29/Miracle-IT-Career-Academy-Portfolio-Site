@@ -428,6 +428,14 @@ p {
 
 /* Responsive adjustments */
 @media (max-width: 1200px) {
+  .main-heading-one {
+    font-size: 2.8rem;
+  }
+  
+  .landing {
+    padding: 4rem;
+  }
+  
   h1 {
     font-size: 2.8rem;
   }
@@ -443,6 +451,7 @@ p {
     flex-direction: column;
     padding: 3rem 2rem;
     gap: 2rem;
+    height: auto;
   }
   
   .content {
@@ -451,11 +460,11 @@ p {
     text-align: center;
   }
   
-  h1 {
+  .main-heading-one {
     font-size: 2.5rem;
   }
   
-  .features {
+  .features-page-one {
     justify-content: center;
   }
   
@@ -493,7 +502,7 @@ p {
     padding: 2rem 1.5rem;
   }
   
-  h1 {
+  .main-heading-one {
     font-size: 2.2rem;
   }
   
@@ -501,12 +510,12 @@ p {
     font-size: 1rem;
   }
   
-  .features {
+  .features-page-one {
     flex-wrap: wrap;
     gap: 0.8rem;
   }
   
-  .feature-item {
+  .feature-item-one {
     font-size: 0.9rem;
     padding: 0.6rem 1rem;
   }
@@ -532,7 +541,7 @@ p {
 }
 
 @media (max-width: 480px) {
-  h1 {
+  .main-heading-one {
     font-size: 1.8rem;
   }
   
@@ -543,6 +552,11 @@ p {
   
   .image-section {
     min-height: 350px;
+  }
+  
+  .btn-primary {
+    padding: 0.7rem 1.5rem;
+    font-size: 0.9rem;
   }
   
   .solid-circle {
@@ -561,28 +575,35 @@ p {
   }
 }
 
-/* Media query updates for main-heading */
-@media (max-width: 1200px) {
-  .main-heading {
-    font-size: 2.8rem;
+/* Additional responsive adjustments for small devices */
+@media (max-width: 375px) {
+  .landing {
+    padding: 1.5rem 1rem;
   }
-}
-
-@media (max-width: 1024px) {
-  .main-heading {
-    font-size: 2.5rem;
+  
+  .main-heading-one {
+    font-size: 1.6rem;
   }
-}
-
-@media (max-width: 768px) {
-  .main-heading {
-    font-size: 2.2rem;
+  
+  p {
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
   }
-}
-
-@media (max-width: 480px) {
-  .main-heading {
-    font-size: 1.8rem;
+  
+  .btn-primary {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.85rem;
+    margin-bottom: 2rem;
+  }
+  
+  .feature-item-one {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.9rem;
+  }
+  
+  .badge {
+    padding: 0.4rem 0.7rem;
+    font-size: 0.7rem;
   }
 }
 /* Simplified heading container without box effect */
@@ -595,4 +616,32 @@ p {
   position: relative;
   margin-bottom: 1.8rem;
   z-index: 5;
+}
+
+/* Portrait orientation adjustments for mobile devices */
+@media (max-width: 768px) and (orientation: portrait) {
+  .landing {
+    height: auto;
+    min-height: 100vh;
+  }
+  
+  .image-section {
+    margin-top: 2rem;
+  }
+}
+
+/* Landscape orientation adjustments for mobile devices */
+@media (max-width: 1024px) and (orientation: landscape) {
+  .landing {
+    height: auto;
+    padding: 2rem;
+  }
+  
+  .content {
+    max-width: 50%;
+  }
+  
+  .image-section {
+    max-height: 60vh;
+  }
 }
