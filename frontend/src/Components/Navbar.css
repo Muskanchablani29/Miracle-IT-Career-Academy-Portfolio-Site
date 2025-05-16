@@ -84,8 +84,10 @@ display: block;
 width: 100%;
 }
 
-.dropdown-menu ul li a {
+.dropdown-menu ul li a,
+.dropdown-menu ul li button.dropdown-button {
 display: block;
+width: 100%;
 padding: 10px 15px;
 color: var(--text-primary);
 text-decoration: none;
@@ -95,9 +97,12 @@ border: none;
 box-shadow: none;
 text-align: left;
 font-weight: 500;
+font-size: 1rem;
+cursor: pointer;
 }
 
-.dropdown-menu ul li a:hover {
+.dropdown-menu ul li a:hover,
+.dropdown-menu ul li button.dropdown-button:hover {
 background-color: rgba(255, 69, 0, 0.1);
 color: var(--primary-color);
 }
@@ -306,4 +311,55 @@ gap: 0.5rem;
 .dashboard-toggle {
 padding: 0.5rem 0.8rem;
 }
+}
+/* User profile button styling */
+.user-menu-container {
+  position: relative;
+}
+
+.user-profile-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  font-weight: 600;
+  padding: 0.7rem 1.4rem;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 2px 6px rgba(255, 127, 80, 0.2);
+  transition: var(--transition-standard);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.user-profile-button:hover {
+  background-color: rgba(255, 255, 255, 0.5);
+  color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(255, 127, 80, 0.3);
+  transform: translateY(-2px);
+}
+
+.user-icon {
+  font-size: 1.2rem;
+}
+
+.menu-icon {
+  margin-right: 8px;
+  font-size: 0.9rem;
+}
+
+/* Responsive adjustments for user menu */
+@media (max-width: 768px) {
+  .user-profile-button {
+    padding: 0.6rem 1rem;
+  }
+  
+  .dropdown-menu {
+    width: 100%;
+    left: 0;
+    right: 0;
+  }
 }
