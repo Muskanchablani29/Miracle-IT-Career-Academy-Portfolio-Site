@@ -5,7 +5,7 @@ const API_URL = 'http://localhost:8000/api/';
 // Courses API
 export const fetchCourses = async () => {
   try {
-    const response = await axios.get(`${API_URL}courses/courses/`);
+    const response = await axios.get(`${API_URL}courses/`);
     return response.data;
   } catch (error) {
     console.error('Error fetching courses:', error);
@@ -15,7 +15,7 @@ export const fetchCourses = async () => {
 
 export const fetchCourseById = async (id) => {
   try {
-    const response = await axios.get(`${API_URL}courses/courses/${id}/`);
+    const response = await axios.get(`${API_URL}courses/${id}/`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching course with id ${id}:`, error);
@@ -26,7 +26,7 @@ export const fetchCourseById = async (id) => {
 // Videos API
 export const fetchVideosByCourseId = async (courseId) => {
   try {
-    const response = await axios.get(`${API_URL}courses/videos/?course_id=${courseId}`);
+    const response = await axios.get(`${API_URL}videos/?course_id=${courseId}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching videos for course ${courseId}:`, error);
@@ -37,7 +37,7 @@ export const fetchVideosByCourseId = async (courseId) => {
 // Certificates API
 export const fetchCertificates = async () => {
   try {
-    const response = await axios.get(`${API_URL}courses/certificates/`);
+    const response = await axios.get(`${API_URL}certificates/`);
     return response.data;
   } catch (error) {
     console.error('Error fetching certificates:', error);
@@ -48,7 +48,7 @@ export const fetchCertificates = async () => {
 // Workshops API
 export const fetchWorkshops = async () => {
   try {
-    const response = await axios.get(`${API_URL}courses/workshops/`);
+    const response = await axios.get(`${API_URL}workshops/`);
     return response.data;
   } catch (error) {
     console.error('Error fetching workshops:', error);
@@ -59,7 +59,7 @@ export const fetchWorkshops = async () => {
 // Quizzes API
 export const fetchQuizzes = async () => {
   try {
-    const response = await axios.get(`${API_URL}courses/quizzes/`);
+    const response = await axios.get(`${API_URL}quizzes/`);
     return response.data;
   } catch (error) {
     console.error('Error fetching quizzes:', error);

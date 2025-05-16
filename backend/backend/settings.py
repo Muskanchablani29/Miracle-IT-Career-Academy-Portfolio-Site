@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'users',
     'rest_framework_simplejwt',
     'corsheaders',
+    'courses',
 ]
 
 MIDDLEWARE = [
