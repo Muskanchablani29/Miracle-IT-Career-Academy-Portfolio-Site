@@ -1,84 +1,22 @@
 .explore-container {
   display: flex;
-  min-height: 100vh;
-  position: relative;
+  min-height: calc(100vh - 82px);
+  margin-top: 82px;
+  width: 100%;
+}
+
+.sidebar-wrapper {
+  width: 280px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 82px;
+  height: calc(100vh - 82px);
 }
 
 .explore-content {
   flex: 1;
   padding: 20px;
-  margin-left: 280px; /* Updated to match sidebar width */
-  min-height: calc(100vh - 82px);
-  overflow-y: auto;
-}
-
-.courses-list {
-  padding: 20px;
-}
-
-.courses-list h2 {
-  margin-bottom: 20px;
-  color: #333;
-}
-
-.courses-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
-}
-
-.course-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.course-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-}
-
-.course-image img {
-  width: 100%;
-  height: 180px;
-  object-fit: cover;
-}
-
-.course-details {
-  padding: 15px;
-}
-
-.course-details h3 {
-  margin-top: 0;
-  margin-bottom: 10px;
-  color: #333;
-}
-
-.course-details p {
-  color: #666;
-  margin-bottom: 15px;
-}
-
-.course-meta {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 15px;
-  font-size: 14px;
-  color: #777;
-}
-
-.enroll-btn {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  width: 100%;
-}
-
-.enroll-btn:hover {
-  background-color: #0056b3;
+  margin-left: 20px;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }

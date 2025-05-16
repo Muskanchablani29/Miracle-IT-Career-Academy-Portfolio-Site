@@ -1,63 +1,286 @@
-import React, { useState, useEffect } from 'react';
-import './components.css';
-import { fetchCertificates } from '../../api';
+import React, { useEffect } from 'react';
+import './certificate-page.css';
 
 const Certificates = () => {
-  const [certificatePrograms, setCertificatePrograms] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
   useEffect(() => {
-    const getCertificates = async () => {
-      try {
-        setLoading(true);
-        const data = await fetchCertificates();
-        setCertificatePrograms(data);
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to load certificates. Please try again later.');
-        setLoading(false);
-        console.error('Error fetching certificates:', err);
-      }
+    // Animation for elements when they come into view
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate-in');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    // FAQ functionality
+    const faqItems = document.querySelectorAll('.faq-item');
+    faqItems.forEach(item => {
+      const question = item.querySelector('.faq-question');
+      question.addEventListener('click', () => {
+        item.classList.toggle('active');
+        const toggle = item.querySelector('.faq-toggle');
+        toggle.textContent = item.classList.contains('active') ? '−' : '+';
+      });
+    });
+
+    document.querySelectorAll('.animate-on-scroll').forEach(el => {
+      observer.observe(el);
+    });
+
+    return () => {
+      document.querySelectorAll('.animate-on-scroll').forEach(el => {
+        observer.unobserve(el);
+      });
     };
-
-    getCertificates();
   }, []);
-
-  if (loading) {
-    return <div className="loading">Loading certificates...</div>;
-  }
-
-  if (error) {
-    return <div className="error-message">{error}</div>;
-  }
 
   return (
     <div className="certificates-container">
-      <h2>Earn a Certificate</h2>
-      <p>Complete these courses to earn valuable certificates that boost your resume.</p>
-      
-      <div className="certificates-list">
-        {certificatePrograms.length > 0 ? (
-          certificatePrograms.map((program) => (
-            <div className="certificate-card" key={program.id}>
-              <div className="certificate-image">
-                <img src={program.image} alt={program.title} />
-              </div>
-              <div className="certificate-details">
-                <h3>{program.title}</h3>
-                <p>{program.description}</p>
-                <div className="certificate-meta">
-                  <span>{program.duration}</span>
-                  <span>{program.level}</span>
+      <div className="certificate-hero">
+        <div className="floating-shape shape1"></div>
+        <div className="floating-shape shape2"></div>
+        <div className="floating-shape shape3"></div>
+        <div className="certificate-hero-content">
+          <h1>Earn Professional Certificates</h1>
+          <p>Advance your career with industry-recognized certifications that employers value worldwide</p>
+          <div className="hero-buttons">
+            <button className="hero-btn hero-btn-primary">Explore Programs</button>
+            <button className="hero-btn hero-btn-secondary">Learn More</button>
+          </div>
+        </div>
+      </div>
+
+      <div className="certificate-paths-container">
+        <div className="container-inner">
+          <div className="section-heading animate-on-scroll">
+            <h2>Certification Pathways</h2>
+            <p>Choose the learning format that best suits your needs and schedule</p>
+          </div>
+
+          <div className="certificate-paths">
+            {/* Online Courses Path */}
+            <div className="path-card online-path animate-on-scroll">
+              <div className="path-header">
+                <div className="path-icon">
+                  <i className="fas fa-laptop"></i>
                 </div>
-                <button className="enroll-btn">Start Program</button>
+                <h3>Online Learning</h3>
+              </div>
+              <div className="path-image">
+                <img src="https://images.unsplash.com/photo-1571260899304-425eee4c7efd?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Online Learning" />
+              </div>
+              <div className="path-steps">
+                <div className="path-step">
+                  <div className="step-marker">1</div>
+                  <div className="step-content">
+                    <h4>Enroll Online</h4>
+                    <p>Register for our self-paced digital courses</p>
+                  </div>
+                </div>
+                <div className="path-step">
+                  <div className="step-marker">2</div>
+                  <div className="step-content">
+                    <h4>Complete Modules</h4>
+                    <p>Study interactive content at your own pace</p>
+                  </div>
+                </div>
+                <div className="path-step">
+                  <div className="step-marker">3</div>
+                  <div className="step-content">
+                    <h4>Pass Assessment</h4>
+                    <p>Score 70%+ on the final evaluation</p>
+                  </div>
+                </div>
+                <div className="path-step">
+                  <div className="step-marker">4</div>
+                  <div className="step-content">
+                    <h4>Get Certified</h4>
+                    <p>Receive your digital certificate instantly</p>
+                  </div>
+                </div>
+              </div>
+              <button className="path-btn">Browse Online Courses</button>
+            </div>
+
+            {/* Offline Courses Path */}
+            <div className="path-card offline-path animate-on-scroll">
+              <div className="path-header">
+                <div className="path-icon">
+                  <i className="fas fa-chalkboard-teacher"></i>
+                </div>
+                <h3>Classroom Learning</h3>
+              </div>
+              <div className="path-image">
+                <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Classroom Learning" />
+              </div>
+              <div className="path-steps">
+                <div className="path-step">
+                  <div className="step-marker">1</div>
+                  <div className="step-content">
+                    <h4>Register In-Person</h4>
+                    <p>Join our instructor-led classroom sessions</p>
+                  </div>
+                </div>
+                <div className="path-step">
+                  <div className="step-marker">2</div>
+                  <div className="step-content">
+                    <h4>Attend Classes</h4>
+                    <p>Participate in hands-on training sessions</p>
+                  </div>
+                </div>
+                <div className="path-step">
+                  <div className="step-marker">3</div>
+                  <div className="step-content">
+                    <h4>Complete Projects</h4>
+                    <p>Build real-world applications with guidance</p>
+                  </div>
+                </div>
+                <div className="path-step">
+                  <div className="step-marker">4</div>
+                  <div className="step-content">
+                    <h4>Graduate</h4>
+                    <p>Receive certificate at graduation ceremony</p>
+                  </div>
+                </div>
+              </div>
+              <button className="path-btn">Find Classroom Courses</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="additional-options-container">
+        <div className="container-inner">
+          <div className="section-heading animate-on-scroll">
+            <h2>Additional Certification Options</h2>
+            <p>Explore alternative paths to earning valuable credentials</p>
+          </div>
+
+          <div className="options-grid">
+            {/* Workshops */}
+            <div className="option-tile animate-on-scroll">
+              <div className="option-header">
+                <div className="option-icon">
+                  <i className="fas fa-calendar-check"></i>
+                </div>
+                <h3>Certified Workshops</h3>
+              </div>
+              <div className="option-content">
+                <p>Intensive 1-3 day expert-led training sessions on specialized technologies</p>
+                <ul className="option-features">
+                  <li><i className="fas fa-check-circle"></i> High-impact learning</li>
+                  <li><i className="fas fa-check-circle"></i> Industry networking</li>
+                  <li><i className="fas fa-check-circle"></i> Focused skill development</li>
+                </ul>
+                <button className="option-btn">View Workshops</button>
               </div>
             </div>
-          ))
-        ) : (
-          <p>No certificate programs available at the moment.</p>
-        )}
+
+            {/* Exams */}
+            <div className="option-tile animate-on-scroll">
+              <div className="option-header">
+                <div className="option-icon">
+                  <i className="fas fa-file-alt"></i>
+                </div>
+                <h3>Professional Exams</h3>
+              </div>
+              <div className="option-content">
+                <p>Industry-standard certification exams with preparation support</p>
+                <ul className="option-features">
+                  <li><i className="fas fa-check-circle"></i> Global recognition</li>
+                  <li><i className="fas fa-check-circle"></i> Prep materials included</li>
+                  <li><i className="fas fa-check-circle"></i> Flexible scheduling</li>
+                </ul>
+                <button className="option-btn">Schedule Exam</button>
+              </div>
+            </div>
+
+            {/* Internships */}
+            <div className="option-tile animate-on-scroll">
+              <div className="option-header">
+                <div className="option-icon">
+                  <i className="fas fa-briefcase"></i>
+                </div>
+                <h3>Internship Certificates</h3>
+              </div>
+              <div className="option-content">
+                <p>1-6 month work experience programs with partner companies</p>
+                <ul className="option-features">
+                  <li><i className="fas fa-check-circle"></i> Real-world experience</li>
+                  <li><i className="fas fa-check-circle"></i> Professional mentorship</li>
+                  <li><i className="fas fa-check-circle"></i> Job opportunities</li>
+                </ul>
+                <button className="option-btn">Find Internships</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="faq-container">
+        <div className="container-inner">
+          <div className="section-heading animate-on-scroll">
+            <h2>Frequently Asked Questions</h2>
+            <p>Find answers to common questions about our certification programs</p>
+          </div>
+          
+          <div className="faq-grid">
+            <div className="faq-item animate-on-scroll">
+              <div className="faq-question">
+                <h3>How long are certificates valid?</h3>
+                <span className="faq-toggle">+</span>
+              </div>
+              <div className="faq-answer">
+                <p>Our certificates do not expire. However, for certain technical certifications, we recommend renewal every 2-3 years to stay current with evolving technologies.</p>
+              </div>
+            </div>
+            
+            <div className="faq-item animate-on-scroll">
+              <div className="faq-question">
+                <h3>Can I get a physical certificate?</h3>
+                <span className="faq-toggle">+</span>
+              </div>
+              <div className="faq-answer">
+                <p>Yes, all digital certificates can be requested as physical copies for an additional fee. Physical certificates are printed on premium paper with embossed seals.</p>
+              </div>
+            </div>
+            
+            <div className="faq-item animate-on-scroll">
+              <div className="faq-question">
+                <h3>Are certificates internationally recognized?</h3>
+                <span className="faq-toggle">+</span>
+              </div>
+              <div className="faq-answer">
+                <p>Yes, our certificates are designed to meet international standards and are recognized by employers worldwide.</p>
+              </div>
+            </div>
+            
+            <div className="faq-item animate-on-scroll">
+              <div className="faq-question">
+                <h3>How quickly can I complete a certification?</h3>
+                <span className="faq-toggle">+</span>
+              </div>
+              <div className="faq-answer">
+                <p>Completion time varies by program. Online courses can be completed at your own pace, typically taking 4-12 weeks. Classroom courses follow a fixed schedule of 8-16 weeks.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="cta-container">
+        <div className="cta-bg-shapes">
+          <div className="cta-shape cta-shape-1"></div>
+          <div className="cta-shape cta-shape-2"></div>
+          <div className="cta-shape cta-shape-3"></div>
+        </div>
+        <div className="container-inner">
+          <div className="cta-content">
+            <h2>Ready to Advance Your Career?</h2>
+            <p>Start your certification journey today and take the next step toward professional success</p>
+            <button className="cta-btn">Get Started Now</button>
+          </div>
+        </div>
       </div>
     </div>
   );

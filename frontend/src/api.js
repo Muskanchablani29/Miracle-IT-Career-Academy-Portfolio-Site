@@ -1,29 +1,51 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000/api/';
+// Axios instance for user-related endpoints (login etc.)
+const USER_API_URL = 'http://localhost:8000/api/';
+const userAxiosInstance = axios.create({
+  baseURL: USER_API_URL,
+});
 
-const axiosInstance = axios.create({
-  baseURL: API_URL,
+// Axios instance for courses and workshops endpoints
+const COURSES_API_URL = 'http://localhost:8000/apii/';
+const coursesAxiosInstance = axios.create({
+  baseURL: COURSES_API_URL,
 });
 
 // Add a request interceptor to include Authorization header if access token is available
-axiosInstance.interceptors.request.use(
-  config => {
-    const token = localStorage.getItem('access');
-    if (token) {
-      config.headers['Authorization'] = 'Bearer ' + token;
+const addAuthInterceptor = (axiosInstance) => {
+  axiosInstance.interceptors.request.use(
+    config => {
+      const token = localStorage.getItem('access');
+      if (token) {
+        config.headers['Authorization'] = 'Bearer ' + token;
+      }
+      return config;
+    },
+    error => {
+      return Promise.reject(error);
     }
-    return config;
-  },
-  error => {
-    return Promise.reject(error);
+  );
+};
+
+addAuthInterceptor(userAxiosInstance);
+addAuthInterceptor(coursesAxiosInstance);
+
+// User API (login, signup, etc.) - example placeholder
+export const loginUser = async (credentials) => {
+  try {
+    const response = await userAxiosInstance.post('login/', credentials);
+    return response.data;
+  } catch (error) {
+    console.error('Error logging in:', error);
+    throw error;
   }
-);
+};
 
 // Courses API
 export const fetchCourses = async () => {
   try {
-    const response = await axiosInstance.get('courses/');
+    const response = await coursesAxiosInstance.get('courses/');
     return response.data;
   } catch (error) {
     console.error('Error fetching courses:', error);
@@ -33,7 +55,7 @@ export const fetchCourses = async () => {
 
 export const fetchCourseById = async (id) => {
   try {
-    const response = await axiosInstance.get(`courses/${id}/`);
+    const response = await coursesAxiosInstance.get(`courses/${id}/`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching course with id ${id}:`, error);
@@ -44,7 +66,7 @@ export const fetchCourseById = async (id) => {
 // Videos API
 export const fetchVideosByCourseId = async (courseId) => {
   try {
-    const response = await axiosInstance.get(`videos/?course_id=${courseId}`);
+    const response = await coursesAxiosInstance.get(`videos/?course_id=${courseId}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching videos for course ${courseId}:`, error);
@@ -55,7 +77,7 @@ export const fetchVideosByCourseId = async (courseId) => {
 // Certificates API
 export const fetchCertificates = async () => {
   try {
-    const response = await axiosInstance.get('certificates/');
+    const response = await coursesAxiosInstance.get('certificates/');
     return response.data;
   } catch (error) {
     console.error('Error fetching certificates:', error);
@@ -66,7 +88,7 @@ export const fetchCertificates = async () => {
 // Workshops API
 export const fetchWorkshops = async () => {
   try {
-    const response = await axiosInstance.get('workshops/');
+    const response = await coursesAxiosInstance.get('workshops/');
     return response.data;
   } catch (error) {
     console.error('Error fetching workshops:', error);
@@ -77,7 +99,7 @@ export const fetchWorkshops = async () => {
 // Quizzes API
 export const fetchQuizzes = async () => {
   try {
-    const response = await axiosInstance.get('quizzes/');
+    const response = await coursesAxiosInstance.get('quizzes/');
     return response.data;
   } catch (error) {
     console.error('Error fetching quizzes:', error);
@@ -85,5 +107,6 @@ export const fetchQuizzes = async () => {
   }
 };
 
-// Export axiosInstance as default for components that need it directly
-export default axiosInstance;
+// Export axios instances as needed
+export { userAxiosInstance, coursesAxiosInstance };
+export default { userAxiosInstance, coursesAxiosInstance };

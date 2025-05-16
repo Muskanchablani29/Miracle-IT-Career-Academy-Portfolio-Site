@@ -36,7 +36,7 @@ class Certificate(models.Model):
 class Workshop(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
-    image = models.URLField()
+    image = models.URLField(max_length=500)
     date = models.CharField(max_length=100)
     location = models.CharField(max_length=200)
     available_seats = models.IntegerField(default=0)
@@ -47,7 +47,7 @@ class Workshop(models.Model):
 class Quiz(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
-    image = models.URLField()
+    image = models.URLField(max_length=500)
     questions = models.IntegerField(default=0)
     time = models.CharField(max_length=50)
     difficulty = models.CharField(max_length=50)

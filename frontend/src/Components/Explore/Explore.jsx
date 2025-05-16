@@ -1,20 +1,21 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Certificates from './Certificates';
 import Workshops from './Workshops';
 import Quizzes from './Quizzes';
 import CourseDetail from './CourseDetail';
+import CoursesMain from './CoursesMain';
 import './Explore.css';
 import './course-container.css';
 import { fetchCourses } from '../../api';
-import ArtificialInteligence from './Courses/AI&MlTrack/ArtificialInteligence';
-import MachineLearning from './Courses/AI&MlTrack/MachineLearning';
 
 const Explore = () => {
   return (
     <div className="explore-container">
-      <Sidebar />
+      <div className="sidebar-wrapper">
+        <Sidebar />
+      </div>
       <div className="explore-content">
         <Routes>
           <Route path="/" element={<CoursesList />} />
@@ -23,35 +24,8 @@ const Explore = () => {
           <Route path="workshops" element={<Workshops />} />
           <Route path="quizzes" element={<Quizzes />} />
           
-          {/* Development Hub Routes */}
-          <Route path="courses/mern" element={<DevelopmentCourse category="MERN" />} />
-          <Route path="courses/full-stack-web-development" element={<DevelopmentCourse category="Full Stack Web Development" />} />
-          <Route path="courses/c-cpp-data-structure" element={<DevelopmentCourse category="C/C++/Data Structure" />} />
-          <Route path="courses/java" element={<DevelopmentCourse category="Java" />} />
-          <Route path="courses/python" element={<DevelopmentCourse category="Python" />} />
-          <Route path="courses/php" element={<DevelopmentCourse category="PHP" />} />
-          
-          {/* AI and ML Track Routes */}
-          <Route path="courses/artificial-intelligence" element={<ArtificialInteligence />} />
-          <Route path="courses/machine-learning" element={<MachineLearning />} />
-          <Route path="courses/big-data" element={<AICourse category="Big Data" />} />
-          <Route path="courses/data-science" element={<AICourse category="Data Science and Data Analytics" />} />
-          
-          {/* Cloud Security Routes */}
-          <Route path="courses/it-security" element={<CloudCourse category="IT Security and Ethical Hacking" />} />
-          <Route path="courses/cloud-computing" element={<CloudCourse category="Cloud Computing" />} />
-          <Route path="courses/devops" element={<CloudCourse category="DevOps" />} />
-          <Route path="courses/aws-azure" element={<CloudCourse category="AWS/Azure" />} />
-          
-          {/* JOB Linked Program Routes */}
-          <Route path="courses/pgdse" element={<JobCourse category="PGDSE" />} />
-          <Route path="courses/pgdie" element={<JobCourse category="PGDIE" />} />
-          <Route path="courses/pgdfe" element={<JobCourse category="PGDFE" />} />
-          <Route path="courses/pgdda" element={<JobCourse category="PGDDA" />} />
-          <Route path="courses/aiml-advance-diploma" element={<JobCourse category="AIML (Advance Diploma)" />} />
-          
-          {/* Catch-all for category courses */}
-          <Route path="courses/:category" element={<CategoryCourses />} />
+          {/* All courses routes handled by CoursesMain component */}
+          <Route path="courses/*" element={<CoursesMain />} />
         </Routes>
       </div>
     </div>
@@ -187,131 +161,6 @@ const CategoryCourses = () => {
         ) : (
           <p>No courses available in this category at the moment.</p>
         )}
-      </div>
-    </div>
-  );
-};
-
-// Generic course components for different categories
-const DevelopmentCourse = ({ category }) => {
-  return (
-    <div className="course-container">
-      <h1>{category}</h1>
-      <p className="course-description">
-        Explore our comprehensive {category} curriculum designed to help you master this technology.
-      </p>
-      
-      <div className="course-grid">
-        <div className="course-card">
-          <h3>Introduction to {category}</h3>
-          <p>Learn the fundamentals of {category} and build a strong foundation.</p>
-          <button className="enroll-btn">Enroll Now</button>
-        </div>
-        
-        <div className="course-card">
-          <h3>Advanced {category}</h3>
-          <p>Take your {category} skills to the next level with advanced concepts.</p>
-          <button className="enroll-btn">Enroll Now</button>
-        </div>
-        
-        <div className="course-card">
-          <h3>{category} Projects</h3>
-          <p>Apply your knowledge by building real-world projects.</p>
-          <button className="enroll-btn">Enroll Now</button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const AICourse = ({ category }) => {
-  return (
-    <div className="course-container">
-      <h1>{category}</h1>
-      <p className="course-description">
-        Explore our comprehensive {category} curriculum designed for AI and data enthusiasts.
-      </p>
-      
-      <div className="course-grid">
-        <div className="course-card">
-          <h3>Introduction to {category}</h3>
-          <p>Learn the fundamentals of {category} and its applications.</p>
-          <button className="enroll-btn">Enroll Now</button>
-        </div>
-        
-        <div className="course-card">
-          <h3>Advanced {category} Techniques</h3>
-          <p>Master advanced techniques and methodologies in {category}.</p>
-          <button className="enroll-btn">Enroll Now</button>
-        </div>
-        
-        <div className="course-card">
-          <h3>{category} in Practice</h3>
-          <p>Apply your knowledge through hands-on projects and case studies.</p>
-          <button className="enroll-btn">Enroll Now</button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const CloudCourse = ({ category }) => {
-  return (
-    <div className="course-container">
-      <h1>{category}</h1>
-      <p className="course-description">
-        Explore our comprehensive {category} curriculum designed for cloud and security professionals.
-      </p>
-      
-      <div className="course-grid">
-        <div className="course-card">
-          <h3>Introduction to {category}</h3>
-          <p>Learn the fundamentals of {category} and build a strong foundation.</p>
-          <button className="enroll-btn">Enroll Now</button>
-        </div>
-        
-        <div className="course-card">
-          <h3>{category} Best Practices</h3>
-          <p>Master industry best practices and standards in {category}.</p>
-          <button className="enroll-btn">Enroll Now</button>
-        </div>
-        
-        <div className="course-card">
-          <h3>{category} Certification Prep</h3>
-          <p>Prepare for industry-recognized certifications in {category}.</p>
-          <button className="enroll-btn">Enroll Now</button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const JobCourse = ({ category }) => {
-  return (
-    <div className="course-container">
-      <h1>{category} Program</h1>
-      <p className="course-description">
-        Our job-linked {category} program is designed to prepare you for industry roles.
-      </p>
-      
-      <div className="course-grid">
-        <div className="course-card">
-          <h3>{category} Curriculum</h3>
-          <p>Comprehensive curriculum covering all aspects of the program.</p>
-          <button className="enroll-btn">Enroll Now</button>
-        </div>
-        
-        <div className="course-card">
-          <h3>Industry Projects</h3>
-          <p>Work on real-world projects from industry partners.</p>
-          <button className="enroll-btn">Enroll Now</button>
-        </div>
-        
-        <div className="course-card">
-          <h3>Placement Assistance</h3>
-          <p>Get placement support and career guidance from our experts.</p>
-          <button className="enroll-btn">Enroll Now</button>
-        </div>
       </div>
     </div>
   );
