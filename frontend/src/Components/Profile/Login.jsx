@@ -14,23 +14,36 @@ const Login = () => {
   const handleSubmit = async e => {
     e.preventDefault();
     try {
+      console.log('Attempting login with:', credentials);
       const res = await axios.post('login/', credentials);
+      console.log('Login response:', res.data);
+      
       localStorage.setItem('access', res.data.access);
       localStorage.setItem('refresh', res.data.refresh);
-
-      const profile = await axios.get('profile/');
+      
+      // Re-create axios instance with the new token
+      const token = res.data.access;
+      const config = {
+        headers: { Authorization: `Bearer ${token}` }
+      };
+      
+      console.log('Fetching profile with token');
+      const profile = await axios.get('profile/', config);
+      console.log('Profile response:', profile.data);
+      
       const role = profile.data.role;
-
       setUser({ role, username: credentials.username });
 
       if (role === 'student') navigate('/student');
       else if (role === 'faculty') navigate('/faculty');
       else if (role === 'admin') navigate('/admin');
     } catch (err) {
+      console.error('Login error:', err);
       if (err.response && err.response.data) {
+        console.error('Error response data:', err.response.data);
         alert('Login failed: ' + JSON.stringify(err.response.data));
       } else {
-        alert('Login failed');
+        alert('Login failed. Please check your credentials and try again.');
       }
     }
   };

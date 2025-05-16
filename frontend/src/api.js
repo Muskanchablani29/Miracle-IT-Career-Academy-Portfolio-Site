@@ -18,11 +18,54 @@ const addAuthInterceptor = (axiosInstance) => {
     config => {
       const token = localStorage.getItem('access');
       if (token) {
-        config.headers['Authorization'] = 'Bearer ' + token;
+        config.headers['Authorization'] = `Bearer ${token}`;
       }
       return config;
     },
     error => {
+      return Promise.reject(error);
+    }
+  );
+
+  // Add a response interceptor to handle token refresh
+  axiosInstance.interceptors.response.use(
+    (response) => {
+      return response;
+    },
+    async (error) => {
+      const originalRequest = error.config;
+      
+      // If the error is 401 and we haven't tried to refresh the token yet
+      if (error.response.status === 401 && !originalRequest._retry) {
+        originalRequest._retry = true;
+        
+        try {
+          const refreshToken = localStorage.getItem('refresh');
+          if (!refreshToken) {
+            return Promise.reject(error);
+          }
+          
+          // Try to get a new token
+          const response = await axios.post(`${USER_API_URL}token/refresh/`, {
+            refresh: refreshToken
+          });
+          
+          if (response.status === 200) {
+            localStorage.setItem('access', response.data.access);
+            
+            // Update the failed request with the new token
+            originalRequest.headers['Authorization'] = `Bearer ${response.data.access}`;
+            return axiosInstance(originalRequest);
+          }
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+          // Clear tokens if refresh fails
+          localStorage.removeItem('access');
+          localStorage.removeItem('refresh');
+          return Promise.reject(refreshError);
+        }
+      }
+      
       return Promise.reject(error);
     }
   );
@@ -109,4 +152,4 @@ export const fetchQuizzes = async () => {
 
 // Export axios instances as needed
 export { userAxiosInstance, coursesAxiosInstance };
-export default { userAxiosInstance, coursesAxiosInstance };
+export default userAxiosInstance;

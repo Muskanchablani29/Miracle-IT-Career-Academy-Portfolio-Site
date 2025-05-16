@@ -10,7 +10,7 @@ export default function Home() {
   return (
     <>
     <Homeone />
-    <Hometwo />
+    {/* <Hometwo /> */}
     <Homethree />
     <Homefour />
     <Homefive />
