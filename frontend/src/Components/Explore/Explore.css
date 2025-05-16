@@ -1,12 +1,15 @@
 .explore-container {
   display: flex;
   min-height: 100vh;
+  position: relative;
 }
 
 .explore-content {
   flex: 1;
   padding: 20px;
-  margin-left: 250px; /* Same as sidebar width */
+  margin-left: 280px; /* Updated to match sidebar width */
+  min-height: calc(100vh - 82px);
+  overflow-y: auto;
 }
 
 .courses-list {

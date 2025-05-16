@@ -81,10 +81,15 @@
   cursor: pointer;
   transition: background-color 0.3s ease;
   width: 100%;
+  display: block;
+  text-align: center;
+  text-decoration: none;
 }
 
 .enroll-btn:hover,
 .register-btn:hover,
 .start-quiz-btn:hover {
   background-color: #0056b3;
+  text-decoration: none;
+  color: white;
 }

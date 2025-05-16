@@ -1,73 +1,67 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './components.css';
+import { fetchQuizzes } from '../../api';
 
 const Quizzes = () => {
+  const [quizzesList, setQuizzesList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const getQuizzes = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchQuizzes();
+        setQuizzesList(data);
+        setLoading(false);
+      } catch (err) {
+        setError('Failed to load quizzes. Please try again later.');
+        setLoading(false);
+        console.error('Error fetching quizzes:', err);
+      }
+    };
+
+    getQuizzes();
+  }, []);
+
+  if (loading) {
+    return <div className="loading">Loading quizzes...</div>;
+  }
+
+  if (error) {
+    return <div className="error-message">{error}</div>;
+  }
+
   return (
     <div className="quizzes-container">
       <h2>Take a Quiz</h2>
       <p>Test your knowledge and skills with our interactive quizzes.</p>
       
       <div className="quizzes-list">
-        {quizzesList.map((quiz) => (
-          <div className="quiz-card" key={quiz.id}>
-            <div className="quiz-image">
-              <img src={quiz.image} alt={quiz.title} />
-            </div>
-            <div className="quiz-details">
-              <h3>{quiz.title}</h3>
-              <p>{quiz.description}</p>
-              <div className="quiz-meta">
-                <span><strong>Questions:</strong> {quiz.questions}</span>
-                <span><strong>Time:</strong> {quiz.time}</span>
-                <span><strong>Difficulty:</strong> {quiz.difficulty}</span>
+        {quizzesList.length > 0 ? (
+          quizzesList.map((quiz) => (
+            <div className="quiz-card" key={quiz.id}>
+              <div className="quiz-image">
+                <img src={quiz.image} alt={quiz.title} />
               </div>
-              <button className="start-quiz-btn">Start Quiz</button>
+              <div className="quiz-details">
+                <h3>{quiz.title}</h3>
+                <p>{quiz.description}</p>
+                <div className="quiz-meta">
+                  <span><strong>Questions:</strong> {quiz.questions}</span>
+                  <span><strong>Time:</strong> {quiz.time}</span>
+                  <span><strong>Difficulty:</strong> {quiz.difficulty}</span>
+                </div>
+                <button className="start-quiz-btn">Start Quiz</button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <p>No quizzes available at the moment.</p>
+        )}
       </div>
     </div>
   );
 };
-
-// Sample quizzes data
-const quizzesList = [
-  {
-    id: 1,
-    title: "HTML & CSS Fundamentals",
-    description: "Test your knowledge of HTML and CSS basics",
-    image: "https://via.placeholder.com/300x200",
-    questions: 20,
-    time: "30 minutes",
-    difficulty: "Beginner"
-  },
-  {
-    id: 2,
-    title: "JavaScript Essentials",
-    description: "Challenge yourself with core JavaScript concepts",
-    image: "https://via.placeholder.com/300x200",
-    questions: 25,
-    time: "45 minutes",
-    difficulty: "Intermediate"
-  },
-  {
-    id: 3,
-    title: "React.js Mastery",
-    description: "Advanced quiz on React components, hooks, and state management",
-    image: "https://via.placeholder.com/300x200",
-    questions: 30,
-    time: "60 minutes",
-    difficulty: "Advanced"
-  },
-  {
-    id: 4,
-    title: "Database Concepts",
-    description: "Test your knowledge of SQL and NoSQL databases",
-    image: "https://via.placeholder.com/300x200",
-    questions: 25,
-    time: "40 minutes",
-    difficulty: "Intermediate"
-  }
-];
 
 export default Quizzes;

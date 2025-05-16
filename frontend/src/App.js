@@ -11,7 +11,6 @@ import Home from './Components/Home/Home';
 import Explore from './Components/Explore/Explore';
 import Navbar from './Components/Navbar';
 import { UserProvider } from './Components/UserContext';
-// import Courses from './Components/Pages/Courses';
 
 function App() {
   return (
