@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import './Sidebar.css';
+import './Sidebar-explore.css';
 import { FaCertificate, FaChalkboardTeacher, FaQuestionCircle, FaCode, FaRobot, FaShieldAlt, FaBriefcase } from 'react-icons/fa';
 
 const Sidebar = () => {
@@ -18,9 +18,9 @@ const Sidebar = () => {
   }, []);
   
   return (
-    <div className="sidebar" ref={sidebarRef}>
+    <div className="sidebar-explore" ref={sidebarRef}>
       <h2>Explore</h2>
-      <ul className="sidebar-menu">
+      <ul className="sidebar-menu-explore">
         <li className={location.pathname === "/explore/certificates" ? "active" : ""}>
           <Link to="/explore/certificates"><FaCertificate className="menu-icon" /> Earn a Certificate</Link>
         </li>

@@ -2,30 +2,47 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Signup from './Components/Profile/Signup';
 import Login from './Components/Profile/Login';
-import StudentDashboard from './Components/Pages/StudentDashboard';
-import FacultyDashboard from './Components/Pages/FacultDashboard';
-import AdminDashboard from './Components/Pages/AdminDashboard';
+import StudentDashboard from './Components/Student/StudentDashboard';
+import FacultyDashboard from './Components/Faculty/FacultyDashboard';
+import AdminDashboard from './Components/Admin/AdminDashboard';
 import About from './Components/About/About'
-import MainPage from './Components/Pages/MainPage';
 import Home from './Components/Home/Home';
 import Explore from './Components/Explore/Explore';
-import Navbar from './Components/Navbar';
 import { UserProvider } from './Components/UserContext';
+import { AuthLayout, PublicLayout } from './Components/Layout';
+import './Components/Layout.css';
 
 function App() {
   return (
     <UserProvider>
       <Router>
-        <Navbar />
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/student" element={<StudentDashboard />} />
-          <Route path="/faculty" element={<FacultyDashboard />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/explore/*" element={<Explore />} />
+          {/* Public Routes */}
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/explore/*" element={<Explore />} />
+          </Route>
+          
+          {/* Protected Routes with Role-Based Access */}
+          <Route path="/student" element={<AuthLayout requiredRole="student" />}>
+            <Route index element={<StudentDashboard />} />
+            {/* Add more student routes here */}
+          </Route>
+          
+          <Route path="/faculty" element={<AuthLayout requiredRole="faculty" />}>
+            <Route index element={<FacultyDashboard />} />
+            {/* Add more faculty routes here */}
+          </Route>
+          
+          <Route path="/admin" element={<AuthLayout requiredRole="admin" />}>
+            <Route index element={<AdminDashboard />} />
+            {/* Add more admin routes here */}
+          </Route>
+          
+          {/* Fallback route */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Router>

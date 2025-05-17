@@ -5,6 +5,7 @@ export const UserContext = createContext(null);
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const restoreUser = async () => {
@@ -17,18 +18,20 @@ export const UserProvider = ({ children }) => {
           const username = profile.data.username || null;
           setUser({ role, username });
         } catch (error) {
-          // If token invalid or error, clear user and tokens
+          console.error('Error restoring user session:', error);
+          // Remove hardcoded user fallback for production
           setUser(null);
           localStorage.removeItem('access');
           localStorage.removeItem('refresh');
         }
       }
+      setLoading(false);
     };
     restoreUser();
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, setUser }}>
+    <UserContext.Provider value={{ user, setUser, loading }}>
       {children}
     </UserContext.Provider>
   );
