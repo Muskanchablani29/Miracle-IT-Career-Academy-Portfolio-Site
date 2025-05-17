@@ -1,3 +1,4 @@
+import * as e from 'express';
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { UserContext } from './UserContext';
@@ -26,14 +27,19 @@ const Sidebar = () => {
           { to: '/faculty', label: 'Dashboard', icon: '📊' },
           { to: '/faculty/courses', label: 'My Courses', icon: '📚' },
           { to: '/faculty/students', label: 'Students', icon: '👨‍🎓' },
-          { to: '/faculty/assignments', label: 'Assignments', icon: '📝' }
+          { to: '/faculty/assignments', label: 'Assignments', icon: '📝' },
+          { to: '/faculty/settings', label: 'Settings', icon: '⚙️'}
+
         ];
       case 'student':
         return [
           { to: '/student', label: 'Dashboard', icon: '📊' },
           { to: '/student/courses', label: 'My Courses', icon: '📚' },
           { to: '/student/assignments', label: 'Assignments', icon: '📝' },
-          { to: '/student/progress', label: 'Progress', icon: '📈' }
+          { to: '/student/progress', label: 'Progress', icon: '📈' },
+          { to: '/student/settings', label: 'Settings', icon: '⚙️' },
+          { to: '/student/explore', label: 'Explore', icon: '🔍' }
+
         ];
       default:
         return [];
