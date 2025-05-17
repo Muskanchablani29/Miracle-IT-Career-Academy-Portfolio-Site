@@ -1,0 +1,32 @@
+/* Auth layout styles - only applied to authenticated pages */
+.auth-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Added to prevent scrollbar on auth-layout */
+}
+
+.dashboard-container {
+  display: flex;
+  flex: 1;
+  margin-top: 60px; /* Match navbar height */
+  overflow: hidden; /* Added to prevent scrollbar on container */
+}
+
+.dashboard-content {
+  flex: 1;
+  padding: 20px;
+  margin-left: 250px; /* Match sidebar width */
+  background-color: #f5f5f5;
+  overflow-y: auto; /* Keep this to allow scrolling in content area */
+  width: calc(100% - 250px);
+  height: calc(100vh - 60px); /* Viewport height minus navbar height */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .dashboard-content {
+    margin-left: 0;
+    width: 100%;
+  }
+}

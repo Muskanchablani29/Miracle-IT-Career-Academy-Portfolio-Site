@@ -58,9 +58,9 @@ color: white;
 }
 
 .navbar.logged-in .nav-list a:hover {
-  color: #4cc9f0;
-  background-color: rgba(76, 201, 240, 0.1);
-  box-shadow: 0 4px 12px rgba(76, 201, 240, 0.2);
+  color: var(--primary-color);
+  background-color: rgba(255, 69, 0, 0.1);
+  box-shadow: 0 4px 12px var(--shadow-color);
   transform: translateY(-2px);
 }
 
@@ -82,15 +82,15 @@ color: white;
 /* Other existing styles remain unchanged */
 
 .navbar.logged-in .nav-list a {
-color: #333;
+color: var(--text-primary);
 background-color: transparent;
 border: none;
 box-shadow: none;
 }
 
 .navbar.logged-in .nav-list a:hover {
-color: #4cc9f0;
-background-color: rgba(76, 201, 240, 0.1);
+color: var(--primary-color);
+background-color: rgba(255, 69, 0, 0.1);
 }
 
 .nav-left {
@@ -104,6 +104,7 @@ flex: 2;
 display: flex;
 justify-content: center;
 align-items: center;
+text-align: center;
 }
 
 .nav-right {
@@ -125,14 +126,14 @@ width: auto;
 .academy-title {
 font-size: 1.5rem;
 font-weight: 700;
-color: #333;
 margin-left: 10px;
 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 letter-spacing: 0.5px;
-background: linear-gradient(45deg, #333, #4cc9f0);
+background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
 -webkit-background-clip: text;
 background-clip: text;
 -webkit-text-fill-color: transparent;
+text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.5);
 }
 
 .nav-list {
@@ -245,8 +246,8 @@ color: var(--primary-color);
 
 .navbar.logged-in .dropdown-menu ul li a:hover,
 .navbar.logged-in .dropdown-menu ul li button.dropdown-button:hover {
-background-color: rgba(76, 201, 240, 0.1);
-color: #4cc9f0;
+background-color: rgba(255, 69, 0, 0.1);
+color: var(--primary-color);
 }
 
 @keyframes fadeIn {

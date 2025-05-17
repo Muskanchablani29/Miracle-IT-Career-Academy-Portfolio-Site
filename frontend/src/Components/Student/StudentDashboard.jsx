@@ -1,9 +1,23 @@
-import React, { useContext } from 'react'
+import React, { useContext, useState } from 'react'
 import { UserContext } from '../UserContext'
 import './StudentDashboard.css'
+import { FaSearch } from 'react-icons/fa'
 
 export default function StudentDashboard() {
   const { user } = useContext(UserContext);
+  const [courseSearchQuery, setCourseSearchQuery] = useState('');
+  
+  const handleCourseSearch = (e) => {
+    setCourseSearchQuery(e.target.value);
+  };
+  
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (courseSearchQuery.trim()) {
+      console.log('Searching for courses:', courseSearchQuery);
+      // Implement course search functionality
+    }
+  };
   
   return (
     <div className="student-dashboard">
@@ -11,6 +25,20 @@ export default function StudentDashboard() {
       <div className="welcome-section">
         <h2>Welcome, {user?.username || 'Student'}!</h2>
         <p>Track your progress and access your courses from this dashboard.</p>
+      </div>
+      
+      {/* Course search bar */}
+      <div className="course-search-container">
+        <form onSubmit={handleSearchSubmit}>
+          <FaSearch className="search-icon" />
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search for courses..."
+            value={courseSearchQuery}
+            onChange={handleCourseSearch}
+          />
+        </form>
       </div>
       
       <div className="dashboard-stats">

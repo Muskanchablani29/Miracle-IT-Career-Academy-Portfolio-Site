@@ -32,6 +32,7 @@ const Login = () => {
       console.log('Profile response:', profile.data);
       
       const role = profile.data.role;
+      localStorage.setItem('role', role); // Store role in localStorage
       setUser({ role, username: credentials.username });
 
       if (role === 'student') navigate('/student');

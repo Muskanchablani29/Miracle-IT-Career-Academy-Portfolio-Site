@@ -10,19 +10,32 @@ export const UserProvider = ({ children }) => {
   useEffect(() => {
     const restoreUser = async () => {
       const access = localStorage.getItem('access');
+      const role = localStorage.getItem('role');
+      
       if (access) {
         try {
           // Optionally fetch profile to verify token and get user info
           const profile = await axios.get('profile/');
-          const role = profile.data.role;
           const username = profile.data.username || null;
-          setUser({ role, username });
+          const fetchedRole = profile.data.role;
+          
+          // Update role in localStorage if it's different
+          if (fetchedRole && fetchedRole !== role) {
+            localStorage.setItem('role', fetchedRole);
+          }
+          
+          setUser({ role: fetchedRole || role, username });
         } catch (error) {
           console.error('Error restoring user session:', error);
-          // Remove hardcoded user fallback for production
-          setUser(null);
-          localStorage.removeItem('access');
-          localStorage.removeItem('refresh');
+          // If we have a role in localStorage, use it as fallback
+          if (role) {
+            setUser({ role, username: null });
+          } else {
+            setUser(null);
+            localStorage.removeItem('access');
+            localStorage.removeItem('refresh');
+            localStorage.removeItem('role');
+          }
         }
       }
       setLoading(false);
