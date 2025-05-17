@@ -20,7 +20,10 @@ const Sidebar = () => {
           { to: '/admin/users', label: 'Manage Users', icon: '👥' },
           { to: '/admin/courses', label: 'Manage Courses', icon: '📚' },
           { to: '/admin/reports', label: 'Reports', icon: '📝' },
-          { to: '/admin/settings', label: 'Settings', icon: '⚙️' }
+          { to: '/admin/settings', label: 'Settings', icon: '⚙️' },
+          { to: '/admin/explore', label: 'Explore', icon: '🔍' },
+          { to: '/admin/ManageUsers', label: 'Manage Users', icon: '👥' },
+          { to: '/admin/ManageCourses', label: 'Manage Courses', icon: '📚' },  
         ];
       case 'faculty':
         return [
