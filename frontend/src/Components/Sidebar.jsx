@@ -28,7 +28,9 @@ const Sidebar = () => {
           { to: '/faculty/courses', label: 'My Courses', icon: '📚' },
           { to: '/faculty/students', label: 'Students', icon: '👨‍🎓' },
           { to: '/faculty/assignments', label: 'Assignments', icon: '📝' },
-          { to: '/faculty/settings', label: 'Settings', icon: '⚙️'}
+          { to: '/faculty/settings', label: 'Settings', icon: '⚙️'},
+          { to: '/faculty/explore', label: 'Explore', icon: '🔍' }
+          { to: '/faculty/ManageUsers', label: 'Manage Users', icon: '👥' },
 
         ];
       case 'student':
