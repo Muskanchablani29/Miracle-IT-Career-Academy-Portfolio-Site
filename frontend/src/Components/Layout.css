@@ -3,29 +3,36 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* Added to prevent scrollbar on auth-layout */
 }
 
 .dashboard-container {
-  display: flex;
-  flex: 1;
+  margin-left: 250px; /* Match sidebar width */
   margin-top: 60px; /* Match navbar height */
-  overflow: hidden; /* Added to prevent scrollbar on container */
+  width: calc(100% - 250px);
+  min-height: calc(100vh - 60px);
 }
 
 .dashboard-content {
-  flex: 1;
   padding: 20px;
-  margin-left: 250px; /* Match sidebar width */
   background-color: #f5f5f5;
-  overflow-y: auto; /* Keep this to allow scrolling in content area */
-  width: calc(100% - 250px);
-  height: calc(100vh - 60px); /* Viewport height minus navbar height */
+  min-height: calc(100vh - 60px);
+}
+
+/* Loading state */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100vw;
+  font-size: 1.2rem;
+  color: #333;
+  background-color: #f5f5f5;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .dashboard-content {
+  .dashboard-container {
     margin-left: 0;
     width: 100%;
   }

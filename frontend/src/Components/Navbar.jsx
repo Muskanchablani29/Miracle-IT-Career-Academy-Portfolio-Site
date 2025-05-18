@@ -22,12 +22,10 @@ const Navbar = () => {
   }, [setUser, navigate]);
 
   const handleWebClick = useCallback(() => {
+    localStorage.removeItem('access');
+    localStorage.removeItem('refresh');
+    setUser(null);
     navigate('/');
-    setTimeout(() => {
-      localStorage.removeItem('access');
-      localStorage.removeItem('refresh');
-      setUser(null);
-    }, 100);
   }, [setUser, navigate]);
 
   const toggleUserMenu = useCallback(() => {

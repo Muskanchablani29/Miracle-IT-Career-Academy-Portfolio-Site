@@ -1,0 +1,140 @@
+.dashboard-container {
+  padding: 20px;
+  width: 100%;
+}
+
+.dashboard-content {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+.fee-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.fee-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex: 1;
+  min-width: 200px;
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.fee-card:hover {
+  transform: translateY(-5px);
+}
+
+.fee-card h3 {
+  margin: 0 0 10px 0;
+  font-size: 1rem;
+  color: #555;
+}
+
+.fee-amount {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin: 0;
+  color: #333;
+}
+
+.fee-date {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin: 0;
+  color: #F44336;
+}
+
+.fee-history {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+.fee-history h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.fee-history table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.fee-history th, 
+.fee-history td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.fee-history th {
+  background-color: #f8f9fa;
+  color: #555;
+  font-weight: 600;
+}
+
+.fee-history tr:hover {
+  background-color: #f8f9fa;
+}
+
+.status-success {
+  color: #4CAF50;
+  font-weight: 500;
+}
+
+.status-pending {
+  color: #FFC107;
+  font-weight: 500;
+}
+
+.payment-options {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.payment-options h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: 1rem;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+}
+
+@media (max-width: 768px) {
+  .fee-summary {
+    flex-direction: column;
+  }
+  
+  .fee-history {
+    overflow-x: auto;
+  }
+}

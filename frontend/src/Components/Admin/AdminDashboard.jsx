@@ -1,93 +1,119 @@
-import React, { useContext } from 'react'
-import { UserContext } from '../UserContext'
-import './AdminDashboard.css'
+import React from 'react';
+import './AdminDashboard.css';
 
-export default function AdminDashboard() {
-  const { user } = useContext(UserContext);
-  
+const AdminDashboard = () => {
   return (
-    <div className="admin-dashboard">
+    <div className="dashboard-container">
       <h1>Admin Dashboard</h1>
-      <div className="welcome-section">
-        <h2>Welcome, {user?.username || 'Admin'}!</h2>
-        <p>Manage users, courses, and system settings from this dashboard.</p>
-      </div>
-      
-      <div className="dashboard-stats">
-        <div className="stat-card">
-          <h3>Total Users</h3>
-          <p className="stat-number">245</p>
-          <div className="stat-breakdown">
-            <span>Students: 200</span>
-            <span>Faculty: 35</span>
-            <span>Admins: 10</span>
+      <div className="dashboard-content">
+        <div className="stats-container">
+          <div className="stat-card">
+            <h3>Total Students</h3>
+            <p className="stat-number">1,245</p>
+            <p className="stat-change positive">+12% from last month</p>
+          </div>
+          <div className="stat-card">
+            <h3>Total Faculty</h3>
+            <p className="stat-number">48</p>
+            <p className="stat-change positive">+3% from last month</p>
+          </div>
+          <div className="stat-card">
+            <h3>Active Courses</h3>
+            <p className="stat-number">32</p>
+            <p className="stat-change neutral">No change</p>
+          </div>
+          <div className="stat-card">
+            <h3>Revenue</h3>
+            <p className="stat-number">₹24.5L</p>
+            <p className="stat-change positive">+8% from last month</p>
           </div>
         </div>
-        <div className="stat-card">
-          <h3>Active Courses</h3>
-          <p className="stat-number">18</p>
-        </div>
-        <div className="stat-card">
-          <h3>New Registrations</h3>
-          <p className="stat-number">12</p>
-          <p className="stat-period">This week</p>
-        </div>
-      </div>
-      
-      <div className="admin-panels">
-        <div className="admin-panel">
-          <h3>Recent Users</h3>
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Username</th>
-                <th>Role</th>
-                <th>Joined</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>john_doe</td>
-                <td>Student</td>
-                <td>Oct 15, 2023</td>
-                <td><span className="status active">Active</span></td>
-              </tr>
-              <tr>
-                <td>sarah_smith</td>
-                <td>Faculty</td>
-                <td>Oct 12, 2023</td>
-                <td><span className="status active">Active</span></td>
-              </tr>
-              <tr>
-                <td>mike_johnson</td>
-                <td>Student</td>
-                <td>Oct 10, 2023</td>
-                <td><span className="status inactive">Inactive</span></td>
-              </tr>
-            </tbody>
-          </table>
-          <button className="view-all-btn">View All Users</button>
+        
+        <div className="dashboard-row">
+          <div className="dashboard-column">
+            <div className="dashboard-card">
+              <h3>Recent Enrollments</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Course</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Rahul Sharma</td>
+                    <td>Web Development</td>
+                    <td>12 Jul, 2023</td>
+                    <td className="status-success">Confirmed</td>
+                  </tr>
+                  <tr>
+                    <td>Priya Singh</td>
+                    <td>Data Science</td>
+                    <td>10 Jul, 2023</td>
+                    <td className="status-success">Confirmed</td>
+                  </tr>
+                  <tr>
+                    <td>Amit Kumar</td>
+                    <td>Python Programming</td>
+                    <td>08 Jul, 2023</td>
+                    <td className="status-pending">Pending</td>
+                  </tr>
+                </tbody>
+              </table>
+              <a href="#" className="view-all">View All</a>
+            </div>
+          </div>
+          
+          <div className="dashboard-column">
+            <div className="dashboard-card">
+              <h3>System Notifications</h3>
+              <div className="notification-list">
+                <div className="notification">
+                  <div className="notification-icon warning">⚠️</div>
+                  <div className="notification-content">
+                    <p className="notification-text">Server load high (85%)</p>
+                    <p className="notification-time">2 hours ago</p>
+                  </div>
+                </div>
+                <div className="notification">
+                  <div className="notification-icon info">ℹ️</div>
+                  <div className="notification-content">
+                    <p className="notification-text">Database backup completed</p>
+                    <p className="notification-time">5 hours ago</p>
+                  </div>
+                </div>
+                <div className="notification">
+                  <div className="notification-icon success">✅</div>
+                  <div className="notification-content">
+                    <p className="notification-text">System update successful</p>
+                    <p className="notification-time">1 day ago</p>
+                  </div>
+                </div>
+              </div>
+              <a href="#" className="view-all">View All</a>
+            </div>
+          </div>
         </div>
         
-        <div className="admin-panel">
-          <h3>System Notifications</h3>
-          <ul className="notification-list">
-            <li className="notification">
-              <span className="notification-type error">Error</span>
-              <p>Database backup failed on Oct 16, 2023</p>
-            </li>
-            <li className="notification">
-              <span className="notification-type warning">Warning</span>
-              <p>Server load reached 85% at 3:45 PM</p>
-            </li>
-            <li className="notification">
-              <span className="notification-type info">Info</span>
-              <p>System update scheduled for Oct 20, 2023</p>
-            </li>
-          </ul>
+        <div className="dashboard-card">
+          <h3>Course Enrollment Statistics</h3>
+          <div className="chart-container">
+            {/* Chart would be implemented with a library like Chart.js */}
+            <div className="mock-chart">
+              <div className="chart-bar" style={{ height: '90%', backgroundColor: '#4CAF50' }}>Web Dev</div>
+              <div className="chart-bar" style={{ height: '75%', backgroundColor: '#2196F3' }}>Python</div>
+              <div className="chart-bar" style={{ height: '60%', backgroundColor: '#FFC107' }}>Data Science</div>
+              <div className="chart-bar" style={{ height: '45%', backgroundColor: '#9C27B0' }}>AI/ML</div>
+              <div className="chart-bar" style={{ height: '30%', backgroundColor: '#F44336' }}>Cloud</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
+
+export default AdminDashboard;

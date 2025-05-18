@@ -1,10 +1,19 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { UserContext } from './UserContext';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
+import './Layout.css';
 
 // Layout for public pages - no special styling
 export const PublicLayout = () => {
+  const { user } = useContext(UserContext);
+  
+  // If user is already logged in, redirect to their dashboard
+  if (user) {
+    return <Navigate to={`/${user.role}`} replace />;
+  }
+  
   return (
     <>
       <Navbar />
@@ -16,23 +25,21 @@ export const PublicLayout = () => {
 // Layout for authenticated pages with role-based access control
 export const AuthLayout = ({ requiredRole }) => {
   const location = useLocation();
+  const { user, loading } = useContext(UserContext);
   
-  // Check if user is authenticated and has the required role
-  const isAuthenticated = localStorage.getItem('access') !== null;
-  const userRole = localStorage.getItem('role');
+  // Show loading state while checking authentication
+  if (loading) {
+    return <div className="loading">Loading...</div>;
+  }
   
-  console.log('AuthLayout - isAuthenticated:', isAuthenticated);
-  console.log('AuthLayout - userRole:', userRole);
-  console.log('AuthLayout - requiredRole:', requiredRole);
-  
-  if (!isAuthenticated) {
-    console.log('Not authenticated, redirecting to login');
+  // If not authenticated, redirect to login
+  if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
   
-  if (requiredRole && userRole !== requiredRole) {
-    console.log('Wrong role, redirecting to home');
-    return <Navigate to="/" replace />;
+  // If user doesn't have the required role, redirect to their dashboard
+  if (requiredRole && user.role !== requiredRole) {
+    return <Navigate to={`/${user.role}`} replace />;
   }
   
   return (

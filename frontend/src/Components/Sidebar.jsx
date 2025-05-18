@@ -1,9 +1,14 @@
-import * as e from 'express';
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { UserContext } from './UserContext';
 import './Sidebar.css';
 import logo from './Images/Logo-miracle.png';
+import { 
+  FaHome, FaUserGraduate, FaBook, FaCalendarAlt, FaChartLine, 
+  FaMoneyBillWave, FaFileAlt, FaUserCircle, FaUsers, FaCog, 
+  FaClipboardList, FaReceipt, FaCertificate, FaGraduationCap, 
+  FaBullhorn, FaListAlt
+} from 'react-icons/fa';
 
 const Sidebar = () => {
   const { user } = useContext(UserContext);
@@ -16,35 +21,32 @@ const Sidebar = () => {
     switch (user.role) {
       case 'admin':
         return [
-          { to: '/admin', label: 'Dashboard', icon: '📊' },
-          { to: '/admin/users', label: 'Manage Users', icon: '👥' },
-          { to: '/admin/courses', label: 'Manage Courses', icon: '📚' },
-          { to: '/admin/reports', label: 'Reports', icon: '📝' },
-          { to: '/admin/settings', label: 'Settings', icon: '⚙️' },
-          { to: '/admin/explore', label: 'Explore', icon: '🔍' },
-          { to: '/admin/ManageUsers', label: 'Manage Users', icon: '👥' },
-          { to: '/admin/ManageCourses', label: 'Manage Courses', icon: '📚' },  
+          { to: '/admin', label: 'Dashboard', icon: <FaHome /> },
+          { to: '/admin/users', label: 'User Management', icon: <FaUsers /> },
+          { to: '/admin/courses', label: 'Course Management', icon: <FaBook /> },
+          { to: '/admin/attendance', label: 'Attendance Logs', icon: <FaCalendarAlt /> },
+          { to: '/admin/fees', label: 'Fee Tracking', icon: <FaMoneyBillWave /> },
+          { to: '/admin/certificates', label: 'Certificates', icon: <FaCertificate /> },
+          { to: '/admin/settings', label: 'System Settings', icon: <FaCog /> },
         ];
       case 'faculty':
         return [
-          { to: '/faculty', label: 'Dashboard', icon: '📊' },
-          { to: '/faculty/courses', label: 'My Courses', icon: '📚' },
-          { to: '/faculty/students', label: 'Students', icon: '👨‍🎓' },
-          { to: '/faculty/assignments', label: 'Assignments', icon: '📝' },
-          { to: '/faculty/settings', label: 'Settings', icon: '⚙️'},
-          { to: '/faculty/explore', label: 'Explore', icon: '🔍' }
-          { to: '/faculty/ManageUsers', label: 'Manage Users', icon: '👥' },
-
+          { to: '/faculty', label: 'Dashboard', icon: <FaHome /> },
+          { to: '/faculty/courses', label: 'Manage Courses', icon: <FaBook /> },
+          { to: '/faculty/attendance', label: 'Student Attendance', icon: <FaCalendarAlt /> },
+          { to: '/faculty/gradebook', label: 'Gradebook', icon: <FaClipboardList /> },
+          { to: '/faculty/announcements', label: 'Faculty Announcements', icon: <FaBullhorn /> },
+          { to: '/faculty/students', label: 'Student List', icon: <FaUserGraduate /> },
         ];
       case 'student':
         return [
-          { to: '/student', label: 'Dashboard', icon: '📊' },
-          { to: '/student/courses', label: 'My Courses', icon: '📚' },
-          { to: '/student/assignments', label: 'Assignments', icon: '📝' },
-          { to: '/student/progress', label: 'Progress', icon: '📈' },
-          { to: '/student/settings', label: 'Settings', icon: '⚙️' },
-          { to: '/student/explore', label: 'Explore', icon: '🔍' }
-
+          { to: '/student', label: 'Dashboard', icon: <FaHome /> },
+          { to: '/student/courses', label: 'Courses', icon: <FaBook /> },
+          { to: '/student/attendance', label: 'Attendance', icon: <FaCalendarAlt /> },
+          { to: '/student/performance', label: 'Performance Report', icon: <FaChartLine /> },
+          { to: '/student/fees', label: 'Fee Management', icon: <FaMoneyBillWave /> },
+          { to: '/student/documents', label: 'Documents & Certificates', icon: <FaFileAlt /> },
+          { to: '/student/profile', label: 'Student Profile', icon: <FaUserCircle /> },
         ];
       default:
         return [];
@@ -61,7 +63,9 @@ const Sidebar = () => {
         </Link>
       </div>
       <div className="sidebar-header">
-        <h3>{user.role.charAt(0).toUpperCase() + user.role.slice(1)} Panel</h3>
+        <h3>{user.role === 'student' ? 'Student Panel' : 
+             user.role === 'admin' ? 'Admin Panel' : 
+             'Faculty Dashboard'}</h3>
       </div>
       <ul className="sidebar-menu">
         {navLinks.map((link, index) => (

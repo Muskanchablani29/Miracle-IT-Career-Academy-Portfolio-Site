@@ -40,6 +40,7 @@
 
 .sidebar-item {
   margin-bottom: 8px;
+  padding: 0 15px;
 }
 
 .sidebar-link {
@@ -67,6 +68,11 @@
   margin-right: 10px;
   font-size: 1.2rem;
   color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
 }
 
 .sidebar-text {
@@ -97,7 +103,6 @@
 }
 
 .sidebar-logo-img {
-  max-width: 80%;
-  height: auto;
-  max-height: 45px;
+  max-width: 100%;
+  max-height: 90px;
 }
