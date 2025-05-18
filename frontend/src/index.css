@@ -1,21 +1,19 @@
-:root {
-  --primary-color: #3EB489; /* Mint Green */
-  --secondary-color: #2E8B57; /* Darker Mint Green */
-  --accent-color: #A3D9A5; /* Light Mint Green */
-  --background-color: #FFFFFF; /* White Background */
-  --card-background: #E6F2E6; /* Very Light Mint Green */
-  --text-primary: #3EB489; /* Mint Green Text */
-  --cta-button: #3EB489; /* Mint Green Button */
-  --warning-alert: #FFB74D; /* Amber Warning (unchanged) */
-}
-
-html, body {
+body {
   margin: 0;
   padding: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto; 
-  background-color: var(--background-color);
-  color: var(--text-primary);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  box-sizing: border-box;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
 }

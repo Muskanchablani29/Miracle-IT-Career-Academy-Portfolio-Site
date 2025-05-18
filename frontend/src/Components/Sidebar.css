@@ -8,12 +8,13 @@
   top: 0;
   left: 0;
   z-index: 100;
-  transition: all 0.3s;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.7);
   overflow-y: auto;
   border-right: 1px solid rgba(0, 0, 0, 0.05);
   scrollbar-width: thin;
   scrollbar-color: #FF4500 rgba(255, 255, 255, 0.4);
+  padding: 0;
+  margin: 0;
 }
 
 .sidebar-header {
@@ -79,18 +80,6 @@
   font-size: 0.9rem;
 }
 
-/* For mobile responsiveness */
-@media (max-width: 768px) {
-  .sidebar {
-    width: 0;
-    overflow: hidden;
-  }
-  
-  .sidebar.active {
-    width: 250px;
-  }
-}
-
 /* Logo styling for sidebar */
 .sidebar-logo {
   padding: 15px;
@@ -105,4 +94,16 @@
 .sidebar-logo-img {
   max-width: 100%;
   max-height: 90px;
+}
+
+/* For mobile responsiveness */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 0;
+    overflow: hidden;
+  }
+  
+  .sidebar.active {
+    width: 250px;
+  }
 }

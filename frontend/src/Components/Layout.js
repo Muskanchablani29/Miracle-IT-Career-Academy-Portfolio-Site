@@ -46,11 +46,9 @@ export const AuthLayout = ({ requiredRole }) => {
     <div className="auth-layout">
       <Navbar />
       <Sidebar />
-      <div className="dashboard-container">
-        <div className="dashboard-content">
-          <Outlet />
-        </div>
-      </div>
+      <main className="dashboard-container">
+        <Outlet />
+      </main>
     </div>
   );
 };
