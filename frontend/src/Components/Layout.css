@@ -1,27 +1,30 @@
-/* Reset margins and padding */
-body, html {
-  margin: 0;
-  padding: 0;
-}
-
-/* Auth layout styles */
+/* Auth layout styles - only applied to authenticated pages */
 .auth-layout {
-  min-height: 100vh;
-  position: relative;
+min-height: 100vh;
+display: flex;
+height: 100vh;
+position: relative;
 }
 
 .dashboard-container {
-  position: absolute;
-  left: 250px;
-  top: 60px;
-  width: calc(100% - 250px);
-  min-height: calc(100vh - 60px);
-  box-sizing: border-box;
+flex-grow: 1;
+overflow-y: auto;
+/* height: calc(100vh - 60px); */
+padding-top: 0;
+/* box-sizing: border-box; */
+position: relative;
+width: auto;
 }
 
 .dashboard-content {
-  padding: 20px;
-  background-color: #f5f5f5;
+/* padding: 20px; */
+background-color: #f5f5f5;
+margin-top: 60px;
+}
+
+/* Public layout styles - don't affect the home page content */
+.public-layout {
+  min-height: 100vh;
 }
 
 /* Loading state */

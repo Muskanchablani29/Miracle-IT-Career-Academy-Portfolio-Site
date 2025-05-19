@@ -100,8 +100,8 @@ const LandingPage = () => {
   };
 
   return (
-    <section className="landing">
-      <div className="content">
+    <section className="landing-homeone">
+      <div className="content-homeone">
         <div className="heading-container">
           <h1 ref={headingRef} className="main-heading-one">
             Up Your <span className="highlight">Skills</span><br />

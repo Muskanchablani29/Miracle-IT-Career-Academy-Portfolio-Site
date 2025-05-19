@@ -236,7 +236,7 @@ export default function WhyChooseUsPage() {
   };
   
   return (
-    <div className="why-container">
+    <div className="why-container-homethree">
       {/* Background particles */}
       <div className="particles">
         {[...Array(20)].map((_, i) => (
@@ -340,7 +340,7 @@ export default function WhyChooseUsPage() {
               </motion.div>
             </AnimatePresence>
             
-            <div className="stats-container">
+            <div className="stats-container-homethree">
               <div className="stat-item">
                 <span className="stat-number">5000+</span>
                 <span className="stat-label">Students</span>

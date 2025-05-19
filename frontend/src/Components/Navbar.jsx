@@ -78,11 +78,7 @@ const Navbar = () => {
       ) : (
         // Logged in navbar
         <>
-          <div className="nav-left">
-            <span className="academy-title">Miracle IT Career Academy</span>
-          </div>
-          
-          <div className="nav-center">
+          <div className="nav-center logged-in-center">
             <form onSubmit={handleSearchSubmit}>
               <div className="navbar-search-container">
                 <FaSearch className="navbar-search-icon" />
@@ -97,7 +93,7 @@ const Navbar = () => {
             </form>
           </div>
           
-          <div className="nav-right">
+          <div className="nav-right-logged-in">
             <ul className="nav-list">
               <li>
                 <button onClick={handleWebClick} className="web-link">

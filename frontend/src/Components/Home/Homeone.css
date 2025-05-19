@@ -1,16 +1,17 @@
-.landing {
+.landing-homeone {
   display: flex;
   justify-content: space-between;
   align-items: start;
-  padding:  5rem;
+  padding:  6rem;
   flex-wrap: wrap;
   overflow: hidden;
+  margin-top: 30px;
   background: var(--background-color);
-  height: 80vh;
+  height: 100vh;
   position: relative;
 }
 
-.content {
+.content-homeone {
   flex: 1;
   max-width: 600px;
   align-items: start;
@@ -447,14 +448,14 @@ p {
 }
 
 @media (max-width: 1024px) {
-  .landing {
+  .landing-homeone {
     flex-direction: column;
     padding: 3rem 2rem;
     gap: 2rem;
     height: auto;
   }
   
-  .content {
+  .content-homeone {
     margin-bottom: 2rem;
     max-width: 100%;
     text-align: center;
@@ -498,7 +499,7 @@ p {
 }
 
 @media (max-width: 768px) {
-  .landing {
+  .landing-homeone {
     padding: 2rem 1.5rem;
   }
   
@@ -577,7 +578,7 @@ p {
 
 /* Additional responsive adjustments for small devices */
 @media (max-width: 375px) {
-  .landing {
+  .landing-homeone {
     padding: 1.5rem 1rem;
   }
   

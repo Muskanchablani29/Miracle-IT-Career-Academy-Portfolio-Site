@@ -1,7 +1,7 @@
 /* Search bar styling for navbar */
 .search-container {
-  width: 100%;
-  max-width: 500px;
+  /* width: 100%; */
+  max-width: 680px;
   margin: 10px auto;
   position: relative;
   padding: 0 15px;

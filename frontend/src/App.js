@@ -6,6 +6,7 @@ import Login from './Components/Profile/Login';
 import Signup from './Components/Profile/Signup';
 import Home from './Components/Home/Home';
 import About from './Components/About/About';
+import CreateAdmin from './Components/Admin/CreateAdmin';
 
 // Student Components
 import StudentDashboard from './Components/Student/StudentDashboard';
@@ -53,6 +54,7 @@ function App() {
             <Route path="explore" element={<Explore />} />
             <Route path="courses" element={<CoursesMain />} />
             <Route path="course/:id" element={<CourseDetail />} />
+            <Route path="create-admin" element={<CreateAdmin />} />
           </Route>
           
           {/* Student Routes */}

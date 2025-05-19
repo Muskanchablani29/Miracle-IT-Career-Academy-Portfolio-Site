@@ -17,7 +17,7 @@
   --white: #FFFFFF;
 }
 
-.why-container {
+.why-container-homethree {
   position: relative;
   width: 100%;
   min-height: 100vh;
@@ -30,7 +30,7 @@
   font-family: 'Poppins', sans-serif;
 }
 
-.why-container::before {
+.why-container-homethree::before {
   content: '';
   position: absolute;
   top: 0;
@@ -350,7 +350,7 @@
 }
 
 /* Stats container */
-.stats-container {
+.stats-container-homethree {
   display: flex;
   justify-content: space-around;
   width: 100%;
@@ -364,7 +364,7 @@
   backdrop-filter: blur(10px);
 }
 
-.stats-container::before {
+.stats-container-homethree::before {
   content: '';
   position: absolute;
   top: 0;
@@ -484,7 +484,7 @@
     font-size: 1.5rem;
   }
   
-  .stats-container {
+  .stats-container-homethree {
     padding: 25px 15px;
     flex-wrap: wrap;
     gap: 20px;

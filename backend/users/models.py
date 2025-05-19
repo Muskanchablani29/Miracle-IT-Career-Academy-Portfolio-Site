@@ -11,15 +11,15 @@ class CustomUser(AbstractUser):
 
 class Student(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='student_profile')
-    # Add student-specific fields here
-    # e.g. enrollment_number = models.CharField(max_length=50)
+    enrollment_id = models.CharField(max_length=50, unique=True)
+    date_of_birth = models.DateField()
+    created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='created_students')
 
 class Faculty(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='faculty_profile')
-    # Add faculty-specific fields here
-    # e.g. department = models.CharField(max_length=100)
+    department = models.CharField(max_length=100, blank=True)
+    created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='created_faculty')
 
 class Admin(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='admin_profile')
-    # Add admin-specific fields here
-    # e.g. admin_code = models.CharField(max_length=50)
+    is_super_admin = models.BooleanField(default=False)

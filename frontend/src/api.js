@@ -74,13 +74,72 @@ const addAuthInterceptor = (axiosInstance) => {
 addAuthInterceptor(userAxiosInstance);
 addAuthInterceptor(coursesAxiosInstance);
 
-// User API (login, signup, etc.) - example placeholder
+// User API (login, signup, etc.)
 export const loginUser = async (credentials) => {
   try {
     const response = await userAxiosInstance.post('login/', credentials);
     return response.data;
   } catch (error) {
     console.error('Error logging in:', error);
+    throw error;
+  }
+};
+
+// Create admin account
+export const createAdminAccount = async (adminData) => {
+  try {
+    const response = await userAxiosInstance.post('create-admin/', adminData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating admin account:', error);
+    throw error;
+  }
+};
+
+// Create faculty account (admin only)
+export const createFacultyAccount = async (facultyData) => {
+  try {
+    console.log('Creating faculty with data:', facultyData);
+    console.log('Auth token:', localStorage.getItem('access'));
+    
+    // Log request headers for debugging
+    const headers = {
+      'Authorization': `Bearer ${localStorage.getItem('access')}`,
+      'Content-Type': 'application/json'
+    };
+    console.log('Request headers:', headers);
+    
+    const response = await userAxiosInstance.post('create-faculty/', facultyData, { 
+      headers: headers 
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating faculty account:', error);
+    console.error('Error response:', error.response);
+    throw error;
+  }
+};
+
+// Create student account (faculty only)
+export const createStudentAccount = async (studentData) => {
+  try {
+    console.log('Creating student with data:', studentData);
+    console.log('Auth token:', localStorage.getItem('access'));
+    
+    // Log request headers for debugging
+    const headers = {
+      'Authorization': `Bearer ${localStorage.getItem('access')}`,
+      'Content-Type': 'application/json'
+    };
+    console.log('Request headers:', headers);
+    
+    const response = await userAxiosInstance.post('create-student/', studentData, { 
+      headers: headers 
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating student account:', error);
+    console.error('Error response:', error.response);
     throw error;
   }
 };

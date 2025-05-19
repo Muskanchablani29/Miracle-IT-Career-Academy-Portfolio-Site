@@ -15,10 +15,10 @@ export const PublicLayout = () => {
   }
   
   return (
-    <>
+    <div className="public-layout">
       <Navbar />
       <Outlet />
-    </>
+    </div>
   );
 };
 
@@ -47,7 +47,9 @@ export const AuthLayout = ({ requiredRole }) => {
       <Navbar />
       <Sidebar />
       <main className="dashboard-container">
-        <Outlet />
+        <div className="dashboard-content">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

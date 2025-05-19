@@ -5,6 +5,7 @@ import Hometwo from './Hometwo.jsx';
 import Homethree from './Homethree.jsx';
 import Homefour from './Homefour.jsx';
 import Homefive from './Homefive.jsx';
+import AdminSetup from './AdminSetup.jsx';
 
 export default function Home() {
   const [redirectPath, setRedirectPath] = useState(null);
@@ -35,6 +36,7 @@ export default function Home() {
       <Homethree />
       <Homefour />
       <Homefive />
+      <AdminSetup />
     </>
   );
 }
