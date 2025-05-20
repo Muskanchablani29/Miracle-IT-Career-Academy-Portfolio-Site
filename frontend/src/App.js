@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { UserContext, UserProvider } from './Components/UserContext';
 import { AuthLayout, PublicLayout } from './Components/Layout';
 import Login from './Components/Profile/Login';
-import Signup from './Components/Profile/Signup';
 import Home from './Components/Home/Home';
 import About from './Components/About/About';
 import CreateAdmin from './Components/Admin/CreateAdmin';
@@ -50,7 +49,6 @@ function App() {
             <Route index element={<Home />} />
             <Route path="about" element={<About />} />
             <Route path="login" element={<Login />} />
-            <Route path="signup" element={<Signup />} />
             <Route path="explore" element={<Explore />} />
             <Route path="courses" element={<CoursesMain />} />
             <Route path="course/:id" element={<CourseDetail />} />

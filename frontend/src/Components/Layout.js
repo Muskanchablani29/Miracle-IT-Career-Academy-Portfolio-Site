@@ -8,15 +8,19 @@ import './Layout.css';
 // Layout for public pages - no special styling
 export const PublicLayout = () => {
   const { user } = useContext(UserContext);
+  const location = useLocation();
   
   // If user is already logged in, redirect to their dashboard
   if (user) {
     return <Navigate to={`/${user.role}`} replace />;
   }
   
+  // Don't show navbar on login page
+  const isLoginPage = location.pathname === '/login';
+  
   return (
     <div className="public-layout">
-      <Navbar />
+      {!isLoginPage && <Navbar />}
       <Outlet />
     </div>
   );
