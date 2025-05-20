@@ -2,8 +2,8 @@ import React, { useState, useContext, useEffect } from 'react';
 import axios from '../../api';
 import { useNavigate } from 'react-router-dom';
 import { Player } from '@lottiefiles/react-lottie-player';
-import Lottie from 'lottie-react';
-import loadingAnimation from './enhancedLoadingAnimation.json';
+import portalAnimation from './portalAnimation.json';
+import successAnimation from './successAnimation.json';
 import loginAnimation from './loginAnimation.json';
 import './Login.css';
 import { UserContext } from '../UserContext';
@@ -19,6 +19,7 @@ const Login = () => {
     role: 'faculty'
   });
   const [selectedRole, setSelectedRole] = useState(null);
+  const [loginSuccess, setLoginSuccess] = useState(false);
   const navigate = useNavigate();
   const { setUser } = useContext(UserContext);
 
@@ -31,6 +32,19 @@ const Login = () => {
       return () => clearTimeout(timer);
     }
   }, [loginStep]);
+
+  // Navigate after successful login animation completes
+  useEffect(() => {
+    if (loginSuccess) {
+      const timer = setTimeout(() => {
+        const role = localStorage.getItem('role');
+        if (role === 'student') navigate('/student');
+        else if (role === 'faculty') navigate('/faculty');
+        else if (role === 'admin') navigate('/admin');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [loginSuccess, navigate]);
 
   const handleChange = e => setCredentials({ 
     ...credentials, 
@@ -69,9 +83,8 @@ const Login = () => {
         username: selectedRole === 'student' ? res.data.user.username : credentials.username 
       });
 
-      if (res.data.user.role === 'student') navigate('/student');
-      else if (res.data.user.role === 'faculty') navigate('/faculty');
-      else if (res.data.user.role === 'admin') navigate('/admin');
+      // Show success animation instead of navigating immediately
+      setLoginSuccess(true);
     } catch (err) {
       console.error('Login error:', err);
       alert('Login failed. Please check your credentials and try again.');
@@ -100,14 +113,32 @@ const Login = () => {
         username: res.data.user.username 
       });
 
-      if (res.data.user.role === 'student') navigate('/student');
-      else if (res.data.user.role === 'faculty') navigate('/faculty');
-      else if (res.data.user.role === 'admin') navigate('/admin');
+      // Show success animation instead of navigating immediately
+      setLoginSuccess(true);
     } catch (err) {
       console.error('Direct login error:', err);
       alert('Login failed. Please try again.');
     }
   };
+
+  // Success animation screen
+  if (loginSuccess) {
+    return (
+      <div className="login-step success-step">
+        <div className="success-animation-container">
+          <Player
+            autoplay
+            src={successAnimation}
+            style={{ height: '300px', width: '300px' }}
+          />
+          <div className="success-text">
+            <h2>Login Successful!</h2>
+            <p>Redirecting to your dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Loading animation screen
   if (loginStep === 'loading') {
@@ -116,13 +147,12 @@ const Login = () => {
         <div className="loading-animation-container">
           <Player
             autoplay
-            loop
-            src={loadingAnimation}
-            style={{ height: '300px', width: '300px' }}
+            src={portalAnimation}
+            style={{ height: '400px', width: '400px' }}
           />
           <div className="loading-text">
             <h2>Welcome to Miracle Academy</h2>
-            <p>Preparing your experience...</p>
+            <p>Opening secure portal...</p>
           </div>
         </div>
       </div>
