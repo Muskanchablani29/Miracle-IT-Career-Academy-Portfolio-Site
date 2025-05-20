@@ -1,13 +1,13 @@
 import React, { useState, useContext, useEffect } from 'react';
 import axios from '../../api';
 import { useNavigate } from 'react-router-dom';
+import { Player } from '@lottiefiles/react-lottie-player';
 import Lottie from 'lottie-react';
-import loadingAnimation from './loadingAnimation.json';
-import roleSelectionAnimation from './roleSelectionAnimation.json';
+import loadingAnimation from './enhancedLoadingAnimation.json';
 import loginAnimation from './loginAnimation.json';
 import './Login.css';
 import { UserContext } from '../UserContext';
-import { FaUser, FaLock, FaUserGraduate, FaChalkboardTeacher, FaUserShield } from 'react-icons/fa';
+import { FaUser, FaLock, FaUserGraduate, FaChalkboardTeacher, FaUserShield, FaArrowRight } from 'react-icons/fa';
 
 const Login = () => {
   const [loginStep, setLoginStep] = useState('loading');
@@ -113,9 +113,17 @@ const Login = () => {
   if (loginStep === 'loading') {
     return (
       <div className="login-step loading-step">
-        <div className="loading-animation">
-          <Lottie animationData={loadingAnimation} loop={true} />
-          <h2>Preparing Login...</h2>
+        <div className="loading-animation-container">
+          <Player
+            autoplay
+            loop
+            src={loadingAnimation}
+            style={{ height: '300px', width: '300px' }}
+          />
+          <div className="loading-text">
+            <h2>Welcome to Miracle Academy</h2>
+            <p>Preparing your experience...</p>
+          </div>
         </div>
       </div>
     );
@@ -128,11 +136,7 @@ const Login = () => {
         <div className="role-selection-container">
           <div className="role-selection-header">
             <h1>Choose Your Role</h1>
-            <p>Select your role to continue</p>
-          </div>
-          
-          <div className="role-animation">
-            <Lottie animationData={roleSelectionAnimation} loop={true} />
+            <p>Select how you want to access the platform</p>
           </div>
           
           <div className="role-cards">
@@ -142,6 +146,9 @@ const Login = () => {
               </div>
               <h3>Admin</h3>
               <p>System administration and management</p>
+              <div className="role-card-footer">
+                <span>Select <FaArrowRight /></span>
+              </div>
             </div>
             
             <div className="role-card faculty" onClick={() => handleRoleSelection('faculty')}>
@@ -150,6 +157,9 @@ const Login = () => {
               </div>
               <h3>Faculty</h3>
               <p>Course management and student assessment</p>
+              <div className="role-card-footer">
+                <span>Select <FaArrowRight /></span>
+              </div>
             </div>
             
             <div className="role-card student" onClick={() => handleRoleSelection('student')}>
@@ -158,6 +168,9 @@ const Login = () => {
               </div>
               <h3>Student</h3>
               <p>Access courses and track progress</p>
+              <div className="role-card-footer">
+                <span>Select <FaArrowRight /></span>
+              </div>
             </div>
           </div>
         </div>
@@ -181,7 +194,12 @@ const Login = () => {
               <h1>Miracle <span>Academy</span></h1>
             </div>
             <div className="login-animation">
-              <Lottie animationData={loginAnimation} loop={true} />
+              <Player
+                autoplay
+                loop
+                src={loginAnimation}
+                style={{ height: '100%', width: '100%' }}
+              />
             </div>
             <div className="login-tagline">
               <h2>Transform Your Future</h2>
@@ -261,7 +279,10 @@ const Login = () => {
                   </>
                 )}
                 
-                <button type="submit" className="login-submit-btn">Login</button>
+                <button type="submit" className="login-submit-btn">
+                  <span>Login</span>
+                  <FaArrowRight />
+                </button>
               </form>
               
               <div className="quick-access">
