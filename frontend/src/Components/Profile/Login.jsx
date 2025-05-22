@@ -1,13 +1,15 @@
 import React, { useState, useContext, useEffect } from 'react';
 import axios from '../../api';
 import { useNavigate } from 'react-router-dom';
-import { Player } from '@lottiefiles/react-lottie-player';
-import portalAnimation from './portalAnimation.json';
-import successAnimation from './successAnimation.json';
-import loginAnimation from './loginAnimation.json';
 import './Login.css';
+import './LoadingAnimation.css';
+import './EnhancedFormAnimation.css';
+import './ModernLoginForm.css';
 import { UserContext } from '../UserContext';
 import { FaUser, FaLock, FaUserGraduate, FaChalkboardTeacher, FaUserShield, FaArrowRight } from 'react-icons/fa';
+import LoadingAnimation from './LoadingAnimation.jsx';
+import EnhancedFormAnimation from './EnhancedFormAnimation.jsx';
+import ModernLoginForm from './ModernLoginForm.jsx';
 
 const Login = () => {
   const [loginStep, setLoginStep] = useState('loading');
@@ -23,7 +25,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { setUser } = useContext(UserContext);
 
-  // Auto-transition from loading to role selection after 5 seconds
+  // Auto-transition from loading to role selection after 3 seconds
   useEffect(() => {
     if (loginStep === 'loading') {
       const timer = setTimeout(() => {
@@ -91,46 +93,17 @@ const Login = () => {
     }
   };
 
-  const handleDirectLogin = async (role) => {
-    const loginData = role === 'admin' 
-      ? { username: 'admin', password: 'admin123' }
-      : role === 'faculty'
-        ? { username: 'faculty', password: 'faculty123' }
-        : { enrollment_id: 'STUDENT001', date_of_birth: '01012000' };
-    
-    try {
-      const res = await axios.post(
-        role === 'student' ? 'student-login/' : 'login/', 
-        loginData
-      );
-      
-      localStorage.setItem('access', res.data.access);
-      localStorage.setItem('refresh', res.data.refresh);
-      localStorage.setItem('role', res.data.user.role);
-      
-      setUser({ 
-        role: res.data.user.role, 
-        username: res.data.user.username 
-      });
-
-      // Show success animation instead of navigating immediately
-      setLoginSuccess(true);
-    } catch (err) {
-      console.error('Direct login error:', err);
-      alert('Login failed. Please try again.');
-    }
-  };
-
   // Success animation screen
   if (loginSuccess) {
     return (
       <div className="login-step success-step">
         <div className="success-animation-container">
-          <Player
-            autoplay
-            src={successAnimation}
-            style={{ height: '300px', width: '300px' }}
-          />
+          <div className="success-icon">
+            <svg viewBox="0 0 52 52" className="checkmark">
+              <circle className="checkmark__circle" cx="26" cy="26" r="25" fill="none" />
+              <path className="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+            </svg>
+          </div>
           <div className="success-text">
             <h2>Login Successful!</h2>
             <p>Redirecting to your dashboard...</p>
@@ -140,16 +113,12 @@ const Login = () => {
     );
   }
 
-  // Loading animation screen
+  // Loading animation screen with custom animation
   if (loginStep === 'loading') {
     return (
       <div className="login-step loading-step">
         <div className="loading-animation-container">
-          <Player
-            autoplay
-            src={portalAnimation}
-            style={{ height: '400px', width: '400px' }}
-          />
+          <LoadingAnimation />
           <div className="loading-text">
             <h2>Welcome to Miracle Academy</h2>
             <p>Opening secure portal...</p>
@@ -171,36 +140,54 @@ const Login = () => {
           
           <div className="role-cards">
             <div className="role-card admin" onClick={() => handleRoleSelection('admin')}>
-              <div className="role-icon">
-                <FaUserShield />
+              <div className="role-card-bg"></div>
+              <div className="role-card-face role-card-front">
+                <div className="role-icon-wrapper">
+                  <div className="role-icon">
+                    <FaUserShield />
+                  </div>
+                </div>
+                <h3>Admin</h3>
+                <p>System administration and management</p>
+                <div className="role-card-footer">
+                  <span>Select <FaArrowRight /></span>
+                </div>
               </div>
-              <h3>Admin</h3>
-              <p>System administration and management</p>
-              <div className="role-card-footer">
-                <span>Select <FaArrowRight /></span>
-              </div>
+              <div className="role-card-face role-card-back"></div>
             </div>
             
             <div className="role-card faculty" onClick={() => handleRoleSelection('faculty')}>
-              <div className="role-icon">
-                <FaChalkboardTeacher />
+              <div className="role-card-bg"></div>
+              <div className="role-card-face role-card-front">
+                <div className="role-icon-wrapper">
+                  <div className="role-icon">
+                    <FaChalkboardTeacher />
+                  </div>
+                </div>
+                <h3>Faculty</h3>
+                <p>Course management and student assessment</p>
+                <div className="role-card-footer">
+                  <span>Select <FaArrowRight /></span>
+                </div>
               </div>
-              <h3>Faculty</h3>
-              <p>Course management and student assessment</p>
-              <div className="role-card-footer">
-                <span>Select <FaArrowRight /></span>
-              </div>
+              <div className="role-card-face role-card-back"></div>
             </div>
             
             <div className="role-card student" onClick={() => handleRoleSelection('student')}>
-              <div className="role-icon">
-                <FaUserGraduate />
+              <div className="role-card-bg"></div>
+              <div className="role-card-face role-card-front">
+                <div className="role-icon-wrapper">
+                  <div className="role-icon">
+                    <FaUserGraduate />
+                  </div>
+                </div>
+                <h3>Student</h3>
+                <p>Access courses and track progress</p>
+                <div className="role-card-footer">
+                  <span>Select <FaArrowRight /></span>
+                </div>
               </div>
-              <h3>Student</h3>
-              <p>Access courses and track progress</p>
-              <div className="role-card-footer">
-                <span>Select <FaArrowRight /></span>
-              </div>
+              <div className="role-card-face role-card-back"></div>
             </div>
           </div>
         </div>
@@ -224,12 +211,7 @@ const Login = () => {
               <h1>Miracle <span>Academy</span></h1>
             </div>
             <div className="login-animation">
-              <Player
-                autoplay
-                loop
-                src={loginAnimation}
-                style={{ height: '100%', width: '100%' }}
-              />
+              <EnhancedFormAnimation selectedRole={selectedRole} />
             </div>
             <div className="login-tagline">
               <h2>Transform Your Future</h2>
@@ -238,92 +220,13 @@ const Login = () => {
           </div>
           
           <div className="login-right-panel">
-            <div className="login-form-container">
-              <h2>Welcome Back</h2>
-              <p>Please login as {selectedRole}</p>
-              
-              <div className="selected-role">
-                <div className={`role-badge ${selectedRole}`}>
-                  {selectedRole === 'admin' && <FaUserShield />}
-                  {selectedRole === 'faculty' && <FaChalkboardTeacher />}
-                  {selectedRole === 'student' && <FaUserGraduate />}
-                  <span>{selectedRole}</span>
-                </div>
-                <button className="change-role-btn" onClick={() => setLoginStep('roleSelection')}>
-                  Change Role
-                </button>
-              </div>
-              
-              <form onSubmit={handleSubmit}>
-                {selectedRole !== 'student' ? (
-                  <>
-                    <div className="form-input">
-                      <FaUser className="input-icon" />
-                      <input 
-                        type="text" 
-                        name="username" 
-                        placeholder="Username" 
-                        value={credentials.username}
-                        onChange={handleChange} 
-                        required 
-                      />
-                    </div>
-                    
-                    <div className="form-input">
-                      <FaLock className="input-icon" />
-                      <input 
-                        type="password" 
-                        name="password" 
-                        placeholder="Password" 
-                        value={credentials.password}
-                        onChange={handleChange} 
-                        required 
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="form-input">
-                      <FaUser className="input-icon" />
-                      <input 
-                        type="text" 
-                        name="enrollment_id" 
-                        placeholder="Enrollment ID" 
-                        value={credentials.enrollment_id}
-                        onChange={handleChange} 
-                        required 
-                      />
-                    </div>
-                    
-                    <div className="form-input">
-                      <FaLock className="input-icon" />
-                      <input 
-                        type="password" 
-                        name="date_of_birth" 
-                        placeholder="Password (DOB: DDMMYYYY)" 
-                        value={credentials.date_of_birth}
-                        onChange={handleChange} 
-                        required 
-                      />
-                    </div>
-                  </>
-                )}
-                
-                <button type="submit" className="login-submit-btn">
-                  <span>Login</span>
-                  <FaArrowRight />
-                </button>
-              </form>
-              
-              <div className="quick-access">
-                <p>Quick Access:</p>
-                <div className="quick-access-buttons">
-                  <button onClick={() => handleDirectLogin(selectedRole)} className={`quick-btn ${selectedRole}`}>
-                    Login as {selectedRole}
-                  </button>
-                </div>
-              </div>
-            </div>
+            <ModernLoginForm 
+              selectedRole={selectedRole}
+              credentials={credentials}
+              handleChange={handleChange}
+              handleSubmit={handleSubmit}
+              setLoginStep={setLoginStep}
+            />
           </div>
         </div>
       </div>
