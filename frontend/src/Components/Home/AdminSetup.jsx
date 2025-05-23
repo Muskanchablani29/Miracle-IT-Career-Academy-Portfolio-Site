@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from '../../api';
+import { userAxiosInstance } from '../../api';
 import './AdminSetup.css';
 
 const AdminSetup = () => {
@@ -12,7 +12,7 @@ const AdminSetup = () => {
       try {
         // Try to create an admin to see if one already exists
         // If it returns 403, an admin already exists
-        await axios.post('create-admin/', {
+        await userAxiosInstance.post('create-admin/', {
           username: 'test',
           email: 'test@test.com',
           password: 'test12345'

@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import axios from '../../api';
+import { userAxiosInstance } from '../../api';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
 import './LoadingAnimation.css';
@@ -40,9 +40,16 @@ const Login = () => {
     if (loginSuccess) {
       const timer = setTimeout(() => {
         const role = localStorage.getItem('role');
-        if (role === 'student') navigate('/student');
-        else if (role === 'faculty') navigate('/faculty');
-        else if (role === 'admin') navigate('/admin');
+        console.log('Navigating to role dashboard:', role);
+        if (role === 'student') {
+          navigate('/student');
+        } else if (role === 'faculty') {
+          navigate('/faculty');
+        } else if (role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/');
+        }
       }, 3000);
       return () => clearTimeout(timer);
     }
@@ -60,54 +67,69 @@ const Login = () => {
   };
 
   const handleSubmit = async e => {
-    e.preventDefault();
+    if (e) e.preventDefault();
+    console.log('Submitting login with selectedRole:', selectedRole);
+    console.log('Credentials:', credentials);
     try {
       let res;
       
       if (selectedRole === 'student') {
-        res = await axios.post('student-login/', {
+        res = await userAxiosInstance.post('student-login/', {
           enrollment_id: credentials.enrollment_id,
           date_of_birth: credentials.date_of_birth
         });
       } else {
-        res = await axios.post('login/', {
+        // Use a unique timestamp to prevent caching issues
+        const timestamp = new Date().getTime();
+        res = await userAxiosInstance.post(`login/?_=${timestamp}`, {
           username: credentials.username,
           password: credentials.password
         });
       }
       
+      console.log('Login successful, response:', res.data);
+      
+      // Store auth data in localStorage
       localStorage.setItem('access', res.data.access);
       localStorage.setItem('refresh', res.data.refresh);
-      localStorage.setItem('role', res.data.user.role);
       
+      // Make sure we have a valid role
+      const userRole = res.data.role || (res.data.user && res.data.user.role);
+      if (!userRole) {
+        console.error('No role found in response data');
+        throw new Error('Invalid response: No role information');
+      }
+      
+      localStorage.setItem('role', userRole);
+      
+      // Set user in context
       setUser({ 
-        role: res.data.user.role, 
+        role: userRole, 
         username: selectedRole === 'student' ? res.data.user.username : credentials.username 
       });
 
       // Show success animation instead of navigating immediately
       setLoginSuccess(true);
+      
+      // Force a reload after a short delay to ensure context is updated
+      setTimeout(() => {
+        console.log('Forcing navigation to', `/${userRole}`);
+        window.location.href = `/${userRole}`;
+      }, 3000);
     } catch (err) {
       console.error('Login error:', err);
       alert('Login failed. Please check your credentials and try again.');
     }
   };
 
-  // Success animation screen
+  // Show success animation screen
   if (loginSuccess) {
     return (
       <div className="login-step success-step">
         <div className="success-animation-container">
-          <div className="success-icon">
-            <svg viewBox="0 0 52 52" className="checkmark">
-              <circle className="checkmark__circle" cx="26" cy="26" r="25" fill="none" />
-              <path className="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
-            </svg>
-          </div>
-          <div className="success-text">
-            <h2>Login Successful!</h2>
-            <p>Redirecting to your dashboard...</p>
-          </div>
+          <div className="success-icon">✓</div>
+          <h2>Login Successful!</h2>
+          <p>Redirecting to your dashboard...</p>
         </div>
       </div>
     );

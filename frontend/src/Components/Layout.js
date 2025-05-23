@@ -1,5 +1,5 @@
-import React, { useContext } from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import React, { useContext, useEffect } from 'react';
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { UserContext } from './UserContext';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
@@ -12,6 +12,7 @@ export const PublicLayout = () => {
   
   // If user is already logged in, redirect to their dashboard
   if (user) {
+    console.log('PublicLayout redirecting to /' + user.role);
     return <Navigate to={`/${user.role}`} replace />;
   }
   
@@ -29,23 +30,51 @@ export const PublicLayout = () => {
 // Layout for authenticated pages with role-based access control
 export const AuthLayout = ({ requiredRole }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, loading } = useContext(UserContext);
-  
+
+  useEffect(() => {
+    console.log('AuthLayout useEffect - user:', user, 'loading:', loading);
+    if (!loading && !user) {
+      console.log('AuthLayout useEffect - redirecting to login');
+      navigate('/login', { replace: true, state: { from: location } });
+    }
+  }, [user, loading, navigate, location]);
+
+  // Show loading state while checking authentication, but add a timeout
+  // to prevent infinite loading
+  useEffect(() => {
+    let timeoutId;
+    if (loading) {
+      // If still loading after 5 seconds, force refresh the page
+      timeoutId = setTimeout(() => {
+        console.log('Loading timeout reached, refreshing authentication state');
+        window.location.reload();
+      }, 5000);
+    }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [loading]);
+
   // Show loading state while checking authentication
   if (loading) {
+    console.log('AuthLayout loading...');
     return <div className="loading">Loading...</div>;
   }
   
-  // If not authenticated, redirect to login
+  // If not authenticated, redirect handled in useEffect above
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return null; // Prevent rendering while redirecting
   }
   
   // If user doesn't have the required role, redirect to their dashboard
   if (requiredRole && user.role !== requiredRole) {
+    console.log(`AuthLayout redirecting to /${user.role} due to role mismatch`);
     return <Navigate to={`/${user.role}`} replace />;
   }
   
+  console.log('AuthLayout rendering children for user:', user);
   return (
     <div className="auth-layout">
       <Navbar />

@@ -4,12 +4,22 @@ import axios from 'axios';
 const USER_API_URL = 'http://localhost:8000/api/';
 const userAxiosInstance = axios.create({
   baseURL: USER_API_URL,
+  headers: {
+    'Cache-Control': 'no-cache',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+  },
 });
 
 // Axios instance for courses and workshops endpoints
 const COURSES_API_URL = 'http://localhost:8000/apii/';
 const coursesAxiosInstance = axios.create({
   baseURL: COURSES_API_URL,
+  headers: {
+    'Cache-Control': 'no-cache',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+  },
 });
 
 // Add a request interceptor to include Authorization header if access token is available
@@ -28,47 +38,47 @@ const addAuthInterceptor = (axiosInstance) => {
   );
 
   // Add a response interceptor to handle token refresh
-  axiosInstance.interceptors.response.use(
-    (response) => {
-      return response;
-    },
-    async (error) => {
-      const originalRequest = error.config;
-      
-      // If the error is 401 and we haven't tried to refresh the token yet
-      if (error.response.status === 401 && !originalRequest._retry) {
-        originalRequest._retry = true;
-        
-        try {
-          const refreshToken = localStorage.getItem('refresh');
-          if (!refreshToken) {
-            return Promise.reject(error);
-          }
-          
-          // Try to get a new token
-          const response = await axios.post(`${USER_API_URL}token/refresh/`, {
-            refresh: refreshToken
-          });
-          
-          if (response.status === 200) {
-            localStorage.setItem('access', response.data.access);
-            
-            // Update the failed request with the new token
-            originalRequest.headers['Authorization'] = `Bearer ${response.data.access}`;
-            return axiosInstance(originalRequest);
-          }
-        } catch (refreshError) {
-          console.error('Token refresh failed:', refreshError);
-          // Clear tokens if refresh fails
-          localStorage.removeItem('access');
-          localStorage.removeItem('refresh');
-          return Promise.reject(refreshError);
+ axiosInstance.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        const refreshToken = localStorage.getItem('refresh');
+        if (!refreshToken) {
+          return Promise.reject(error);
         }
+
+        // Try to get a new token
+        const response = await axios.post(`${USER_API_URL}token/refresh/`, {
+          refresh: refreshToken
+        });
+
+        if (response.status === 200) {
+          localStorage.setItem('access', response.data.access);
+
+          // Update the failed request with the new token
+          originalRequest.headers['Authorization'] = `Bearer ${response.data.access}`;
+          return axiosInstance(originalRequest);
+        }
+      } catch (refreshError) {
+        console.error('Token refresh failed:', refreshError);
+        // Clear tokens if refresh fails
+        localStorage.removeItem('access');
+        localStorage.removeItem('refresh');
+        return Promise.reject(refreshError);
       }
-      
-      return Promise.reject(error);
     }
-  );
+
+    return Promise.reject(error);
+  }
+);
+
 };
 
 addAuthInterceptor(userAxiosInstance);
@@ -211,4 +221,3 @@ export const fetchQuizzes = async () => {
 
 // Export axios instances as needed
 export { userAxiosInstance, coursesAxiosInstance };
-export default userAxiosInstance;

@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
-import axios from '../api';
+import { userAxiosInstance } from '../api';
 
 export const UserContext = createContext(null);
 
@@ -12,7 +12,7 @@ export const UserProvider = ({ children }) => {
       if (access) {
         try {
           // Optionally fetch profile to verify token and get user info
-          const profile = await axios.get('profile/');
+          const profile = await userAxiosInstance.get('profile/');
           const role = profile.data.role;
           const username = profile.data.username || null;
           setUser({ role, username });

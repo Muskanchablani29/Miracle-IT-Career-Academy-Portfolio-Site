@@ -58,7 +58,7 @@ const ModernLoginForm = ({
         </button>
       </div>
       
-      <form onSubmit={handleSubmit}>
+      <form>
         {selectedRole !== 'student' ? (
           <>
             <div className="modern-form-input">
@@ -117,7 +117,14 @@ const ModernLoginForm = ({
           </>
         )}
         
-        <button type="submit" className="modern-login-submit-btn">
+        <button 
+          type="button" 
+          className="modern-login-submit-btn" 
+          onClick={(e) => {
+            e.preventDefault();
+            handleSubmit(e);
+          }}
+        >
           Login <FaArrowRight />
         </button>
       </form>
