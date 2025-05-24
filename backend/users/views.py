@@ -1,9 +1,10 @@
-from rest_framework import generics, permissions, status
-from .models import CustomUser, Student, Faculty, Admin
+from rest_framework import generics, permissions, status, viewsets
+from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate
 from .serializers import (
     RegisterSerializer, UserSerializer, CreateAdminSerializer, 
     CreateFacultySerializer, CreateStudentSerializer, StudentSerializer,
-    FacultySerializer, AdminSerializer, StudentLoginSerializer
+    FacultySerializer, AdminSerializer, StudentLoginSerializer,
+    WorkshopSerializer, CertificateSerializer
 )
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -39,6 +40,10 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             response = super().post(request, *args, **kwargs)
             if response.status_code == 200:
                 logger.info(f"Login successful for username: {username}")
+                # Add role information to the response data
+                user = authenticate(username=username, password=request.data.get('password', ''))
+                if user is not None:
+                    response.data['role'] = user.role
             else:
                 logger.warning(f"Login failed for username: {username}, response: {response.data}")
             return response
@@ -270,3 +275,12 @@ class ListStudentView(generics.ListAPIView):
         elif user.role == 'faculty':
             return Student.objects.filter(created_by=user)
         return Student.objects.none()
+
+# New ViewSets for Workshop and Certificate
+class WorkshopViewSet(viewsets.ModelViewSet):
+    queryset = Workshop.objects.all()
+    serializer_class = WorkshopSerializer
+
+class CertificateViewSet(viewsets.ModelViewSet):
+    queryset = Certificate.objects.all()
+    serializer_class = CertificateSerializer

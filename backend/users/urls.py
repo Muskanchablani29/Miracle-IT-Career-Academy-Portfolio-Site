@@ -2,7 +2,8 @@ from django.urls import path, include
 from .views import (
     RegisterView, ProfileView, CustomTokenObtainPairView,
     CreateAdminView, CreateFacultyView, CreateStudentView,
-    ListFacultyView, ListStudentView, StudentLoginView
+    ListFacultyView, ListStudentView, StudentLoginView,
+    WorkshopViewSet, CertificateViewSet
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.http import HttpResponse
@@ -12,6 +13,8 @@ def api_root(request):
     return HttpResponse("Users API root. Available endpoints: register/, login/, token/refresh/, profile/")
 
 router = DefaultRouter()
+router.register(r'workshops', WorkshopViewSet)
+router.register(r'certificates', CertificateViewSet)
 
 urlpatterns = [
     path('', api_root, name='api_root'),

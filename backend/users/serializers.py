@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser, Student, Faculty, Admin
+from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate
 from django.contrib.auth.password_validation import validate_password
 from datetime import datetime
 
@@ -124,3 +124,13 @@ class StudentLoginSerializer(serializers.Serializer):
         # This field now accepts a string (password) instead of a date
         # We'll handle the conversion in the view
         return value
+
+class WorkshopSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Workshop
+        fields = ['id', 'title', 'description', 'image', 'date', 'location', 'available_seats']
+
+class CertificateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Certificate
+        fields = ['id', 'title', 'description', 'image', 'duration', 'level']

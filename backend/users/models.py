@@ -23,3 +23,24 @@ class Faculty(models.Model):
 class Admin(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='admin_profile')
     is_super_admin = models.BooleanField(default=False)
+
+class Workshop(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    image = models.URLField(max_length=500)
+    date = models.CharField(max_length=100)
+    location = models.CharField(max_length=200)
+    available_seats = models.IntegerField(default=0)
+    
+    def __str__(self):
+        return self.title
+
+class Certificate(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    image = models.URLField()
+    duration = models.CharField(max_length=50)
+    level = models.CharField(max_length=50)
+    
+    def __str__(self):
+        return self.title

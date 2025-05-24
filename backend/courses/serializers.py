@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Course, Video, Certificate, Workshop, Quiz
+from .models import Course, Video, Quiz
 
 class VideoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -12,16 +12,6 @@ class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = ['id', 'title', 'description', 'image', 'duration', 'level', 'created_at', 'videos']
-
-class CertificateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Certificate
-        fields = ['id', 'title', 'description', 'image', 'duration', 'level']
-
-class WorkshopSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Workshop
-        fields = ['id', 'title', 'description', 'image', 'date', 'location', 'available_seats']
 
 class QuizSerializer(serializers.ModelSerializer):
     class Meta:
