@@ -94,28 +94,59 @@ class CreateFacultySerializer(serializers.Serializer):
 class CreateStudentSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
     email = serializers.EmailField(required=True)
-    enrollment_id = serializers.CharField(required=True)
+    enrollment_id = serializers.CharField(required=False)
     date_of_birth = serializers.DateField(required=True)
 
     def create(self, validated_data):
         # Use date of birth as password in ddmmyyyy format
         dob = validated_data['date_of_birth']
         password = dob.strftime('%d%m%Y')
-        
+
+        # Generate enrollment ID if not provided
+        if 'enrollment_id' not in validated_data or not validated_data['enrollment_id']:
+            # Get the current year
+            current_year = datetime.now().year
+            prefix = f"ENRL{str(current_year)[-2:]}"
+
+            # Fetch all existing enrollment IDs with the current prefix
+            existing_ids = Student.objects.filter(enrollment_id__startswith=prefix).values_list('enrollment_id', flat=True)
+            print(f"DEBUG: existing_ids = {list(existing_ids)}")  # Debug print
+
+            if not existing_ids:
+                # No existing enrollment IDs, start from 001
+                next_id = 1
+            else:
+                # Extract numeric suffixes
+                existing_numbers = set()
+                for eid in existing_ids:
+                    try:
+                        num = int(eid.replace(prefix, ''))
+                        existing_numbers.add(num)
+                    except ValueError:
+                        continue
+                print(f"DEBUG: existing_numbers = {existing_numbers}")  # Debug print
+
+                # Find the lowest missing number starting from 1
+                next_id = 1
+                while next_id in existing_numbers:
+                    next_id += 1
+
+            validated_data['enrollment_id'] = f"{prefix}{next_id:03d}"
+            print(f"DEBUG: assigned enrollment_id = {validated_data['enrollment_id']}")  # Debug print
+
         user = CustomUser.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
             password=password,
             role='student',
         )
-        Student.objects.create(
+        student = Student.objects.create(
             user=user,
             enrollment_id=validated_data['enrollment_id'],
             date_of_birth=validated_data['date_of_birth'],
             created_by=self.context['request'].user
         )
-        return user
-
+        return student
 class StudentLoginSerializer(serializers.Serializer):
     enrollment_id = serializers.CharField(required=True)
     date_of_birth = serializers.CharField(required=True)

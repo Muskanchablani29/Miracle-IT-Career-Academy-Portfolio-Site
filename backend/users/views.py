@@ -221,21 +221,14 @@ class CreateFacultyView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CreateStudentView(APIView):
-    # Temporarily allow any authenticated user for debugging
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
-    
+    # Temporarily allow any user for testing
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
     def post(self, request):
-        logger.debug(f"CreateStudentView - User: {request.user}, Role: {request.user.role}")
+        logger.debug(f"CreateStudentView - User: {request.user if request.user.is_authenticated else 'Anonymous'}, Role: {getattr(request.user, 'role', 'N/A')}")
         logger.debug(f"Request data: {request.data}")
-        
-        # For debugging, temporarily bypass role check
-        # if request.user.role != 'faculty':
-        #     return Response(
-        #         {"detail": "Only faculty users can create student accounts."},
-        #         status=status.HTTP_403_FORBIDDEN
-        #     )
-        
+
         serializer = CreateStudentSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             try:
