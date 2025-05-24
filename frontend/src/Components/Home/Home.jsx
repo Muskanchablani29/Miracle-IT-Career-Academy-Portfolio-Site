@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import Homeone from './Homeone.jsx';
-import Hometwo from './Hometwo.jsx';
+// import Hometwo from './Hometwo.jsx';
 import Homethree from './Homethree.jsx';
 import Homefour from './Homefour.jsx';
 import Homefive from './Homefive.jsx';
 import AdminSetup from './AdminSetup.jsx';
+import Homesix from './Homesix.jsx';
 
 export default function Home() {
   const [redirectPath, setRedirectPath] = useState(null);
@@ -37,6 +38,7 @@ export default function Home() {
       <Homefour />
       <Homefive />
       <AdminSetup />
+      <Homesix/>
     </>
   );
 }

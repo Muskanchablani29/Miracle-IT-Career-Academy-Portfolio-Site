@@ -25,11 +25,16 @@ const Login = () => {
   const navigate = useNavigate();
   const { setUser } = useContext(UserContext);
 
-  // Skip loading animation and go directly to role selection
+  // Show loading animation for 5 seconds before role selection
   useEffect(() => {
     if (loginStep === 'loading') {
-      // Immediately go to role selection without delay
-      setLoginStep('roleSelection');
+      // Set a 5-second timer before showing role selection
+      const timer = setTimeout(() => {
+        setLoginStep('roleSelection');
+      }, 5000);
+      
+      // Clean up timer if component unmounts
+      return () => clearTimeout(timer);
     }
   }, [loginStep]);
 
@@ -115,6 +120,14 @@ const Login = () => {
   // The user will be redirected immediately after successful login
 
   // Role selection screen
+  if (loginStep === 'loading') {
+    return (
+      <div className="login-step loading-step">
+        <LoadingAnimation />
+      </div>
+    );
+  }
+  
   if (loginStep === 'roleSelection') {
     return (
       <div className="login-step role-selection-step">
