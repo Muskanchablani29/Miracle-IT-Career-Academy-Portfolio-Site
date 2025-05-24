@@ -1,20 +1,11 @@
 import axios from 'axios';
 
-// Axios instance for user-related endpoints (login etc.)
-const USER_API_URL = 'http://localhost:8000/api/';
-const userAxiosInstance = axios.create({
-  baseURL: USER_API_URL,
-  headers: {
-    'Cache-Control': 'no-cache',
-    'Pragma': 'no-cache',
-    'Expires': '0',
-  },
-});
+// Base API URL
+const API_URL = 'http://localhost:8000/api/';
 
-// Axios instance for courses and workshops endpoints
-const COURSES_API_URL = 'http://localhost:8000/apii/';
-const coursesAxiosInstance = axios.create({
-  baseURL: COURSES_API_URL,
+// Single axios instance for all API calls
+const userAxiosInstance = axios.create({
+  baseURL: API_URL,
   headers: {
     'Cache-Control': 'no-cache',
     'Pragma': 'no-cache',
@@ -23,22 +14,21 @@ const coursesAxiosInstance = axios.create({
 });
 
 // Add a request interceptor to include Authorization header if access token is available
-const addAuthInterceptor = (axiosInstance) => {
-  axiosInstance.interceptors.request.use(
-    config => {
-      const token = localStorage.getItem('access');
-      if (token) {
-        config.headers['Authorization'] = `Bearer ${token}`;
-      }
-      return config;
-    },
-    error => {
-      return Promise.reject(error);
+userAxiosInstance.interceptors.request.use(
+  config => {
+    const token = localStorage.getItem('access');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
-  );
+    return config;
+  },
+  error => {
+    return Promise.reject(error);
+  }
+);
 
-  // Add a response interceptor to handle token refresh
- axiosInstance.interceptors.response.use(
+// Add a response interceptor to handle token refresh
+userAxiosInstance.interceptors.response.use(
   (response) => {
     return response;
   },
@@ -46,29 +36,31 @@ const addAuthInterceptor = (axiosInstance) => {
     const originalRequest = error.config;
 
     if (error.response && error.response.status === 401 && !originalRequest._retry) {
+      console.log('401 error detected, attempting token refresh');
       originalRequest._retry = true;
 
       try {
         const refreshToken = localStorage.getItem('refresh');
         if (!refreshToken) {
+          console.log('No refresh token available, rejecting');
           return Promise.reject(error);
         }
 
         // Try to get a new token
-        const response = await axios.post(`${USER_API_URL}token/refresh/`, {
+        const response = await axios.post(`${API_URL}token/refresh/`, {
           refresh: refreshToken
         });
 
         if (response.status === 200) {
+          console.log('Token refresh successful');
           localStorage.setItem('access', response.data.access);
 
           // Update the failed request with the new token
           originalRequest.headers['Authorization'] = `Bearer ${response.data.access}`;
-          return axiosInstance(originalRequest);
+          return userAxiosInstance(originalRequest);
         }
       } catch (refreshError) {
         console.error('Token refresh failed:', refreshError);
-        // Clear tokens if refresh fails
         localStorage.removeItem('access');
         localStorage.removeItem('refresh');
         return Promise.reject(refreshError);
@@ -78,11 +70,6 @@ const addAuthInterceptor = (axiosInstance) => {
     return Promise.reject(error);
   }
 );
-
-};
-
-addAuthInterceptor(userAxiosInstance);
-addAuthInterceptor(coursesAxiosInstance);
 
 // User API (login, signup, etc.)
 export const loginUser = async (credentials) => {
@@ -109,23 +96,10 @@ export const createAdminAccount = async (adminData) => {
 // Create faculty account (admin only)
 export const createFacultyAccount = async (facultyData) => {
   try {
-    console.log('Creating faculty with data:', facultyData);
-    console.log('Auth token:', localStorage.getItem('access'));
-    
-    // Log request headers for debugging
-    const headers = {
-      'Authorization': `Bearer ${localStorage.getItem('access')}`,
-      'Content-Type': 'application/json'
-    };
-    console.log('Request headers:', headers);
-    
-    const response = await userAxiosInstance.post('create-faculty/', facultyData, { 
-      headers: headers 
-    });
+    const response = await userAxiosInstance.post('create-faculty/', facultyData);
     return response.data;
   } catch (error) {
     console.error('Error creating faculty account:', error);
-    console.error('Error response:', error.response);
     throw error;
   }
 };
@@ -133,23 +107,10 @@ export const createFacultyAccount = async (facultyData) => {
 // Create student account (faculty only)
 export const createStudentAccount = async (studentData) => {
   try {
-    console.log('Creating student with data:', studentData);
-    console.log('Auth token:', localStorage.getItem('access'));
-    
-    // Log request headers for debugging
-    const headers = {
-      'Authorization': `Bearer ${localStorage.getItem('access')}`,
-      'Content-Type': 'application/json'
-    };
-    console.log('Request headers:', headers);
-    
-    const response = await userAxiosInstance.post('create-student/', studentData, { 
-      headers: headers 
-    });
+    const response = await userAxiosInstance.post('create-student/', studentData);
     return response.data;
   } catch (error) {
     console.error('Error creating student account:', error);
-    console.error('Error response:', error.response);
     throw error;
   }
 };
@@ -157,7 +118,7 @@ export const createStudentAccount = async (studentData) => {
 // Courses API
 export const fetchCourses = async () => {
   try {
-    const response = await coursesAxiosInstance.get('courses/');
+    const response = await userAxiosInstance.get('courses/courses/');
     return response.data;
   } catch (error) {
     console.error('Error fetching courses:', error);
@@ -167,7 +128,7 @@ export const fetchCourses = async () => {
 
 export const fetchCourseById = async (id) => {
   try {
-    const response = await coursesAxiosInstance.get(`courses/${id}/`);
+    const response = await userAxiosInstance.get(`courses/courses/${id}/`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching course with id ${id}:`, error);
@@ -178,7 +139,7 @@ export const fetchCourseById = async (id) => {
 // Videos API
 export const fetchVideosByCourseId = async (courseId) => {
   try {
-    const response = await coursesAxiosInstance.get(`videos/?course_id=${courseId}`);
+    const response = await userAxiosInstance.get(`courses/videos/?course_id=${courseId}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching videos for course ${courseId}:`, error);
@@ -189,7 +150,7 @@ export const fetchVideosByCourseId = async (courseId) => {
 // Certificates API
 export const fetchCertificates = async () => {
   try {
-    const response = await coursesAxiosInstance.get('certificates/');
+    const response = await userAxiosInstance.get('certificates/');
     return response.data;
   } catch (error) {
     console.error('Error fetching certificates:', error);
@@ -200,7 +161,7 @@ export const fetchCertificates = async () => {
 // Workshops API
 export const fetchWorkshops = async () => {
   try {
-    const response = await coursesAxiosInstance.get('workshops/');
+    const response = await userAxiosInstance.get('workshops/');
     return response.data;
   } catch (error) {
     console.error('Error fetching workshops:', error);
@@ -211,7 +172,7 @@ export const fetchWorkshops = async () => {
 // Quizzes API
 export const fetchQuizzes = async () => {
   try {
-    const response = await coursesAxiosInstance.get('quizzes/');
+    const response = await userAxiosInstance.get('courses/quizzes/');
     return response.data;
   } catch (error) {
     console.error('Error fetching quizzes:', error);
@@ -219,5 +180,4 @@ export const fetchQuizzes = async () => {
   }
 };
 
-// Export axios instances as needed
-export { userAxiosInstance, coursesAxiosInstance };
+export { userAxiosInstance };

@@ -5,28 +5,12 @@ export const UserContext = createContext(null);
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Initialize loading as false to remove loading animation
   const effectRan = useRef(false);
 
   useEffect(() => {
     if (effectRan.current) return; // Prevent double invocation in Strict Mode
     let isMounted = true;
-    
-    // Add a timeout to prevent infinite loading
-    const timeoutId = setTimeout(() => {
-      if (isMounted && loading) {
-        console.log('UserContext: Loading timeout reached, forcing loading to false');
-        setLoading(false);
-        
-        // Try to restore user from token if possible
-        const access = localStorage.getItem('access');
-        const role = localStorage.getItem('role');
-        if (access && role) {
-          console.log('UserContext: Setting user from localStorage after timeout');
-          setUser({ role, username: 'User' });
-        }
-      }
-    }, 5000);
     
     const restoreUser = async () => {
       const access = localStorage.getItem('access');
@@ -35,8 +19,17 @@ export const UserProvider = ({ children }) => {
       
       if (access) {
         try {
-          // Optionally fetch profile to verify token and get user info
-          const profile = await userAxiosInstance.get('profile/');
+          // Set user immediately from localStorage to avoid loading state
+          if (role) {
+            const username = localStorage.getItem('username') || 'User';
+            setUser({ role, username });
+            console.log('User set from localStorage immediately:', { role, username });
+          }
+          
+          // Fetch profile in background to verify token and update user info
+          const profilePromise = userAxiosInstance.get('profile/', { timeout: 3000 });
+          const profile = await profilePromise;
+          
           console.log('Profile fetched:', profile.data);
           const username = profile.data.username || null;
           const fetchedRole = profile.data.role;
@@ -48,47 +41,29 @@ export const UserProvider = ({ children }) => {
           
           if (isMounted) {
             setUser({ role: fetchedRole || role, username });
+            console.log('User updated in context:', { role: fetchedRole || role, username });
           }
         } catch (error) {
           console.error('Error restoring user session:', error);
-          // Only clear tokens if it's an authentication error (401)
-          if (error.response && error.response.status === 401) {
-            console.log('Authentication error, logging out');
-            if (isMounted) setUser(null);
+          // Handle both authentication errors and timeouts
+          if (error.response?.status === 401 || error.code === 'ECONNABORTED') {
+            console.log('Authentication error or timeout, logging out');
+            if (isMounted) {
+              setUser(null);
+              console.log('User cleared in context due to auth error or timeout');
+            }
             localStorage.removeItem('access');
             localStorage.removeItem('refresh');
             localStorage.removeItem('role');
           } else {
-            // For other errors (like network issues), try to keep the user logged in
-            // Use token data to create a minimal user object
-            try {
-              // Parse the JWT token to get basic user info
-              const tokenParts = access.split('.');
-              if (tokenParts.length === 3) {
-                const tokenPayload = tokenParts[1];
-                const base64 = tokenPayload.replace(/-/g, '+').replace(/_/g, '/');
-                const tokenData = JSON.parse(atob(base64));
-                
-                // Extract role from token if available, or use a default
-                const role = tokenData.role || 'student';
-                const username = tokenData.username || 'User';
-                console.log('Restored user from token:', { role, username });
-                if (isMounted) setUser({ role, username });
-              }
-            } catch (tokenError) {
-              console.error('Failed to parse token:', tokenError);
-              // Don't clear tokens on token parsing error
-              // This allows the token refresh mechanism to try again later
-            }
+            // For other errors, keep the user logged in with minimal data from localStorage
+            // We already set this at the beginning, so no need to set again
           }
-        } finally {
-          // Always set loading to false when done
-          if (isMounted) setLoading(false);
         }
       } else {
         if (isMounted) {
           setUser(null);
-          setLoading(false);
+          console.log('No access token found, user set to null');
         }
       }
     };
@@ -98,9 +73,8 @@ export const UserProvider = ({ children }) => {
     return () => {
       isMounted = false;
       effectRan.current = true;
-      clearTimeout(timeoutId);
     };
-  }, [loading]);
+  }, []);
 
   return (
     <UserContext.Provider value={{ user, setUser, loading }}>

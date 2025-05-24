@@ -49,9 +49,7 @@ function App() {
             <Route index element={<Home />} />
             <Route path="about" element={<About />} />
             <Route path="login" element={<Login />} />
-            <Route path="explore" element={<Explore />} />
-            <Route path="courses" element={<CoursesMain />} />
-            <Route path="course/:id" element={<CourseDetail />} />
+            <Route path="explore/*" element={<Explore />} />
             <Route path="create-admin" element={<CreateAdmin />} />
           </Route>
           

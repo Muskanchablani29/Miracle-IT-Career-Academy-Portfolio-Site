@@ -18,13 +18,40 @@ const Explore = () => {
       </div>
       <div className="explore-content">
         <Routes>
-          <Route path="/" element={<CoursesList />} />
-          <Route path="course/:courseId" element={<CourseDetail />} />
+          <Route index element={<CoursesList />} />
           <Route path="certificates" element={<Certificates />} />
           <Route path="workshops" element={<Workshops />} />
           <Route path="quizzes" element={<Quizzes />} />
+          <Route path="course/:courseId" element={<CourseDetail />} />
           
-          {/* All courses routes handled by CoursesMain component */}
+          {/* Course category routes */}
+          <Route path="courses/mern" element={<CategoryCourses />} />
+          <Route path="courses/full-stack-web-development" element={<CategoryCourses />} />
+          <Route path="courses/c-cpp-data-structure" element={<CategoryCourses />} />
+          <Route path="courses/java" element={<CategoryCourses />} />
+          <Route path="courses/python" element={<CategoryCourses />} />
+          <Route path="courses/php" element={<CategoryCourses />} />
+          
+          {/* AI and ML Track routes */}
+          <Route path="courses/artificial-intelligence" element={<CategoryCourses />} />
+          <Route path="courses/machine-learning" element={<CategoryCourses />} />
+          <Route path="courses/big-data" element={<CategoryCourses />} />
+          <Route path="courses/data-science" element={<CategoryCourses />} />
+          
+          {/* Cloud Security routes */}
+          <Route path="courses/it-security" element={<CategoryCourses />} />
+          <Route path="courses/cloud-computing" element={<CategoryCourses />} />
+          <Route path="courses/devops" element={<CategoryCourses />} />
+          <Route path="courses/aws-azure" element={<CategoryCourses />} />
+          
+          {/* JOB Linked Program routes */}
+          <Route path="courses/pgdse" element={<CategoryCourses />} />
+          <Route path="courses/pgdie" element={<CategoryCourses />} />
+          <Route path="courses/pgdfe" element={<CategoryCourses />} />
+          <Route path="courses/pgdda" element={<CategoryCourses />} />
+          <Route path="courses/aiml-advance-diploma" element={<CategoryCourses />} />
+          
+          {/* Fallback for other course routes */}
           <Route path="courses/*" element={<CoursesMain />} />
         </Routes>
       </div>

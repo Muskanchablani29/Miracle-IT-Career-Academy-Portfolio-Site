@@ -25,33 +25,28 @@ const Login = () => {
   const navigate = useNavigate();
   const { setUser } = useContext(UserContext);
 
-  // Auto-transition from loading to role selection after 3 seconds
+  // Skip loading animation and go directly to role selection
   useEffect(() => {
     if (loginStep === 'loading') {
-      const timer = setTimeout(() => {
-        setLoginStep('roleSelection');
-      }, 5000);
-      return () => clearTimeout(timer);
+      // Immediately go to role selection without delay
+      setLoginStep('roleSelection');
     }
   }, [loginStep]);
 
-  // Navigate after successful login animation completes
+  // Navigate immediately after successful login
   useEffect(() => {
     if (loginSuccess) {
-      const timer = setTimeout(() => {
-        const role = localStorage.getItem('role');
-        console.log('Navigating to role dashboard:', role);
-        if (role === 'student') {
-          navigate('/student');
-        } else if (role === 'faculty') {
-          navigate('/faculty');
-        } else if (role === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/');
-        }
-      }, 3000);
-      return () => clearTimeout(timer);
+      const role = localStorage.getItem('role');
+      console.log('Navigating to role dashboard:', role);
+      if (role === 'student') {
+        navigate('/student');
+      } else if (role === 'faculty') {
+        navigate('/faculty');
+      } else if (role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     }
   }, [loginSuccess, navigate]);
 
@@ -108,47 +103,16 @@ const Login = () => {
         username: selectedRole === 'student' ? res.data.user.username : credentials.username 
       });
 
-      // Show success animation instead of navigating immediately
+      // Set login success and navigate immediately
       setLoginSuccess(true);
-      
-      // Force a reload after a short delay to ensure context is updated
-      setTimeout(() => {
-        console.log('Forcing navigation to', `/${userRole}`);
-        window.location.href = `/${userRole}`;
-      }, 3000);
     } catch (err) {
       console.error('Login error:', err);
       alert('Login failed. Please check your credentials and try again.');
     }
   };
 
-  // Show success animation screen
-  if (loginSuccess) {
-    return (
-      <div className="login-step success-step">
-        <div className="success-animation-container">
-          <div className="success-icon">✓</div>
-          <h2>Login Successful!</h2>
-          <p>Redirecting to your dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Loading animation screen with custom animation
-  if (loginStep === 'loading') {
-    return (
-      <div className="login-step loading-step">
-        <div className="loading-animation-container">
-          <LoadingAnimation />
-          <div className="loading-text">
-            <h2>Welcome to Miracle Academy</h2>
-            <p>Opening secure portal...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // We don't need to show success or loading animations anymore
+  // The user will be redirected immediately after successful login
 
   // Role selection screen
   if (loginStep === 'roleSelection') {

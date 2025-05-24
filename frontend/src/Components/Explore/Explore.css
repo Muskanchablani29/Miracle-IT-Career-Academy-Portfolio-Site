@@ -15,8 +15,6 @@
 
 .explore-content {
   flex: 1;
-  padding: 20px;
-  margin-left: 20px;
   box-sizing: border-box;
   overflow-x: hidden;
 }

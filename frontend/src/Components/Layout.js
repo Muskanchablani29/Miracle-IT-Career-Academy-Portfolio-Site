@@ -31,37 +31,15 @@ export const PublicLayout = () => {
 export const AuthLayout = ({ requiredRole }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, loading } = useContext(UserContext);
+  const { user } = useContext(UserContext);
 
   useEffect(() => {
-    console.log('AuthLayout useEffect - user:', user, 'loading:', loading);
-    if (!loading && !user) {
+    console.log('AuthLayout useEffect - user:', user);
+    if (!user) {
       console.log('AuthLayout useEffect - redirecting to login');
       navigate('/login', { replace: true, state: { from: location } });
     }
-  }, [user, loading, navigate, location]);
-
-  // Show loading state while checking authentication, but add a timeout
-  // to prevent infinite loading
-  useEffect(() => {
-    let timeoutId;
-    if (loading) {
-      // If still loading after 5 seconds, force refresh the page
-      timeoutId = setTimeout(() => {
-        console.log('Loading timeout reached, refreshing authentication state');
-        window.location.reload();
-      }, 5000);
-    }
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [loading]);
-
-  // Show loading state while checking authentication
-  if (loading) {
-    console.log('AuthLayout loading...');
-    return <div className="loading">Loading...</div>;
-  }
+  }, [user, navigate, location]);
   
   // If not authenticated, redirect handled in useEffect above
   if (!user) {
