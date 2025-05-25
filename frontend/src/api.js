@@ -35,6 +35,7 @@ userAxiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Check if error is due to an expired token
     if (error.response && error.response.status === 401 && !originalRequest._retry) {
       console.log('401 error detected, attempting token refresh');
       originalRequest._retry = true;
@@ -42,7 +43,9 @@ userAxiosInstance.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem('refresh');
         if (!refreshToken) {
-          console.log('No refresh token available, rejecting');
+          console.log('No refresh token available, redirecting to login');
+          // You might want to redirect to login page here
+          // window.location.href = '/login';
           return Promise.reject(error);
         }
 
@@ -53,16 +56,27 @@ userAxiosInstance.interceptors.response.use(
 
         if (response.status === 200) {
           console.log('Token refresh successful');
+          
+          // Store the new access token
           localStorage.setItem('access', response.data.access);
 
-          // Update the failed request with the new token
+          // Update the authorization header for all future requests
+          userAxiosInstance.defaults.headers.common['Authorization'] = `Bearer ${response.data.access}`;
+          
+          // Update the failed request with the new token and retry it
           originalRequest.headers['Authorization'] = `Bearer ${response.data.access}`;
           return userAxiosInstance(originalRequest);
         }
       } catch (refreshError) {
         console.error('Token refresh failed:', refreshError);
+        
+        // Clear tokens from storage on refresh failure
         localStorage.removeItem('access');
         localStorage.removeItem('refresh');
+        
+        // You might want to redirect to login page here
+        // window.location.href = '/login';
+        
         return Promise.reject(refreshError);
       }
     }
@@ -115,10 +129,11 @@ export const createStudentAccount = async (studentData) => {
   }
 };
 
-// Courses API
+// Courses API - Public endpoint that doesn't require authentication
 export const fetchCourses = async () => {
   try {
-    const response = await userAxiosInstance.get('courses/courses/');
+    // Use axios directly instead of userAxiosInstance to avoid authentication requirements
+    const response = await axios.get(`${API_URL}courses/courses/`);
     return response.data;
   } catch (error) {
     console.error('Error fetching courses:', error);
@@ -143,6 +158,111 @@ export const fetchVideosByCourseId = async (courseId) => {
     return response.data;
   } catch (error) {
     console.error(`Error fetching videos for course ${courseId}:`, error);
+    throw error;
+  }
+};
+
+// Syllabus API
+export const fetchCourseSyllabus = async (courseId) => {
+  try {
+    const response = await userAxiosInstance.get(`courses/syllabus/?course_id=${courseId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching syllabus for course ${courseId}:`, error);
+    throw error;
+  }
+};
+
+export const fetchSyllabusItems = async (moduleId) => {
+  try {
+    const response = await userAxiosInstance.get(`courses/syllabus-items/?module_id=${moduleId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching syllabus items for module ${moduleId}:`, error);
+    throw error;
+  }
+};
+
+// Create and update syllabus (for faculty and admin)
+export const createCourseSyllabus = async (syllabusData) => {
+  try {
+    const response = await userAxiosInstance.post('courses/syllabus/', syllabusData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating course syllabus:', error);
+    throw error;
+  }
+};
+
+export const updateCourseSyllabus = async (moduleId, syllabusData) => {
+  try {
+    const response = await userAxiosInstance.put(`courses/syllabus/${moduleId}/`, syllabusData);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating syllabus module ${moduleId}:`, error);
+    throw error;
+  }
+};
+
+export const createSyllabusItem = async (itemData) => {
+  try {
+    const response = await userAxiosInstance.post('courses/syllabus-items/', itemData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating syllabus item:', error);
+    throw error;
+  }
+};
+
+export const updateSyllabusItem = async (itemId, itemData) => {
+  try {
+    const response = await userAxiosInstance.put(`courses/syllabus-items/${itemId}/`, itemData);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating syllabus item ${itemId}:`, error);
+    throw error;
+  }
+};
+
+// Course Enrollment API
+export const enrollInCourse = async (courseId) => {
+  try {
+    const response = await userAxiosInstance.post('enroll/', { course_id: courseId });
+    return response.data;
+  } catch (error) {
+    console.error(`Error enrolling in course ${courseId}:`, error);
+    throw error;
+  }
+};
+
+export const getUserEnrollments = async () => {
+  try {
+    const response = await userAxiosInstance.get('enrollments/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user enrollments:', error);
+    throw error;
+  }
+};
+
+// Notifications API
+export const fetchUserNotifications = async () => {
+  try {
+    // Get notifications from user dashboard endpoint
+    const response = await userAxiosInstance.get('dashboard/');
+    return response.data.notifications;
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    throw error;
+  }
+};
+
+export const markNotificationAsRead = async (notificationId) => {
+  try {
+    const response = await userAxiosInstance.post(`notifications/${notificationId}/read/`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error marking notification ${notificationId} as read:`, error);
     throw error;
   }
 };

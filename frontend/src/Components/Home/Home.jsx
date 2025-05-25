@@ -38,7 +38,7 @@ export default function Home() {
       <Homefour />
       <Homefive />
       {/* <AdminSetup /> */}
-      <Homesix/>
+      {/* <Homesix/> */}
     </>
   );
 }

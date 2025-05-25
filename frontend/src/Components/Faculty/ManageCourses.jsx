@@ -1,158 +1,412 @@
-import React from 'react';
-import './FacultyDashboard.css';
+import React, { useState, useEffect } from 'react';
+import { userAxiosInstance } from '../../api';
+import '../Admin/ManageCourses.css';
+import { FaEdit, FaBook } from 'react-icons/fa';
 
-const ManageCourses = () => {
+const FacultyManageCourses = () => {
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [syllabus, setSyllabus] = useState([]);
+  const [editingSyllabus, setEditingSyllabus] = useState(null);
+  const [editingSyllabusItem, setEditingSyllabusItem] = useState(null);
+  const [syllabusFormData, setSyllabusFormData] = useState({
+    title: '',
+    order: 1
+  });
+  const [syllabusItemFormData, setSyllabusItemFormData] = useState({
+    title: '',
+    description: '',
+    order: 1,
+    module_id: null
+  });
+  const [activeTab, setActiveTab] = useState('courses');
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const fetchCourses = async () => {
+    try {
+      setLoading(true);
+      const response = await userAxiosInstance.get('courses/courses/');
+      setCourses(response.data);
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to load courses');
+      setLoading(false);
+      console.error('Error fetching courses:', err);
+    }
+  };
+
+  const fetchSyllabus = async (courseId) => {
+    try {
+      const response = await userAxiosInstance.get(`courses/syllabus/?course_id=${courseId}`);
+      setSyllabus(response.data);
+    } catch (err) {
+      console.error('Error fetching syllabus:', err);
+    }
+  };
+
+  const handleCourseSelect = (course) => {
+    setSelectedCourse(course);
+    fetchSyllabus(course.id);
+    setActiveTab('syllabus');
+  };
+
+  const handleSyllabusInputChange = (e) => {
+    const { name, value } = e.target;
+    setSyllabusFormData({
+      ...syllabusFormData,
+      [name]: value
+    });
+  };
+
+  const handleSyllabusItemInputChange = (e) => {
+    const { name, value } = e.target;
+    setSyllabusItemFormData({
+      ...syllabusItemFormData,
+      [name]: value
+    });
+  };
+
+  const handleUpdateSyllabus = async (e) => {
+    e.preventDefault();
+    try {
+      await userAxiosInstance.put(`courses/syllabus/${editingSyllabus.id}/`, {
+        ...syllabusFormData,
+        course: selectedCourse.id
+      });
+      fetchSyllabus(selectedCourse.id);
+      setEditingSyllabus(null);
+      setSyllabusFormData({
+        title: '',
+        order: 1
+      });
+    } catch (err) {
+      console.error('Error updating syllabus module:', err);
+    }
+  };
+
+  const handleEditSyllabus = (module) => {
+    setSyllabusFormData({
+      title: module.title,
+      order: module.order
+    });
+    setEditingSyllabus(module);
+  };
+
+  const handleUpdateSyllabusItem = async (e) => {
+    e.preventDefault();
+    try {
+      await userAxiosInstance.put(`courses/syllabus-items/${editingSyllabusItem.id}/`, {
+        title: syllabusItemFormData.title,
+        description: syllabusItemFormData.description,
+        order: syllabusItemFormData.order,
+        module: editingSyllabusItem.module
+      });
+      fetchSyllabus(selectedCourse.id);
+      setEditingSyllabusItem(null);
+      setSyllabusItemFormData({
+        title: '',
+        description: '',
+        order: 1,
+        module_id: null
+      });
+    } catch (err) {
+      console.error('Error updating syllabus item:', err);
+    }
+  };
+
+  const handleEditSyllabusItem = (item) => {
+    setSyllabusItemFormData({
+      title: item.title,
+      description: item.description || '',
+      order: item.order,
+      module_id: item.module
+    });
+    setEditingSyllabusItem(item);
+  };
+
+  if (loading) {
+    return <div className="loading">Loading courses...</div>;
+  }
+
+  if (error) {
+    return <div className="error-message">{error}</div>;
+  }
+
   return (
-    <div className="dashboard-container">
-      <h1>Manage Courses</h1>
-      <div className="dashboard-content">
-        <div className="course-filters">
-          <div className="search-filter">
-            <input type="text" placeholder="Search courses..." className="search-input" />
-            <select className="filter-select">
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="upcoming">Upcoming</option>
-              <option value="completed">Completed</option>
-            </select>
-            <button className="btn-primary">Search</button>
-          </div>
-          <button className="btn-primary">Request New Course</button>
+    <div className="manage-courses-container">
+      <h1>Manage Course Content</h1>
+
+      {!selectedCourse ? (
+        <div className="courses-list">
+          <h2>Available Courses</h2>
+          <table className="courses-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Level</th>
+                <th>Duration</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {courses.map((course) => (
+                <tr key={course.id}>
+                  <td>{course.title}</td>
+                  <td>{course.level}</td>
+                  <td>{course.duration}</td>
+                  <td className="actions">
+                    <button 
+                      className="action-btn syllabus-btn"
+                      onClick={() => handleCourseSelect(course)}
+                      title="Manage Syllabus"
+                    >
+                      <FaBook />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-        
-        <div className="courses-grid">
-          <div className="course-card active">
-            <div className="course-header">
-              <h3>Web Development</h3>
-              <span className="course-badge active">Active</span>
-            </div>
-            <div className="course-details">
-              <p><strong>Code:</strong> WD101</p>
-              <p><strong>Students:</strong> 45</p>
-              <p><strong>Schedule:</strong> Mon, Wed, Fri - 10:00 AM</p>
-              <p><strong>Progress:</strong> 65% completed</p>
-            </div>
-            <div className="progress-bar">
-              <div className="progress" style={{ width: '65%' }}></div>
-            </div>
-            <div className="course-actions">
-              <button className="btn-primary">Manage</button>
-              <button className="btn-secondary">Materials</button>
-              <button className="btn-secondary">Grades</button>
-            </div>
+      ) : (
+        <div className="syllabus-management">
+          <div className="syllabus-header">
+            <h2>Update Syllabus: {selectedCourse.title}</h2>
+            <button
+              className="back-btn"
+              onClick={() => {
+                setSelectedCourse(null);
+                setActiveTab('courses');
+              }}
+            >
+              Back to Courses
+            </button>
           </div>
-          
-          <div className="course-card active">
-            <div className="course-header">
-              <h3>Python Programming</h3>
-              <span className="course-badge active">Active</span>
-            </div>
-            <div className="course-details">
-              <p><strong>Code:</strong> PY201</p>
-              <p><strong>Students:</strong> 38</p>
-              <p><strong>Schedule:</strong> Tue, Thu - 2:00 PM</p>
-              <p><strong>Progress:</strong> 50% completed</p>
-            </div>
-            <div className="progress-bar">
-              <div className="progress" style={{ width: '50%' }}></div>
-            </div>
-            <div className="course-actions">
-              <button className="btn-primary">Manage</button>
-              <button className="btn-secondary">Materials</button>
-              <button className="btn-secondary">Grades</button>
-            </div>
+
+          <div className="tabs">
+            <button
+              className={`tab ${activeTab === 'syllabus' ? 'active' : ''}`}
+              onClick={() => setActiveTab('syllabus')}
+            >
+              Syllabus Modules
+            </button>
+            <button
+              className={`tab ${activeTab === 'items' ? 'active' : ''}`}
+              onClick={() => setActiveTab('items')}
+            >
+              Module Items
+            </button>
           </div>
-          
-          <div className="course-card active">
-            <div className="course-header">
-              <h3>Data Science Fundamentals</h3>
-              <span className="course-badge active">Active</span>
-            </div>
-            <div className="course-details">
-              <p><strong>Code:</strong> DS301</p>
-              <p><strong>Students:</strong> 32</p>
-              <p><strong>Schedule:</strong> Mon, Wed - 4:00 PM</p>
-              <p><strong>Progress:</strong> 40% completed</p>
-            </div>
-            <div className="progress-bar">
-              <div className="progress" style={{ width: '40%' }}></div>
-            </div>
-            <div className="course-actions">
-              <button className="btn-primary">Manage</button>
-              <button className="btn-secondary">Materials</button>
-              <button className="btn-secondary">Grades</button>
-            </div>
-          </div>
-          
-          <div className="course-card upcoming">
-            <div className="course-header">
-              <h3>Machine Learning Basics</h3>
-              <span className="course-badge upcoming">Upcoming</span>
-            </div>
-            <div className="course-details">
-              <p><strong>Code:</strong> ML401</p>
-              <p><strong>Students:</strong> 28</p>
-              <p><strong>Schedule:</strong> Tue, Thu - 10:00 AM</p>
-              <p><strong>Starts:</strong> Aug 15, 2023</p>
-            </div>
-            <div className="course-actions">
-              <button className="btn-primary">Prepare</button>
-              <button className="btn-secondary">Materials</button>
-              <button className="btn-secondary">Students</button>
-            </div>
-          </div>
-          
-          <div className="course-card completed">
-            <div className="course-header">
-              <h3>JavaScript Fundamentals</h3>
-              <span className="course-badge completed">Completed</span>
-            </div>
-            <div className="course-details">
-              <p><strong>Code:</strong> JS101</p>
-              <p><strong>Students:</strong> 42</p>
-              <p><strong>Completed:</strong> Jun 30, 2023</p>
-              <p><strong>Avg. Grade:</strong> B+ (85%)</p>
-            </div>
-            <div className="course-actions">
-              <button className="btn-primary">View Report</button>
-              <button className="btn-secondary">Materials</button>
-              <button className="btn-secondary">Grades</button>
-            </div>
-          </div>
+
+          {activeTab === 'syllabus' && (
+            <>
+              <div className="syllabus-list">
+                <h3>Syllabus Modules</h3>
+                {syllabus.length > 0 ? (
+                  <table className="syllabus-table">
+                    <thead>
+                      <tr>
+                        <th>Order</th>
+                        <th>Title</th>
+                        <th>Last Updated</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {syllabus.map((module) => (
+                        <tr key={module.id}>
+                          <td>{module.order}</td>
+                          <td>{module.title}</td>
+                          <td>{new Date(module.last_updated).toLocaleDateString()}</td>
+                          <td className="actions">
+                            <button
+                              className="action-btn edit-btn"
+                              onClick={() => handleEditSyllabus(module)}
+                              title="Edit Module"
+                            >
+                              <FaEdit />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p>No syllabus modules found for this course.</p>
+                )}
+              </div>
+
+              {editingSyllabus && (
+                <div className="syllabus-form">
+                  <h3>Edit Module</h3>
+                  <form onSubmit={handleUpdateSyllabus}>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="module-title">Module Title</label>
+                        <input
+                          type="text"
+                          id="module-title"
+                          name="title"
+                          value={syllabusFormData.title}
+                          onChange={handleSyllabusInputChange}
+                          required
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="module-order">Order</label>
+                        <input
+                          type="number"
+                          id="module-order"
+                          name="order"
+                          min="1"
+                          value={syllabusFormData.order}
+                          onChange={handleSyllabusInputChange}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-actions">
+                      <button type="submit" className="submit-btn">
+                        Update Module
+                      </button>
+                      <button
+                        type="button"
+                        className="cancel-btn"
+                        onClick={() => {
+                          setEditingSyllabus(null);
+                          setSyllabusFormData({
+                            title: '',
+                            order: 1
+                          });
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </>
+          )}
+
+          {activeTab === 'items' && (
+            <>
+              <div className="module-items">
+                <h3>Module Items</h3>
+                {syllabus.map((module) => (
+                  <div className="module-section" key={module.id}>
+                    <h4>
+                      Module {module.order}: {module.title}
+                    </h4>
+                    {module.items.length > 0 ? (
+                      <table className="items-table">
+                        <thead>
+                          <tr>
+                            <th>Order</th>
+                            <th>Title</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {module.items.map((item) => (
+                            <tr key={item.id}>
+                              <td>{item.order}</td>
+                              <td>{item.title}</td>
+                              <td className="actions">
+                                <button
+                                  className="action-btn edit-btn"
+                                  onClick={() => handleEditSyllabusItem(item)}
+                                  title="Edit Item"
+                                >
+                                  <FaEdit />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <p className="no-items">No items in this module</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {editingSyllabusItem && (
+                <div className="item-form">
+                  <h3>Edit Item</h3>
+                  <form onSubmit={handleUpdateSyllabusItem}>
+                    <div className="form-group">
+                      <label htmlFor="item-title">Item Title</label>
+                      <input
+                        type="text"
+                        id="item-title"
+                        name="title"
+                        value={syllabusItemFormData.title}
+                        onChange={handleSyllabusItemInputChange}
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="item-description">Description (Optional)</label>
+                      <textarea
+                        id="item-description"
+                        name="description"
+                        value={syllabusItemFormData.description}
+                        onChange={handleSyllabusItemInputChange}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="item-order">Order</label>
+                      <input
+                        type="number"
+                        id="item-order"
+                        name="order"
+                        min="1"
+                        value={syllabusItemFormData.order}
+                        onChange={handleSyllabusItemInputChange}
+                        required
+                      />
+                    </div>
+
+                    <div className="form-actions">
+                      <button type="submit" className="submit-btn">
+                        Update Item
+                      </button>
+                      <button
+                        type="button"
+                        className="cancel-btn"
+                        onClick={() => {
+                          setEditingSyllabusItem(null);
+                          setSyllabusItemFormData({
+                            title: '',
+                            description: '',
+                            order: 1,
+                            module_id: null
+                          });
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </>
+          )}
         </div>
-        
-        <div className="course-management-section">
-          <h3>Course Management Tools</h3>
-          <div className="management-tools">
-            <div className="tool-card">
-              <div className="tool-icon">📚</div>
-              <h4>Course Materials</h4>
-              <p>Upload and manage course materials, slides, and resources</p>
-              <button className="btn-secondary">Access</button>
-            </div>
-            <div className="tool-card">
-              <div className="tool-icon">📝</div>
-              <h4>Assignments</h4>
-              <p>Create, distribute, and grade assignments</p>
-              <button className="btn-secondary">Access</button>
-            </div>
-            <div className="tool-card">
-              <div className="tool-icon">📊</div>
-              <h4>Gradebook</h4>
-              <p>Manage and track student grades and performance</p>
-              <button className="btn-secondary">Access</button>
-            </div>
-            <div className="tool-card">
-              <div className="tool-icon">📅</div>
-              <h4>Schedule</h4>
-              <p>Manage course schedule and calendar</p>
-              <button className="btn-secondary">Access</button>
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
 
-export default ManageCourses;
+export default FacultyManageCourses;

@@ -10,6 +10,33 @@ import './Explore.css';
 import './course-container.css';
 import { fetchCourses } from '../../api';
 
+// Import Development Hub components
+import Mern from './Courses/DevelopmentHub/Mern';
+import Python from './Courses/DevelopmentHub/Python';
+import Java from './Courses/DevelopmentHub/Java';
+import Php from './Courses/DevelopmentHub/Php';
+import FullStackWeb from './Courses/DevelopmentHub/FullStackWeb';
+import DataStructure from './Courses/DevelopmentHub/DataStructure';
+
+// Import AI & ML Track components
+import ArtificialIntelligence from './Courses/AI&MlTrack/ArtificialIntelligence';
+import MachineLearning from './Courses/AI&MlTrack/MachineLearning';
+import BigData from './Courses/AI&MlTrack/BigData';
+import DataScience from './Courses/AI&MlTrack/DataScience';
+
+// Import Cloud Computing components
+import CloudComputing from './Courses/Cloud-Computing/CloudComputing';
+import ITSecurity from './Courses/Cloud-Computing/ITSecurity';
+import DEVOPS from './Courses/Cloud-Computing/DEVOPS';
+import Aws from './Courses/Cloud-Computing/Aws';
+
+// Import Job-linked components
+import PGDSE from './Courses/Job-linked/PGDSE';
+import PGDIE from './Courses/Job-linked/PGDIE';
+import PGDFE from './Courses/Job-linked/PGDFE';
+import PGDDA from './Courses/Job-linked/PGDDA';
+import AIML from './Courses/Job-linked/AIML';
+
 const Explore = () => {
   return (
     <div className="explore-container">
@@ -24,32 +51,32 @@ const Explore = () => {
           <Route path="quizzes" element={<Quizzes />} />
           <Route path="course/:courseId" element={<CourseDetail />} />
           
-          {/* Course category routes */}
-          <Route path="courses/mern" element={<CategoryCourses />} />
-          <Route path="courses/full-stack-web-development" element={<CategoryCourses />} />
-          <Route path="courses/c-cpp-data-structure" element={<CategoryCourses />} />
-          <Route path="courses/java" element={<CategoryCourses />} />
-          <Route path="courses/python" element={<CategoryCourses />} />
-          <Route path="courses/php" element={<CategoryCourses />} />
+          {/* Development Hub routes */}
+          <Route path="courses/mern" element={<Mern />} />
+          <Route path="courses/python" element={<Python />} />
+          <Route path="courses/full-stack-web-development" element={<FullStackWeb />} />
+          <Route path="courses/c-cpp-data-structure" element={<DataStructure />} />
+          <Route path="courses/java" element={<Java />} />
+          <Route path="courses/php" element={<Php />} />
           
           {/* AI and ML Track routes */}
-          <Route path="courses/artificial-intelligence" element={<CategoryCourses />} />
-          <Route path="courses/machine-learning" element={<CategoryCourses />} />
-          <Route path="courses/big-data" element={<CategoryCourses />} />
-          <Route path="courses/data-science" element={<CategoryCourses />} />
+          <Route path="courses/artificial-intelligence" element={<ArtificialIntelligence />} />
+          <Route path="courses/machine-learning" element={<MachineLearning />} />
+          <Route path="courses/big-data" element={<BigData />} />
+          <Route path="courses/data-science" element={<DataScience />} />
           
           {/* Cloud Security routes */}
-          <Route path="courses/it-security" element={<CategoryCourses />} />
-          <Route path="courses/cloud-computing" element={<CategoryCourses />} />
-          <Route path="courses/devops" element={<CategoryCourses />} />
-          <Route path="courses/aws-azure" element={<CategoryCourses />} />
+          <Route path="courses/it-security" element={<ITSecurity />} />
+          <Route path="courses/cloud-computing" element={<CloudComputing />} />
+          <Route path="courses/devops" element={<DEVOPS />} />
+          <Route path="courses/aws-azure" element={<Aws />} />
           
           {/* JOB Linked Program routes */}
-          <Route path="courses/pgdse" element={<CategoryCourses />} />
-          <Route path="courses/pgdie" element={<CategoryCourses />} />
-          <Route path="courses/pgdfe" element={<CategoryCourses />} />
-          <Route path="courses/pgdda" element={<CategoryCourses />} />
-          <Route path="courses/aiml-advance-diploma" element={<CategoryCourses />} />
+          <Route path="courses/pgdse" element={<PGDSE />} />
+          <Route path="courses/pgdie" element={<PGDIE />} />
+          <Route path="courses/pgdfe" element={<PGDFE />} />
+          <Route path="courses/pgdda" element={<PGDDA />} />
+          <Route path="courses/aiml-advance-diploma" element={<AIML />} />
           
           {/* Fallback for other course routes */}
           <Route path="courses/*" element={<CoursesMain />} />
