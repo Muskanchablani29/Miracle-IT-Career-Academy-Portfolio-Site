@@ -4,8 +4,9 @@ from .serializers import (
     RegisterSerializer, UserSerializer, CreateAdminSerializer, 
     CreateFacultySerializer, CreateStudentSerializer, StudentSerializer,
     FacultySerializer, AdminSerializer, StudentLoginSerializer,
-    WorkshopSerializer, CertificateSerializer
+    WorkshopSerializer, CertificateSerializer, IntegratedDashboardSerializer
 )
+from courses.models import Course, CourseSyllabus, SyllabusItem, Video, Quiz, CourseEnrollment, Notification
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -277,3 +278,93 @@ class WorkshopViewSet(viewsets.ModelViewSet):
 class CertificateViewSet(viewsets.ModelViewSet):
     queryset = Certificate.objects.all()
     serializer_class = CertificateSerializer
+
+class IntegratedDashboardView(APIView):
+    """
+    Integrated API endpoint that provides all data needed for the frontend
+    including user profile, courses, workshops, certificates, and notifications
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.AllowAny]  # Allow public access for GET
+    
+    def get(self, request):
+        try:
+            # For authenticated users, provide full dashboard
+            if request.user.is_authenticated:
+                user = request.user
+                serializer = IntegratedDashboardSerializer(user)
+                return Response(serializer.data)
+            else:
+                # For anonymous users, provide only public data
+                # Create a minimal response with just public data
+                courses = Course.objects.all()
+                workshops = Workshop.objects.all()
+                certificates = Certificate.objects.all()
+                quizzes = Quiz.objects.all()
+                
+                from .serializers import CourseIntegratedSerializer, WorkshopSerializer, CertificateSerializer, QuizIntegratedSerializer
+                
+                return Response({
+                    'courses': CourseIntegratedSerializer(courses, many=True).data,
+                    'workshops': WorkshopSerializer(workshops, many=True).data,
+                    'certificates': CertificateSerializer(certificates, many=True).data,
+                    'quizzes': QuizIntegratedSerializer(quizzes, many=True).data
+                })
+        except Exception as e:
+            logger.error(f"Integrated dashboard error: {str(e)}")
+            return Response(
+                {"detail": f"Error retrieving dashboard data: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+    def post(self, request):
+        """
+        Handle various actions through a single endpoint
+        """
+        # Require authentication for POST actions
+        if not request.user.is_authenticated:
+            return Response(
+                {"detail": "Authentication required for this action"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+            
+        action = request.data.get('action')
+        
+        if action == 'enroll_course':
+            return self._enroll_in_course(request)
+        elif action == 'mark_notification_read':
+            return self._mark_notification_read(request)
+        else:
+            return Response(
+                {"detail": "Invalid action specified"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    def _enroll_in_course(self, request):
+        course_id = request.data.get('course_id')
+        
+        try:
+            course = Course.objects.get(id=course_id)
+        except Course.DoesNotExist:
+            return Response({'error': 'Course not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        enrollment, created = CourseEnrollment.objects.get_or_create(
+            user=request.user,
+            course=course
+        )
+        
+        if created:
+            return Response({'message': 'Successfully enrolled in course'}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({'message': 'Already enrolled in this course'}, status=status.HTTP_200_OK)
+    
+    def _mark_notification_read(self, request):
+        notification_id = request.data.get('notification_id')
+        
+        try:
+            notification = Notification.objects.get(id=notification_id, user=request.user)
+            notification.is_read = True
+            notification.save()
+            return Response({'message': 'Notification marked as read'}, status=status.HTTP_200_OK)
+        except Notification.DoesNotExist:
+            return Response({'error': 'Notification not found'}, status=status.HTTP_404_NOT_FOUND)

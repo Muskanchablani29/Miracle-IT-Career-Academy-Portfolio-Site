@@ -3,14 +3,14 @@ from .views import (
     RegisterView, ProfileView, CustomTokenObtainPairView,
     CreateAdminView, CreateFacultyView, CreateStudentView,
     ListFacultyView, ListStudentView, StudentLoginView,
-    WorkshopViewSet, CertificateViewSet
+    WorkshopViewSet, CertificateViewSet, IntegratedDashboardView
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.http import HttpResponse
 from rest_framework.routers import DefaultRouter
 
 def api_root(request):
-    return HttpResponse("Users API root. Available endpoints: register/, login/, token/refresh/, profile/")
+    return HttpResponse("Users API root. Available endpoints: register/, login/, token/refresh/, profile/, dashboard/")
 
 router = DefaultRouter()
 router.register(r'workshops', WorkshopViewSet)
@@ -23,6 +23,9 @@ urlpatterns = [
     path('student-login/', StudentLoginView.as_view(), name='student_login'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('profile/', ProfileView.as_view(), name='profile'),
+    
+    # Integrated dashboard API endpoint
+    path('dashboard/', IntegratedDashboardView.as_view(), name='integrated_dashboard'),
     
     # Role-based user creation endpoints
     path('create-admin/', CreateAdminView.as_view(), name='create_admin'),
