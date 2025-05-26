@@ -15,4 +15,6 @@ urlpatterns = [
     path('enroll/', views.enroll_in_course, name='enroll-course'),
     path('enrollments/', views.get_user_enrollments, name='user-enrollments'),
     path('notifications/<int:notification_id>/read/', views.mark_notification_read, name='mark-notification-read'),
+    path('latest-courses/', views.get_latest_courses, name='latest-courses'),
+    path('create-course/', views.create_course, name='create-course'),
 ]

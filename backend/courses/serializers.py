@@ -4,14 +4,14 @@ from .models import Course, Video, Quiz, CourseSyllabus, SyllabusItem, CourseEnr
 class SyllabusItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = SyllabusItem
-        fields = ['id', 'title', 'description', 'order']
+        fields = ['id', 'title', 'description', 'order', 'module']
 
 class CourseSyllabusSerializer(serializers.ModelSerializer):
     items = SyllabusItemSerializer(many=True, read_only=True)
     
     class Meta:
         model = CourseSyllabus
-        fields = ['id', 'title', 'order', 'items', 'last_updated']
+        fields = ['id', 'title', 'order', 'course', 'items', 'last_updated']
 
 class VideoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -19,6 +19,8 @@ class VideoSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'url', 'order']
 
 class CourseSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(required=False)
+    
     class Meta:
         model = Course
         fields = ['id', 'title', 'description', 'image', 'duration', 'level', 
@@ -35,6 +37,8 @@ class CourseDetailSerializer(serializers.ModelSerializer):
                  'syllabus_modules', 'videos']
 
 class QuizSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(required=False)
+    
     class Meta:
         model = Quiz
         fields = ['id', 'title', 'description', 'image', 'questions', 'time', 'difficulty']

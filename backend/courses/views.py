@@ -1,26 +1,39 @@
 from rest_framework import viewsets, permissions, status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .models import Course, Video, Quiz, CourseSyllabus, SyllabusItem, CourseEnrollment, Notification
+from django.db.models import Q
 from .serializers import (
     CourseSerializer, CourseDetailSerializer, VideoSerializer, QuizSerializer,
     CourseSyllabusSerializer, SyllabusItemSerializer, CourseEnrollmentSerializer,
     NotificationSerializer
 )
 
-class CourseViewSet(viewsets.ReadOnlyModelViewSet):
+class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
-    permission_classes = [permissions.AllowAny]  # Allow public access to courses
     
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return CourseDetailSerializer
         return CourseSerializer
+        
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+        # Only admin and faculty can create/update courses
+        return [permissions.IsAuthenticated()]
+        
+    def perform_create(self, serializer):
+        # Check if user is admin or faculty
+        user = self.request.user
+        if user.is_staff or user.groups.filter(name='faculty').exists():
+            serializer.save()
+        else:
+            raise permissions.PermissionDenied("Only admin and faculty can create courses.")
 
-class VideoViewSet(viewsets.ReadOnlyModelViewSet):
+class VideoViewSet(viewsets.ModelViewSet):
     serializer_class = VideoSerializer
-    permission_classes = [permissions.AllowAny]  # Allow public access to videos
     
     def get_queryset(self):
         queryset = Video.objects.all()
@@ -28,11 +41,38 @@ class VideoViewSet(viewsets.ReadOnlyModelViewSet):
         if course_id is not None:
             queryset = queryset.filter(course_id=course_id)
         return queryset
+        
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+        # Only admin and faculty can create/update videos
+        return [permissions.IsAuthenticated()]
+        
+    def perform_create(self, serializer):
+        # Check if user is admin or faculty
+        user = self.request.user
+        if user.is_staff or user.groups.filter(name='faculty').exists():
+            serializer.save()
+        else:
+            raise permissions.PermissionDenied("Only admin and faculty can add videos.")
 
-class QuizViewSet(viewsets.ReadOnlyModelViewSet):
+class QuizViewSet(viewsets.ModelViewSet):
     queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
-    permission_classes = [permissions.AllowAny]  # Allow public access to quizzes
+    
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+        # Only admin and faculty can create/update quizzes
+        return [permissions.IsAuthenticated()]
+        
+    def perform_create(self, serializer):
+        # Check if user is admin or faculty
+        user = self.request.user
+        if user.is_staff or user.groups.filter(name='faculty').exists():
+            serializer.save()
+        else:
+            raise permissions.PermissionDenied("Only admin and faculty can create quizzes.")
 
 class CourseSyllabusViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSyllabusSerializer
@@ -47,8 +87,16 @@ class CourseSyllabusViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [permissions.AllowAny()]
-        return [permissions.IsAdminUser() | 
-                permissions.DjangoModelPermissions()]
+        # Allow both admin and faculty to create/update syllabus
+        return [permissions.IsAuthenticated()]
+    
+    def perform_create(self, serializer):
+        # Check if user is admin or faculty
+        user = self.request.user
+        if user.is_staff or user.groups.filter(name='faculty').exists():
+            serializer.save()
+        else:
+            raise permissions.PermissionDenied("Only admin and faculty can create course syllabus.")
 
 class SyllabusItemViewSet(viewsets.ModelViewSet):
     serializer_class = SyllabusItemSerializer
@@ -63,8 +111,16 @@ class SyllabusItemViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [permissions.AllowAny()]
-        return [permissions.IsAdminUser() | 
-                permissions.DjangoModelPermissions()]
+        # Allow both admin and faculty to create/update syllabus items
+        return [permissions.IsAuthenticated()]
+    
+    def perform_create(self, serializer):
+        # Check if user is admin or faculty
+        user = self.request.user
+        if user.is_staff or user.groups.filter(name='faculty').exists():
+            serializer.save()
+        else:
+            raise permissions.PermissionDenied("Only admin and faculty can create syllabus items.")
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -95,6 +151,17 @@ class NotificationViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+        
+    @action(detail=False, methods=['get'])
+    def course_updates(self, request):
+        """Get notifications related to course updates"""
+        notifications = Notification.objects.filter(
+            user=request.user
+        ).filter(
+            Q(title__contains='Course') | Q(title__contains='Module') | Q(title__contains='Content')
+        ).order_by('-created_at')
+        serializer = self.get_serializer(notifications, many=True)
+        return Response(serializer.data)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -113,3 +180,28 @@ def get_user_enrollments(request):
     enrollments = CourseEnrollment.objects.filter(user=request.user)
     serializer = CourseEnrollmentSerializer(enrollments, many=True)
     return Response(serializer.data)
+
+@api_view(['GET'])
+def get_latest_courses(request):
+    """Get the latest courses added or updated"""
+    courses = Course.objects.all().order_by('-created_at')[:5]
+    serializer = CourseSerializer(courses, many=True)
+    return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_course(request):
+    """Create a new course"""
+    # Check if user is admin or faculty
+    user = request.user
+    if not (user.is_staff or user.groups.filter(name='faculty').exists()):
+        return Response(
+            {'error': 'Only admin and faculty can create courses'}, 
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    serializer = CourseSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

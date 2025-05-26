@@ -8,7 +8,7 @@ User = get_user_model()
 class Course(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
-    image = models.URLField()
+    image = models.ImageField(upload_to='course_images/')
     duration = models.CharField(max_length=50)
     level = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -58,7 +58,7 @@ class Video(models.Model):
 class Quiz(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
-    image = models.URLField(max_length=500)
+    image = models.ImageField(upload_to='quiz_images/', blank=True, null=True)
     questions = models.IntegerField(default=0)
     time = models.CharField(max_length=50)
     difficulty = models.CharField(max_length=50)
@@ -91,28 +91,42 @@ class Notification(models.Model):
         ordering = ['-created_at']
 
 @receiver(post_save, sender=CourseSyllabus)
-def notify_syllabus_update(sender, instance, created, **kwargs):
-    if not created:  # Only for updates, not new modules
-        course = instance.course
-        enrollments = CourseEnrollment.objects.filter(course=course)
+def notify_syllabus_update(sender, instance, **kwargs):
+    course = instance.course
+    enrollments = CourseEnrollment.objects.filter(course=course)
+    
+    # Create notification for all enrolled students
+    for enrollment in enrollments:
+        if kwargs.get('created'):
+            title = f"New Module Added to {course.title}"
+            message = f"A new module '{instance.title}' has been added to {course.title}."
+        else:
+            title = f"Course Syllabus Updated"
+            message = f"The syllabus for {course.title} has been updated. Module: {instance.title}"
         
-        for enrollment in enrollments:
-            Notification.objects.create(
-                user=enrollment.user,
-                title=f"Course Syllabus Updated",
-                message=f"The syllabus for {course.title} has been updated. Module: {instance.title}"
-            )
+        Notification.objects.create(
+            user=enrollment.user,
+            title=title,
+            message=message
+        )
 
 @receiver(post_save, sender=SyllabusItem)
-def notify_syllabus_item_update(sender, instance, created, **kwargs):
-    if not created:  # Only for updates, not new items
-        module = instance.module
-        course = module.course
-        enrollments = CourseEnrollment.objects.filter(course=course)
+def notify_syllabus_item_update(sender, instance, **kwargs):
+    module = instance.module
+    course = module.course
+    enrollments = CourseEnrollment.objects.filter(course=course)
+    
+    # Create notification for all enrolled students
+    for enrollment in enrollments:
+        if kwargs.get('created'):
+            title = f"New Content Added to {course.title}"
+            message = f"New content '{instance.title}' has been added to module '{module.title}' in {course.title}."
+        else:
+            title = f"Course Content Updated"
+            message = f"The content for {course.title} has been updated in module: {module.title}"
         
-        for enrollment in enrollments:
-            Notification.objects.create(
-                user=enrollment.user,
-                title=f"Course Content Updated",
-                message=f"The content for {course.title} has been updated in module: {module.title}"
-            )
+        Notification.objects.create(
+            user=enrollment.user,
+            title=title,
+            message=message
+        )
