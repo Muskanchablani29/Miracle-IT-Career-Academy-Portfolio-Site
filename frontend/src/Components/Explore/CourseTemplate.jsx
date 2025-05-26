@@ -42,6 +42,14 @@ const CourseTemplate = ({
 
     checkEnrollmentStatus();
   }, [courseId, user]);
+  
+  // Set first module as open by default when syllabus changes
+  useEffect(() => {
+    if (syllabus && syllabus.length > 0) {
+      const firstModuleId = syllabus[0].id || 1;
+      setOpenModules({ [firstModuleId]: true });
+    }
+  }, [syllabus]);
 
   const toggleModule = (moduleId) => {
     setOpenModules(prev => ({
@@ -100,25 +108,35 @@ const CourseTemplate = ({
       <div className="course-syllabus">
         <h2>Course Syllabus</h2>
         
-        {syllabus.map((module, index) => (
-          <div className="module" key={module.id || index}>
-            <div 
-              className="module-header" 
-              onClick={() => toggleModule(module.id || index + 1)}
-            >
-              <h3><span>{module.order || index + 1}</span>{module.title}</h3>
-              {openModules[module.id || index + 1] ? <FaChevronUp /> : <FaChevronDown />}
+        {syllabus.length > 0 ? (
+          syllabus.map((module, index) => (
+            <div className="module" key={module.id || index}>
+              <div 
+                className="module-header" 
+                onClick={() => toggleModule(module.id || index + 1)}
+              >
+                <h3><span>{module.order || index + 1}</span>{module.title}</h3>
+                {openModules[module.id || index + 1] ? <FaChevronUp /> : <FaChevronDown />}
+              </div>
+              <div className={`module-content ${openModules[module.id || index + 1] ? 'open' : ''}`}>
+                {module.items && module.items.length > 0 ? (
+                  module.items.map((item, itemIndex) => (
+                    <div className="module-item" key={item.id || itemIndex}>
+                      {item.title}
+                      {item.description && <p className="item-description">{item.description}</p>}
+                    </div>
+                  ))
+                ) : (
+                  <p className="no-items">No items in this module</p>
+                )}
+              </div>
             </div>
-            <div className={`module-content ${openModules[module.id || index + 1] ? 'open' : ''}`}>
-              {module.items && module.items.map((item, itemIndex) => (
-                <div className="module-item" key={item.id || itemIndex}>
-                  {item.title}
-                  {item.description && <p className="item-description">{item.description}</p>}
-                </div>
-              ))}
-            </div>
+          ))
+        ) : (
+          <div className="no-syllabus">
+            <p>No syllabus available for this course yet. Please check back later.</p>
           </div>
-        ))}
+        )}
       </div>
 
       <div className="course-technologies">

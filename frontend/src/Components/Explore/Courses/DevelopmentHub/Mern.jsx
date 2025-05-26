@@ -2,36 +2,36 @@ import React, { useState, useEffect } from 'react';
 import CourseTemplate from '../../CourseTemplate';
 import { FaReact, FaNodeJs, FaDatabase, FaServer } from 'react-icons/fa';
 import { SiExpress, SiMongodb } from 'react-icons/si';
-import { fetchCourseSyllabus } from '../../../../api';
+import { fetchCourseSyllabus, fetchCourseById } from '../../../../api';
 
 const Mern = () => {
   const [syllabus, setSyllabus] = useState([]);
+  const [courseData, setCourseData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // In a real app, you would fetch the course ID for MERN
-    // For now, we'll use a hardcoded course ID or create mock data
-    const loadSyllabus = async () => {
+    const loadCourseData = async () => {
       try {
-        // Try to fetch from API first
-        const courseId = 1; // Assuming MERN course has ID 1
-        const data = await fetchCourseSyllabus(courseId);
-        if (data && data.length > 0) {
-          setSyllabus(data);
-        } else {
-          // Fallback to mock data if API returns empty
-          setSyllabus(mockSyllabus);
-        }
+        setLoading(true);
+        // MERN course ID - update this with the actual ID from your database
+        const courseId = 1; 
+        
+        // Fetch both course details and syllabus in parallel
+        const [course, syllabusData] = await Promise.all([
+          fetchCourseById(courseId),
+          fetchCourseSyllabus(courseId)
+        ]);
+        
+        setCourseData(course);
+        setSyllabus(syllabusData);
+        setLoading(false);
       } catch (error) {
-        console.error('Error loading syllabus:', error);
-        // Fallback to mock data on error
-        setSyllabus(mockSyllabus);
-      } finally {
+        console.error('Error loading course data:', error);
         setLoading(false);
       }
     };
 
-    loadSyllabus();
+    loadCourseData();
   }, []);
 
   const technologies = [
@@ -78,115 +78,26 @@ const Mern = () => {
     'Develop a professional portfolio with real-world projects'
   ];
 
+  if (loading) {
+    return <div className="loading">Loading course data...</div>;
+  }
+
   return (
     <CourseTemplate
-      title="MERN Stack Development"
-      description="Master the complete MERN (MongoDB, Express, React, Node.js) stack and become a full-stack JavaScript developer. This comprehensive course covers everything from basics to advanced concepts with hands-on projects."
-      duration="12 Weeks"
-      internshipDuration="4 Weeks"
-      isCertified={true}
-      syllabus={loading ? [] : syllabus}
+      title={courseData?.title || "MERN Stack Development"}
+      description={courseData?.description || "Loading course description..."}
+      duration={courseData?.duration || "12 Weeks"}
+      internshipDuration={courseData?.internship_duration || "4 Weeks"}
+      isCertified={courseData?.is_certified || true}
+      syllabus={syllabus}
       technologies={technologies}
       learningOutcomes={learningOutcomes}
       placementAssistance={true}
-      courseId={1} // Assuming MERN course has ID 1
+      courseId={courseData?.id || 1}
     />
   );
 };
 
-// Mock syllabus data as fallback
-const mockSyllabus = [
-  {
-    id: 1,
-    title: 'Introduction to MERN Stack',
-    order: 1,
-    items: [
-      { id: 1, title: 'Overview of full-stack development' },
-      { id: 2, title: 'Understanding the MERN architecture' },
-      { id: 3, title: 'Setting up development environment' },
-      { id: 4, title: 'Introduction to JavaScript ES6+ features' },
-      { id: 5, title: 'Version control with Git and GitHub' }
-    ]
-  },
-  {
-    id: 2,
-    title: 'MongoDB & Database Design',
-    order: 2,
-    items: [
-      { id: 6, title: 'NoSQL vs SQL databases' },
-      { id: 7, title: 'MongoDB installation and setup' },
-      { id: 8, title: 'CRUD operations in MongoDB' },
-      { id: 9, title: 'Schema design and data modeling' },
-      { id: 10, title: 'Indexing and performance optimization' },
-      { id: 11, title: 'MongoDB Atlas cloud setup' }
-    ]
-  },
-  {
-    id: 3,
-    title: 'Express.js & Backend Development',
-    order: 3,
-    items: [
-      { id: 12, title: 'Introduction to Node.js and NPM' },
-      { id: 13, title: 'Creating RESTful APIs with Express' },
-      { id: 14, title: 'Middleware implementation' },
-      { id: 15, title: 'Error handling and validation' },
-      { id: 16, title: 'Authentication and authorization (JWT)' },
-      { id: 17, title: 'API testing with Postman' }
-    ]
-  },
-  {
-    id: 4,
-    title: 'React.js Frontend Development',
-    order: 4,
-    items: [
-      { id: 18, title: 'React fundamentals and JSX' },
-      { id: 19, title: 'Components, props, and state' },
-      { id: 20, title: 'Hooks and functional components' },
-      { id: 21, title: 'React Router for navigation' },
-      { id: 22, title: 'State management with Context API and Redux' },
-      { id: 23, title: 'Form handling and validation' },
-      { id: 24, title: 'Styling in React (CSS modules, styled-components)' }
-    ]
-  },
-  {
-    id: 5,
-    title: 'Full Stack Integration',
-    order: 5,
-    items: [
-      { id: 25, title: 'Connecting React frontend with Express backend' },
-      { id: 26, title: 'HTTP requests with Axios' },
-      { id: 27, title: 'Handling API responses and errors' },
-      { id: 28, title: 'Authentication flow implementation' },
-      { id: 29, title: 'File uploads and image handling' },
-      { id: 30, title: 'Real-time features with Socket.io' }
-    ]
-  },
-  {
-    id: 6,
-    title: 'Deployment & DevOps',
-    order: 6,
-    items: [
-      { id: 31, title: 'Environment configuration' },
-      { id: 32, title: 'Building for production' },
-      { id: 33, title: 'Deployment to Heroku, Netlify, and Vercel' },
-      { id: 34, title: 'CI/CD pipelines' },
-      { id: 35, title: 'Performance optimization' },
-      { id: 36, title: 'Monitoring and logging' }
-    ]
-  },
-  {
-    id: 7,
-    title: 'Capstone Project',
-    order: 7,
-    items: [
-      { id: 37, title: 'Project planning and requirements gathering' },
-      { id: 38, title: 'System design and architecture' },
-      { id: 39, title: 'Implementation of full-stack features' },
-      { id: 40, title: 'Testing and quality assurance' },
-      { id: 41, title: 'Deployment and presentation' },
-      { id: 42, title: 'Portfolio development' }
-    ]
-  }
-];
+
 
 export default Mern;

@@ -8,7 +8,7 @@ import {
   createSyllabusItem,
   updateSyllabusItem
 } from '../../api';
-import './SyllabusEditor.css';
+import '../Admin/SyllabusEditor.css';
 import { FaPlus, FaTrash, FaArrowUp, FaArrowDown, FaSave } from 'react-icons/fa';
 
 const SyllabusEditor = () => {
@@ -45,6 +45,7 @@ const SyllabusEditor = () => {
     id: `temp-${Date.now()}`,
     title: 'New Module',
     order: syllabus.length + 1,
+    course: courseId,
     items: [],
     isNew: true
   });
@@ -54,6 +55,7 @@ const SyllabusEditor = () => {
     title: 'New Item',
     description: '',
     order: syllabus[moduleIndex].items.length + 1,
+    module: syllabus[moduleIndex].id,
     isNew: true
   });
 
@@ -142,7 +144,6 @@ const SyllabusEditor = () => {
   const handleSave = async () => {
     try {
       setSaving(true);
-      console.log('Starting syllabus save process...');
       
       // Process each module
       for (const module of syllabus) {
@@ -150,66 +151,33 @@ const SyllabusEditor = () => {
         
         // Create or update module
         if (module.isNew) {
-          const moduleData = { 
-            title: module.title, 
-            order: module.order, 
-            course: parseInt(courseId) 
-          };
-          console.log('Creating new module with data:', moduleData);
-          const newModule = await createCourseSyllabus(moduleData);
-          console.log('New module created:', newModule);
+          const { title, order, course } = module;
+          const newModule = await createCourseSyllabus({ title, order, course });
           moduleId = newModule.id;
         } else {
-          const moduleData = { 
-            title: module.title, 
-            order: module.order,
-            course: parseInt(courseId)
-          };
-          console.log(`Updating module ${module.id} with data:`, moduleData);
-          await updateCourseSyllabus(module.id, moduleData);
+          const { title, order } = module;
+          await updateCourseSyllabus(module.id, { title, order });
         }
         
         // Process items for this module
         for (const item of module.items) {
           if (item.isNew) {
-            const itemData = { 
-              title: item.title, 
-              description: item.description || '', 
-              order: item.order, 
-              module: moduleId 
-            };
-            console.log('Creating new item with data:', itemData);
-            await createSyllabusItem(itemData);
+            const { title, description, order } = item;
+            await createSyllabusItem({ title, description, order, module: moduleId });
           } else {
-            const itemData = { 
-              title: item.title, 
-              description: item.description || '', 
-              order: item.order,
-              module: moduleId
-            };
-            console.log(`Updating item ${item.id} with data:`, itemData);
-            await updateSyllabusItem(item.id, itemData);
+            const { title, description, order } = item;
+            await updateSyllabusItem(item.id, { title, description, order });
           }
         }
       }
       
       setSaving(false);
       alert('Syllabus saved successfully!');
-      
-      // Navigate based on user role
-      const userRole = localStorage.getItem('role');
-      if (userRole === 'admin') {
-        navigate(`/admin/courses`);
-      } else if (userRole === 'faculty') {
-        navigate(`/faculty/courses`);
-      }
+      navigate(`/faculty/courses`);
     } catch (err) {
       setSaving(false);
       setError('Failed to save syllabus. Please try again.');
       console.error('Error saving syllabus:', err);
-      if (err.response) {
-        console.error('Error response:', err.response.data);
-      }
     }
   };
 

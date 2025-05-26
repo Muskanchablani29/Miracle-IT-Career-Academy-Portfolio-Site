@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { userAxiosInstance } from '../../api';
+import { Link } from 'react-router-dom';
 import '../Admin/ManageCourses.css';
-import { FaEdit, FaBook } from 'react-icons/fa';
+import { FaEdit, FaBook, FaPlus } from 'react-icons/fa';
 
 const FacultyManageCourses = () => {
   const [courses, setCourses] = useState([]);
@@ -143,7 +144,12 @@ const FacultyManageCourses = () => {
 
       {!selectedCourse ? (
         <div className="courses-list">
-          <h2>Available Courses</h2>
+          <div className="courses-header">
+            <h2>Available Courses</h2>
+            <Link to="/faculty/courses/new" className="add-course-btn">
+              <FaPlus /> Add New Course
+            </Link>
+          </div>
           <table className="courses-table">
             <thead>
               <tr>
@@ -160,12 +166,19 @@ const FacultyManageCourses = () => {
                   <td>{course.level}</td>
                   <td>{course.duration}</td>
                   <td className="actions">
+                    <Link 
+                      to={`/faculty/courses/${course.id}/syllabus`}
+                      className="action-btn syllabus-btn"
+                      title="Edit Syllabus"
+                    >
+                      <FaBook />
+                    </Link>
                     <button 
                       className="action-btn syllabus-btn"
                       onClick={() => handleCourseSelect(course)}
                       title="Manage Syllabus"
                     >
-                      <FaBook />
+                      <FaEdit />
                     </button>
                   </td>
                 </tr>

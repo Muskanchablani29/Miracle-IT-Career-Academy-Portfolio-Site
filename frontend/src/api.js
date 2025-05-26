@@ -13,8 +13,32 @@ const userAxiosInstance = axios.create({
   },
 });
 
+// Admin axios instance for admin-specific operations
+const adminAxiosInstance = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Cache-Control': 'no-cache',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+  },
+});
+
 // Add a request interceptor to include Authorization header if access token is available
 userAxiosInstance.interceptors.request.use(
+  config => {
+    const token = localStorage.getItem('access');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  error => {
+    return Promise.reject(error);
+  }
+);
+
+// Add the same interceptor to the admin instance
+adminAxiosInstance.interceptors.request.use(
   config => {
     const token = localStorage.getItem('access');
     if (token) {
@@ -62,6 +86,7 @@ userAxiosInstance.interceptors.response.use(
 
           // Update the authorization header for all future requests
           userAxiosInstance.defaults.headers.common['Authorization'] = `Bearer ${response.data.access}`;
+          adminAxiosInstance.defaults.headers.common['Authorization'] = `Bearer ${response.data.access}`;
           
           // Update the failed request with the new token and retry it
           originalRequest.headers['Authorization'] = `Bearer ${response.data.access}`;
@@ -76,6 +101,60 @@ userAxiosInstance.interceptors.response.use(
         
         // You might want to redirect to login page here
         // window.location.href = '/login';
+        
+        return Promise.reject(refreshError);
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+// Add the same response interceptor to the admin instance
+adminAxiosInstance.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Check if error is due to an expired token
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+      console.log('401 error detected, attempting token refresh');
+      originalRequest._retry = true;
+
+      try {
+        const refreshToken = localStorage.getItem('refresh');
+        if (!refreshToken) {
+          console.log('No refresh token available, redirecting to login');
+          return Promise.reject(error);
+        }
+
+        // Try to get a new token
+        const response = await axios.post(`${API_URL}token/refresh/`, {
+          refresh: refreshToken
+        });
+
+        if (response.status === 200) {
+          console.log('Token refresh successful');
+          
+          // Store the new access token
+          localStorage.setItem('access', response.data.access);
+
+          // Update the authorization header for all future requests
+          userAxiosInstance.defaults.headers.common['Authorization'] = `Bearer ${response.data.access}`;
+          adminAxiosInstance.defaults.headers.common['Authorization'] = `Bearer ${response.data.access}`;
+          
+          // Update the failed request with the new token and retry it
+          originalRequest.headers['Authorization'] = `Bearer ${response.data.access}`;
+          return adminAxiosInstance(originalRequest);
+        }
+      } catch (refreshError) {
+        console.error('Token refresh failed:', refreshError);
+        
+        // Clear tokens from storage on refresh failure
+        localStorage.removeItem('access');
+        localStorage.removeItem('refresh');
         
         return Promise.reject(refreshError);
       }
@@ -141,6 +220,32 @@ export const fetchCourses = async () => {
   }
 };
 
+// Create a new course (admin and faculty only)
+export const createCourse = async (courseData) => {
+  try {
+    const response = await adminAxiosInstance.post('courses/create-course/', courseData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating course:', error);
+    throw error;
+  }
+};
+
+// Fetch latest courses for workshops page
+export const fetchLatestCourses = async () => {
+  try {
+    const response = await axios.get(`${API_URL}courses/latest-courses/`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching latest courses:', error);
+    throw error;
+  }
+};
+
 export const fetchCourseById = async (id) => {
   try {
     const response = await userAxiosInstance.get(`courses/courses/${id}/`);
@@ -186,7 +291,7 @@ export const fetchSyllabusItems = async (moduleId) => {
 // Create and update syllabus (for faculty and admin)
 export const createCourseSyllabus = async (syllabusData) => {
   try {
-    const response = await userAxiosInstance.post('courses/syllabus/', syllabusData);
+    const response = await adminAxiosInstance.post('courses/syllabus/', syllabusData);
     return response.data;
   } catch (error) {
     console.error('Error creating course syllabus:', error);
@@ -196,7 +301,7 @@ export const createCourseSyllabus = async (syllabusData) => {
 
 export const updateCourseSyllabus = async (moduleId, syllabusData) => {
   try {
-    const response = await userAxiosInstance.put(`courses/syllabus/${moduleId}/`, syllabusData);
+    const response = await adminAxiosInstance.put(`courses/syllabus/${moduleId}/`, syllabusData);
     return response.data;
   } catch (error) {
     console.error(`Error updating syllabus module ${moduleId}:`, error);
@@ -206,7 +311,7 @@ export const updateCourseSyllabus = async (moduleId, syllabusData) => {
 
 export const createSyllabusItem = async (itemData) => {
   try {
-    const response = await userAxiosInstance.post('courses/syllabus-items/', itemData);
+    const response = await adminAxiosInstance.post('courses/syllabus-items/', itemData);
     return response.data;
   } catch (error) {
     console.error('Error creating syllabus item:', error);
@@ -216,7 +321,7 @@ export const createSyllabusItem = async (itemData) => {
 
 export const updateSyllabusItem = async (itemId, itemData) => {
   try {
-    const response = await userAxiosInstance.put(`courses/syllabus-items/${itemId}/`, itemData);
+    const response = await adminAxiosInstance.put(`courses/syllabus-items/${itemId}/`, itemData);
     return response.data;
   } catch (error) {
     console.error(`Error updating syllabus item ${itemId}:`, error);
@@ -253,6 +358,17 @@ export const fetchUserNotifications = async () => {
     return response.data.notifications;
   } catch (error) {
     console.error('Error fetching notifications:', error);
+    throw error;
+  }
+};
+
+// Fetch course update notifications
+export const fetchCourseUpdateNotifications = async () => {
+  try {
+    const response = await userAxiosInstance.get('courses/notifications/course_updates/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching course update notifications:', error);
     throw error;
   }
 };
@@ -300,4 +416,4 @@ export const fetchQuizzes = async () => {
   }
 };
 
-export { userAxiosInstance };
+export { userAxiosInstance, adminAxiosInstance };

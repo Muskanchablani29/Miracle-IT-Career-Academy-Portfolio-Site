@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useRef } from 'react';
-import { userAxiosInstance } from '../api';
+import { userAxiosInstance, adminAxiosInstance } from '../api';
 
 export const UserContext = createContext(null);
 
@@ -38,6 +38,9 @@ export const UserProvider = ({ children }) => {
           if (fetchedRole && fetchedRole !== role) {
             localStorage.setItem('role', fetchedRole);
           }
+          
+          // Update adminAxiosInstance with the token
+          adminAxiosInstance.defaults.headers.common['Authorization'] = `Bearer ${access}`;
           
           if (isMounted) {
             setUser({ role: fetchedRole || role, username });

@@ -98,7 +98,7 @@
 .sidebar-menu-explore li a:hover {
   background-color: rgba(255, 255, 255, 0.9);
   color: #007bff;
-  transform: translateX(3px);
+  /* transform: translateX(3px); */
   border-left: 3px solid #007bff;
 }
 
@@ -262,8 +262,4 @@
   animation: fadeIn 0.5s ease forwards;
   animation-delay: calc(0.05s * var(--animation-order, 0));
   opacity: 0;
-}
-
-.sidebar-menu li.active a, .category-menu li.active a {
-  animation: pulse 2s infinite;
 }

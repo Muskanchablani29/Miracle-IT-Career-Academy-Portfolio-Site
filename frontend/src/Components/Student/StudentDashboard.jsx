@@ -1,11 +1,38 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { UserContext } from '../UserContext'
 import './StudentDashboard.css'
-import { FaSearch } from 'react-icons/fa'
+import { FaSearch, FaBell, FaBook } from 'react-icons/fa'
+import { fetchCourseUpdateNotifications, getUserEnrollments } from '../../api'
 
 export default function StudentDashboard() {
   const { user } = useContext(UserContext);
   const [courseSearchQuery, setCourseSearchQuery] = useState('');
+  const [notifications, setNotifications] = useState([]);
+  const [enrollments, setEnrollments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        // Fetch both notifications and enrollments
+        const [notificationsData, enrollmentsData] = await Promise.all([
+          fetchCourseUpdateNotifications(),
+          getUserEnrollments()
+        ]);
+        
+        setNotifications(notificationsData);
+        setEnrollments(enrollmentsData);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
   
   const handleCourseSearch = (e) => {
     setCourseSearchQuery(e.target.value);
@@ -44,7 +71,7 @@ export default function StudentDashboard() {
       <div className="dashboard-stats">
         <div className="stat-card">
           <h3>Enrolled Courses</h3>
-          <p className="stat-number">3</p>
+          <p className="stat-number">{enrollments.length || 0}</p>
         </div>
         <div className="stat-card">
           <h3>Completed Assignments</h3>
@@ -56,35 +83,56 @@ export default function StudentDashboard() {
         </div>
       </div>
       
+      {/* Course Update Notifications */}
+      <div className="course-notifications">
+        <div className="section-header">
+          <h3><FaBell /> Course Updates</h3>
+          <Link to="/student/notifications" className="view-all-link">View All</Link>
+        </div>
+        
+        <div className="notifications-preview">
+          {loading ? (
+            <p>Loading notifications...</p>
+          ) : notifications.length > 0 ? (
+            notifications.slice(0, 3).map(notification => (
+              <div key={notification.id} className={`notification-item ${notification.is_read ? 'read' : 'unread'}`}>
+                <FaBook className="notification-icon" />
+                <div className="notification-content">
+                  <h4>{notification.title}</h4>
+                  <p>{notification.message}</p>
+                  <span className="notification-time">
+                    {new Date(notification.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p>No course updates available.</p>
+          )}
+        </div>
+      </div>
+      
       <div className="my-courses">
         <h3>My Courses</h3>
         <div className="course-list">
-          <div className="course-card">
-            <h4>Web Development Fundamentals</h4>
-            <div className="progress-bar">
-              <div className="progress" style={{width: '75%'}}></div>
-            </div>
-            <p className="progress-text">75% Complete</p>
-            <button className="continue-btn">Continue</button>
-          </div>
-          
-          <div className="course-card">
-            <h4>Data Structures & Algorithms</h4>
-            <div className="progress-bar">
-              <div className="progress" style={{width: '45%'}}></div>
-            </div>
-            <p className="progress-text">45% Complete</p>
-            <button className="continue-btn">Continue</button>
-          </div>
-          
-          <div className="course-card">
-            <h4>Machine Learning Basics</h4>
-            <div className="progress-bar">
-              <div className="progress" style={{width: '20%'}}></div>
-            </div>
-            <p className="progress-text">20% Complete</p>
-            <button className="continue-btn">Continue</button>
-          </div>
+          {loading ? (
+            <p>Loading courses...</p>
+          ) : enrollments.length > 0 ? (
+            enrollments.map(enrollment => (
+              <div className="course-card" key={enrollment.id}>
+                <h4>{enrollment.course_title}</h4>
+                <div className="progress-bar">
+                  <div className="progress" style={{width: '50%'}}></div>
+                </div>
+                <p className="progress-text">50% Complete</p>
+                <Link to={`/student/courses/${enrollment.course}`} className="continue-btn">
+                  Continue
+                </Link>
+              </div>
+            ))
+          ) : (
+            <p>You are not enrolled in any courses yet.</p>
+          )}
         </div>
       </div>
     </div>
