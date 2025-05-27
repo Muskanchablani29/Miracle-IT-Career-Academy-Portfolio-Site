@@ -6,6 +6,10 @@ import Workshops from './Workshops';
 import Quizzes from './Quizzes';
 import CourseDetail from './CourseDetail';
 import CoursesMain from './CoursesMain';
+import ExploreIntro from './ExploreIntro';
+import CategorySlider from './CategorySlider';
+import EnrollmentSteps from './EnrollmentSteps';
+import CourseCategories from './CourseCategories';
 import './Explore.css';
 import './course-container.css';
 import { fetchCourses } from '../../api';
@@ -136,29 +140,17 @@ const CoursesList = () => {
 
   return (
     <div className="courses-list">
-      <h2>Available Courses</h2>
-      <div className="courses-grid">
-        {courses.length > 0 ? (
-          courses.map((course) => (
-            <div className="course-card" key={course.id}>
-              <div className="course-image">
-                <img src={course.image || '/placeholder-course.jpg'} alt={course.title} />
-              </div>
-              <div className="course-details">
-                <h3>{course.title}</h3>
-                <p>{course.description?.substring(0, 150)}...</p>
-                <div className="course-meta">
-                  <span>{course.duration}</span>
-                  <span>{course.level}</span>
-                </div>
-                <Link to={`/explore/course/${course.id}`} className="enroll-btn">View Course</Link>
-              </div>
-            </div>
-          ))
-        ) : (
-          <p>No courses available at the moment.</p>
-        )}
-      </div>
+      {/* New Intro Section with Animation/Background */}
+      <ExploreIntro />
+      
+      {/* Category Slider */}
+      <CategorySlider />
+      
+      {/* Enrollment Steps with Animation */}
+      <EnrollmentSteps />
+      
+      {/* Categorized Course Cards */}
+      <CourseCategories courses={courses} />
     </div>
   );
 };
