@@ -22,6 +22,7 @@ import FeeTracking from './Components/Admin/FeeTracking';
 import AdminCertificates from './Components/Admin/Certificates';
 import SystemSettings from './Components/Admin/SystemSettings';
 import AddCourse from './Components/Admin/AddCourse';
+import AddWorkshop from './Components/Admin/AddWorkshop';
 
 // Faculty components
 import ManageCourses from './Components/Faculty/ManageCourses';
@@ -87,7 +88,8 @@ function App() {
             <Route path="/admin" element={<AuthLayout requiredRole="admin" />}>
               <Route index element={<AdminDashboard />} />
               <Route path="courses" element={<CourseManagement />} />
-              <Route path="courses/new" element={<AddCourse />} />
+              <Route path="add-course" element={<AddCourse />} />
+              <Route path="add-workshop" element={<AddWorkshop />} />
               <Route path="courses/:courseId/syllabus" element={<SyllabusEditor />} />
               <Route path="users" element={<UserManagement />} />
               <Route path="attendance" element={<AttendanceLogs />} />
@@ -100,7 +102,8 @@ function App() {
             <Route path="/faculty" element={<AuthLayout requiredRole="faculty" />}>
               <Route index element={<FacultyDashboard />} />
               <Route path="courses" element={<ManageCourses />} />
-              <Route path="courses/new" element={<AddCourse />} />
+              <Route path="add-course" element={<AddCourse />} />
+              <Route path="add-workshop" element={<AddWorkshop />} />
               <Route path="courses/:courseId/syllabus" element={<SyllabusEditor />} />
               <Route path="attendance" element={<FacultyStudentAttendance />} />
               <Route path="gradebook" element={<Gradebook />} />

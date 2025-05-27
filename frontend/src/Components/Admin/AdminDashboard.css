@@ -5,6 +5,37 @@
   font-size: 1.8rem;
 }
 
+.quick-actions {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.action-button:hover {
+  background-color: #3a7bc8;
+}
+
+.action-icon {
+  font-size: 1.2rem;
+}
+
 .stats-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));

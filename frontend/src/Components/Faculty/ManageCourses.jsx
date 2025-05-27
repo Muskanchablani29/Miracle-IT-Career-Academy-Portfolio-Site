@@ -146,7 +146,7 @@ const FacultyManageCourses = () => {
         <div className="courses-list">
           <div className="courses-header">
             <h2>Available Courses</h2>
-            <Link to="/faculty/courses/new" className="add-course-btn">
+            <Link to="/faculty/add-course" className="add-course-btn">
               <FaPlus /> Add New Course
             </Link>
           </div>

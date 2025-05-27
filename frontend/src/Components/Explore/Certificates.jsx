@@ -1,16 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import './certificate-page.css';
 import { motion } from 'framer-motion';
+import { fetchCertificates } from '../../api';
 
 const Certificates = () => {
   const [loading, setLoading] = useState(true);
   const [previewCertificate, setPreviewCertificate] = useState(null);
+  const [certificates, setCertificates] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Simulate loading time
-    setTimeout(() => {
-      setLoading(false);
-    }, 1500);
+    const loadCertificates = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchCertificates();
+        setCertificates(data);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error loading certificates:', err);
+        setError('Failed to load certificates. Please try again later.');
+        setLoading(false);
+      }
+    };
+
+    loadCertificates();
 
     // Animation for elements when they come into view
     const observer = new IntersectionObserver((entries) => {
@@ -25,11 +38,15 @@ const Certificates = () => {
     const faqItems = document.querySelectorAll('.faq-item');
     faqItems.forEach(item => {
       const question = item.querySelector('.faq-question');
-      question.addEventListener('click', () => {
-        item.classList.toggle('active');
-        const toggle = item.querySelector('.faq-toggle');
-        toggle.textContent = item.classList.contains('active') ? '−' : '+';
-      });
+      if (question) {
+        question.addEventListener('click', () => {
+          item.classList.toggle('active');
+          const toggle = item.querySelector('.faq-toggle');
+          if (toggle) {
+            toggle.textContent = item.classList.contains('active') ? '−' : '+';
+          }
+        });
+      }
     });
 
     document.querySelectorAll('.animate-on-scroll').forEach(el => {

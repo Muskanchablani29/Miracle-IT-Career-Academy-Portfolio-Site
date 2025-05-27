@@ -1,10 +1,23 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
   return (
     <div className="dashboard-content">
       <h1>Admin Dashboard</h1>
+      
+      <div className="quick-actions">
+        <Link to="/admin/add-course" className="action-button">
+          <span className="action-icon">📚</span>
+          <span>Add New Course</span>
+        </Link>
+        <Link to="/admin/add-workshop" className="action-button">
+          <span className="action-icon">🔧</span>
+          <span>Add New Workshop</span>
+        </Link>
+      </div>
+      
       <div className="stats-container">
         <div className="stat-card">
           <h3>Total Students</h3>

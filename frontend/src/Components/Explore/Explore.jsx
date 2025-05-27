@@ -38,6 +38,20 @@ import PGDDA from './Courses/Job-linked/PGDDA';
 import AIML from './Courses/Job-linked/AIML';
 
 const Explore = () => {
+  const location = useLocation();
+  const [activeCategory, setActiveCategory] = useState(null);
+  
+  useEffect(() => {
+    // Extract category from URL path
+    const path = location.pathname;
+    if (path.includes('/courses/')) {
+      const category = path.split('/courses/')[1];
+      setActiveCategory(category);
+    } else {
+      setActiveCategory(null);
+    }
+  }, [location]);
+
   return (
     <div className="explore-container">
       <div className="sidebar-wrapper">
@@ -77,6 +91,9 @@ const Explore = () => {
           <Route path="courses/pgdfe" element={<PGDFE />} />
           <Route path="courses/pgdda" element={<PGDDA />} />
           <Route path="courses/aiml-advance-diploma" element={<AIML />} />
+          
+          {/* Category-based course listing */}
+          <Route path="courses/category/:category" element={<CategoryCourses />} />
           
           {/* Fallback for other course routes */}
           <Route path="courses/*" element={<CoursesMain />} />
@@ -125,11 +142,11 @@ const CoursesList = () => {
           courses.map((course) => (
             <div className="course-card" key={course.id}>
               <div className="course-image">
-                <img src={course.image} alt={course.title} />
+                <img src={course.image || '/placeholder-course.jpg'} alt={course.title} />
               </div>
               <div className="course-details">
                 <h3>{course.title}</h3>
-                <p>{course.description}</p>
+                <p>{course.description?.substring(0, 150)}...</p>
                 <div className="course-meta">
                   <span>{course.duration}</span>
                   <span>{course.level}</span>
@@ -153,17 +170,44 @@ const CategoryCourses = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [categoryName, setCategoryName] = useState('');
 
   useEffect(() => {
     const getCoursesByCategory = async () => {
       try {
         setLoading(true);
-        // In a real app, you would filter courses by category
+        // Get all courses and filter by category
         const data = await fetchCourses();
-        // Simulating category filtering
+        
+        // Map URL category to backend category field
+        let categoryField;
+        switch(category) {
+          case 'development-hub':
+            categoryField = 'development';
+            setCategoryName('Development Hub');
+            break;
+          case 'ai-ml-track':
+            categoryField = 'ai_ml';
+            setCategoryName('AI & ML Track');
+            break;
+          case 'cloud-computing':
+            categoryField = 'cloud';
+            setCategoryName('Cloud Computing');
+            break;
+          case 'job-linked':
+            categoryField = 'job_linked';
+            setCategoryName('Job-Linked Programs');
+            break;
+          default:
+            categoryField = category;
+            setCategoryName(formatCategoryName(category));
+        }
+        
+        // Filter courses by category
         const filteredCourses = data.filter(course => 
-          course.category?.toLowerCase() === category.toLowerCase()
+          course.category?.toLowerCase() === categoryField.toLowerCase()
         );
+        
         setCourses(filteredCourses);
         setLoading(false);
       } catch (err) {
@@ -193,17 +237,17 @@ const CategoryCourses = () => {
 
   return (
     <div className="courses-list">
-      <h2>{formatCategoryName(category)} Courses</h2>
+      <h2>{categoryName} Courses</h2>
       <div className="courses-grid">
         {courses.length > 0 ? (
           courses.map((course) => (
             <div className="course-card" key={course.id}>
               <div className="course-image">
-                <img src={course.image} alt={course.title} />
+                <img src={course.image || '/placeholder-course.jpg'} alt={course.title} />
               </div>
               <div className="course-details">
                 <h3>{course.title}</h3>
-                <p>{course.description}</p>
+                <p>{course.description?.substring(0, 150)}...</p>
                 <div className="course-meta">
                   <span>{course.duration}</span>
                   <span>{course.level}</span>

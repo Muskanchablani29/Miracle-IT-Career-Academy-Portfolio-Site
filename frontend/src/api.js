@@ -211,7 +211,7 @@ export const createStudentAccount = async (studentData) => {
 // Courses API - Public endpoint that doesn't require authentication
 export const fetchCourses = async () => {
   try {
-    // Use axios directly instead of userAxiosInstance to avoid authentication requirements
+    // Use axios directly to avoid authentication requirements
     const response = await axios.get(`${API_URL}courses/courses/`);
     return response.data;
   } catch (error) {
@@ -238,7 +238,8 @@ export const createCourse = async (courseData) => {
 // Fetch latest courses for workshops page
 export const fetchLatestCourses = async () => {
   try {
-    const response = await axios.get(`${API_URL}courses/latest-courses/`);
+    // Use userAxiosInstance to include authentication headers
+    const response = await userAxiosInstance.get(`courses/latest-courses/`);
     return response.data;
   } catch (error) {
     console.error('Error fetching latest courses:', error);
@@ -248,7 +249,8 @@ export const fetchLatestCourses = async () => {
 
 export const fetchCourseById = async (id) => {
   try {
-    const response = await userAxiosInstance.get(`courses/courses/${id}/`);
+    // Use axios directly to avoid authentication requirements
+    const response = await axios.get(`${API_URL}courses/course/${id}/`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching course with id ${id}:`, error);
@@ -395,12 +397,29 @@ export const fetchCertificates = async () => {
 };
 
 // Workshops API
+
 export const fetchWorkshops = async () => {
   try {
-    const response = await userAxiosInstance.get('workshops/');
+    // Use axios directly to avoid authentication requirements
+    const response = await axios.get(`${API_URL}workshops/`);
     return response.data;
   } catch (error) {
     console.error('Error fetching workshops:', error);
+    throw error;
+  }
+};
+
+// Create a new workshop (admin and faculty only)
+export const createWorkshop = async (workshopData) => {
+  try {
+    const response = await adminAxiosInstance.post('users/workshops/', workshopData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating workshop:', error);
     throw error;
   }
 };

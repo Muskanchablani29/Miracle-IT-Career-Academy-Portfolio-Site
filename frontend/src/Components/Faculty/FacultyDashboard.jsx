@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import './FacultyDashboard.css';
 
 const FacultyDashboard = () => {
@@ -6,6 +7,17 @@ const FacultyDashboard = () => {
     <div className="dashboard-container">
       <h1>Faculty Dashboard</h1>
       <div className="dashboard-content">
+        <div className="quick-actions">
+          <Link to="/faculty/add-course" className="action-button">
+            <span className="action-icon">📚</span>
+            <span>Add New Course</span>
+          </Link>
+          <Link to="/faculty/add-workshop" className="action-button">
+            <span className="action-icon">🔧</span>
+            <span>Add New Workshop</span>
+          </Link>
+        </div>
+        
         <div className="stats-container">
           <div className="stat-card">
             <h3>My Courses</h3>
