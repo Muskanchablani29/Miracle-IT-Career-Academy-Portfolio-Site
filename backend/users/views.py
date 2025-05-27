@@ -274,6 +274,7 @@ class ListStudentView(generics.ListAPIView):
 class WorkshopViewSet(viewsets.ModelViewSet):
     queryset = Workshop.objects.all()
     serializer_class = WorkshopSerializer
+    permission_classes = [permissions.AllowAny]  # Allow public access for GET
 
 class CertificateViewSet(viewsets.ModelViewSet):
     queryset = Certificate.objects.all()

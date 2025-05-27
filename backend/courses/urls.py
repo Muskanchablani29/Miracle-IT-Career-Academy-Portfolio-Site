@@ -17,4 +17,5 @@ urlpatterns = [
     path('notifications/<int:notification_id>/read/', views.mark_notification_read, name='mark-notification-read'),
     path('latest-courses/', views.get_latest_courses, name='latest-courses'),
     path('create-course/', views.create_course, name='create-course'),
+    path('course/<int:course_id>/', views.get_course_by_id, name='get-course-by-id'),
 ]

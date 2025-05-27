@@ -181,12 +181,48 @@ def get_user_enrollments(request):
     serializer = CourseEnrollmentSerializer(enrollments, many=True)
     return Response(serializer.data)
 
+from rest_framework.permissions import AllowAny
+
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_latest_courses(request):
     """Get the latest courses added or updated"""
     courses = Course.objects.all().order_by('-created_at')[:5]
     serializer = CourseSerializer(courses, many=True)
     return Response(serializer.data)
+    
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_course_by_id(request, course_id):
+    """Get a specific course by ID"""
+    try:
+        course = Course.objects.get(id=course_id)
+        serializer = CourseDetailSerializer(course)
+        return Response(serializer.data)
+    except Course.DoesNotExist:
+        return Response({'error': 'Course not found'}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_course_by_id(request, course_id):
+    """Get a specific course by ID"""
+    try:
+        course = Course.objects.get(id=course_id)
+        serializer = CourseDetailSerializer(course)
+        return Response(serializer.data)
+    except Course.DoesNotExist:
+        return Response({'error': 'Course not found'}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_course_by_id(request, course_id):
+    """Get a specific course by ID"""
+    try:
+        course = Course.objects.get(id=course_id)
+        serializer = CourseDetailSerializer(course)
+        return Response(serializer.data)
+    except Course.DoesNotExist:
+        return Response({'error': 'Course not found'}, status=status.HTTP_404_NOT_FOUND)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

@@ -27,7 +27,7 @@ class Admin(models.Model):
 class Workshop(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
-    image = models.URLField(max_length=500)
+    image = models.ImageField(upload_to='workshop_images/', null=True, blank=True)
     date = models.CharField(max_length=100)
     location = models.CharField(max_length=200)
     available_seats = models.IntegerField(default=0)
