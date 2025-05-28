@@ -1,6 +1,6 @@
 .explore-intro {
   width: 100%;
-  height: 400px;
+  height: 500px;
   background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.5)), url('../Images/bg-image-explore.png');
   background-size: cover;
   background-position: center;
@@ -10,7 +10,19 @@
   margin-bottom: 40px;
   position: relative;
   overflow: hidden;
-  animation: gradientAnimation 10s ease infinite;
+}
+
+.animated-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, #0a2463, #3e92cc, #1e5f74, #4a306d);
+  background-size: 400% 400%;
+  opacity: 0.6;
+  animation: gradientAnimation 15s ease infinite;
+  z-index: -1;
 }
 
 @keyframes gradientAnimation {
@@ -26,32 +38,105 @@
 }
 
 .intro-content {
-  max-width: 800px;
+  max-width: 900px;
   text-align: center;
-  padding: 0 20px;
+  padding: 30px;
   color: #fff;
-  animation: fadeIn 1.5s ease-in-out;
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 15px;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.explore-intro h1 {
-  font-size: 3rem;
+.intro-title {
+  font-size: 3.5rem;
   margin-bottom: 20px;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  font-weight: 700;
+  background: linear-gradient(90deg, #ffffff, #e0e0e0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 1px;
 }
 
-.explore-intro p {
-  font-size: 1.2rem;
+.intro-description {
+  font-size: 1.3rem;
   line-height: 1.6;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  margin-bottom: 30px;
+  font-weight: 300;
+}
+
+.feature-highlights {
+  display: flex;
+  justify-content: space-around;
+  margin: 30px 0;
+  flex-wrap: wrap;
+}
+
+.feature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 15px;
+  transition: transform 0.3s ease;
+}
+
+.feature:hover {
+  transform: translateY(-5px);
+}
+
+.feature-icon {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.feature-text {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.explore-button {
+  background: linear-gradient(90deg, #3e92cc, #4a306d);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  font-size: 1.1rem;
+  border-radius: 30px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.explore-button:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(90deg, #4a306d, #3e92cc);
+}
+
+@media (max-width: 768px) {
+  .intro-title {
+    font-size: 2.5rem;
+  }
+  
+  .intro-description {
+    font-size: 1.1rem;
+  }
+  
+  .feature-highlights {
+    flex-direction: column;
+    gap: 20px;
+  }
 }
