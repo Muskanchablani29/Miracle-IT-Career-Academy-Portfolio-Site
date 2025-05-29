@@ -9,6 +9,7 @@ import CoursesMain from './CoursesMain';
 import ExploreIntro from './ExploreIntro';
 import CategorySlider from './CategorySlider';
 import EnrollmentSteps from './EnrollmentSteps';
+import ExploreCertificate from './ExploreCertificate';
 import CourseCategories from './CourseCategories';
 import './Explore.css';
 import './course-container.css';
@@ -148,6 +149,9 @@ const CoursesList = () => {
       
       {/* Enrollment Steps with Animation */}
       <EnrollmentSteps />
+      
+      {/* Certificate Section */}
+      <ExploreCertificate />
       
       {/* Categorized Course Cards */}
       <CourseCategories courses={courses} />

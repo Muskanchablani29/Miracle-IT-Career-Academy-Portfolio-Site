@@ -12,7 +12,7 @@
 }
 
 .navbar {
-background: rgba(255, 68, 0, 0.074);
+background: white;
 backdrop-filter: blur(10px);
 -webkit-backdrop-filter: blur(10px);
 padding: 1rem 2rem;
@@ -117,7 +117,9 @@ margin-right: 20px;
 
 .nav-left img {
 max-height: 55px;
-width: auto;
+width: 200px;
+margin-left: 20px;
+padding-bottom: 10px;
 }
 
 .logo-small {

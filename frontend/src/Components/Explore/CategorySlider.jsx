@@ -26,7 +26,9 @@ const CategorySlider = () => {
               className="category-item" 
               key={index}
             >
-              <span className="category-icon">{category.icon}</span>
+              <div className="category-icon-wrapper">
+                <span className="category-icon">{category.icon}</span>
+              </div>
               <span className="category-name">{category.name}</span>
             </Link>
           ))}
