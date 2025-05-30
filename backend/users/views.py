@@ -276,6 +276,18 @@ class WorkshopViewSet(viewsets.ModelViewSet):
     serializer_class = WorkshopSerializer
     permission_classes = [permissions.AllowAny]  # Allow public access for GET
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            self.perform_create(serializer)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            # Log the serializer errors for debugging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Workshop creation failed: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class CertificateViewSet(viewsets.ModelViewSet):
     queryset = Certificate.objects.all()
     serializer_class = CertificateSerializer

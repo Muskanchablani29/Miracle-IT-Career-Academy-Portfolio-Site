@@ -266,9 +266,11 @@ class StudentLoginSerializer(serializers.Serializer):
         return value
 
 class WorkshopSerializer(serializers.ModelSerializer):
+    date = serializers.CharField(required=True)  # explicitly mark date as required
+
     class Meta:
         model = Workshop
-        fields = ['id', 'title', 'description', 'image', 'date', 'location', 'available_seats']
+        fields = ['id', 'title', 'description', 'image', 'date', 'location', 'available_seats', 'category']
 
 class CertificateSerializer(serializers.ModelSerializer):
     class Meta:
