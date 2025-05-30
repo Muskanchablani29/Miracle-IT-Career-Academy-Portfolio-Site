@@ -397,7 +397,6 @@ export const fetchCertificates = async () => {
 };
 
 // Workshops API
-
 export const fetchWorkshops = async () => {
   try {
     // Use axios directly to avoid authentication requirements
@@ -412,7 +411,7 @@ export const fetchWorkshops = async () => {
 // Create a new workshop (admin and faculty only)
 export const createWorkshop = async (workshopData) => {
   try {
-    const response = await adminAxiosInstance.post('users/workshops/', workshopData, {
+    const response = await adminAxiosInstance.post('workshops/', workshopData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
