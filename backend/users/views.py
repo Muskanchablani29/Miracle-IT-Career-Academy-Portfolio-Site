@@ -1,10 +1,11 @@
 from rest_framework import generics, permissions, status, viewsets
-from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate
+from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate, WorkshopRegistration
 from .serializers import (
     RegisterSerializer, UserSerializer, CreateAdminSerializer, 
     CreateFacultySerializer, CreateStudentSerializer, StudentSerializer,
     FacultySerializer, AdminSerializer, StudentLoginSerializer,
-    WorkshopSerializer, CertificateSerializer, IntegratedDashboardSerializer
+    WorkshopSerializer, CertificateSerializer, IntegratedDashboardSerializer,
+    WorkshopRegistrationSerializer
 )
 from courses.models import Course, CourseSyllabus, SyllabusItem, Video, Quiz, CourseEnrollment, Notification
 from rest_framework.response import Response
@@ -287,6 +288,24 @@ class WorkshopViewSet(viewsets.ModelViewSet):
             logger = logging.getLogger(__name__)
             logger.error(f"Workshop creation failed: {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class WorkshopRegistrationViewSet(viewsets.ModelViewSet):
+    queryset = WorkshopRegistration.objects.all()
+    serializer_class = WorkshopRegistrationSerializer
+    
+    def get_permissions(self):
+        if self.action == 'create':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
+    
+    def list(self, request, *args, **kwargs):
+        # Only admin and faculty can list all registrations
+        if not request.user.is_authenticated or (request.user.role != 'admin' and request.user.role != 'faculty'):
+            return Response(
+                {"detail": "You do not have permission to view workshop registrations."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().list(request, *args, **kwargs)
 
 class CertificateViewSet(viewsets.ModelViewSet):
     queryset = Certificate.objects.all()

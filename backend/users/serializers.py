@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate
+from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate, WorkshopRegistration
 from django.contrib.auth.password_validation import validate_password
 from datetime import datetime
 from courses.models import Course, CourseSyllabus, SyllabusItem, Video, Quiz, CourseEnrollment, Notification
@@ -271,6 +271,38 @@ class WorkshopSerializer(serializers.ModelSerializer):
     class Meta:
         model = Workshop
         fields = ['id', 'title', 'description', 'image', 'date', 'location', 'available_seats', 'category']
+
+class WorkshopRegistrationSerializer(serializers.ModelSerializer):
+    workshop_id = serializers.IntegerField(write_only=True)
+    
+    class Meta:
+        model = WorkshopRegistration
+        fields = ['id', 'workshop_id', 'name', 'email', 'phone', 'education', 
+                  'experience_level', 'special_requirements', 'registration_date']
+        read_only_fields = ['id', 'registration_date']
+        
+    def create(self, validated_data):
+        workshop_id = validated_data.pop('workshop_id')
+        try:
+            workshop = Workshop.objects.get(id=workshop_id)
+        except Workshop.DoesNotExist:
+            raise serializers.ValidationError({"workshop_id": "Workshop not found"})
+            
+        # Check if seats are available
+        if workshop.available_seats <= 0:
+            raise serializers.ValidationError({"error": "No seats available for this workshop"})
+            
+        # Create registration
+        registration = WorkshopRegistration.objects.create(
+            workshop=workshop,
+            **validated_data
+        )
+        
+        # Decrease available seats
+        workshop.available_seats -= 1
+        workshop.save()
+        
+        return registration
 
 class CertificateSerializer(serializers.ModelSerializer):
     class Meta:

@@ -36,6 +36,25 @@ class Workshop(models.Model):
     def __str__(self):
         return self.title
 
+class WorkshopRegistration(models.Model):
+    EXPERIENCE_CHOICES = (
+        ('beginner', 'Beginner'),
+        ('intermediate', 'Intermediate'),
+        ('advanced', 'Advanced'),
+    )
+    
+    workshop = models.ForeignKey(Workshop, on_delete=models.CASCADE, related_name='registrations')
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    phone = models.CharField(max_length=20)
+    education = models.CharField(max_length=200, blank=True, null=True)
+    experience_level = models.CharField(max_length=20, choices=EXPERIENCE_CHOICES, default='beginner')
+    special_requirements = models.TextField(blank=True, null=True)
+    registration_date = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.name} - {self.workshop.title}"
+
 class Certificate(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
