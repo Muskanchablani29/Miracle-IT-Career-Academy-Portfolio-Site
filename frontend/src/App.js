@@ -25,6 +25,7 @@ import SystemSettings from './Components/Admin/SystemSettings';
 import AddCourse from './Components/Admin/AddCourse';
 import AddWorkshop from './Components/Admin/AddWorkshop';
 import WorkshopRegistrations from './Components/Admin/WorkshopRegistrations';
+import AdminRegisteredUsers from './Components/Admin/RegisteredUsers';
 
 // Faculty components
 import ManageCourses from './Components/Faculty/ManageCourses';
@@ -32,6 +33,7 @@ import FacultyStudentAttendance from './Components/Faculty/StudentAttendance';
 import Gradebook from './Components/Faculty/Gradebook';
 import FacultyAnnouncements from './Components/Faculty/FacultyAnnouncements';
 import StudentList from './Components/Faculty/StudentList';
+import FacultyRegisteredUsers from './Components/Faculty/RegisteredUsers';
 
 // Student components
 import StudentCourses from './Components/Student/StudentCourses';
@@ -99,6 +101,7 @@ function App() {
               <Route path="certificates" element={<AdminCertificates />} />
               <Route path="settings" element={<SystemSettings />} />
               <Route path="workshop-registrations" element={<WorkshopRegistrations />} />
+              <Route path="registered-users" element={<AdminRegisteredUsers />} />
             </Route>
             
             {/* Faculty routes */}
@@ -113,6 +116,7 @@ function App() {
               <Route path="announcements" element={<FacultyAnnouncements />} />
               <Route path="students" element={<StudentList />} />
               <Route path="workshop-registrations" element={<WorkshopRegistrations />} />
+              <Route path="registered-users" element={<FacultyRegisteredUsers />} />
             </Route>
             
             {/* Student routes */}

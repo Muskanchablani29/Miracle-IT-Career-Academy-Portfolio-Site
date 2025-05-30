@@ -437,10 +437,21 @@ export const registerForWorkshop = async (registrationData) => {
 // Fetch workshop registrations (admin and faculty only)
 export const fetchWorkshopRegistrations = async () => {
   try {
-    const response = await adminAxiosInstance.get('workshop-registrations/');
+    const response = await userAxiosInstance.get('workshop-registrations/');
     return response.data;
   } catch (error) {
     console.error('Error fetching workshop registrations:', error);
+    throw error;
+  }
+};
+
+// Fetch faculty workshop registrations
+export const fetchFacultyWorkshopRegistrations = async () => {
+  try {
+    const response = await userAxiosInstance.get('faculty/workshop-registrations/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching faculty workshop registrations:', error);
     throw error;
   }
 };

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FaChevronLeft, FaUser, FaEnvelope, FaPhone, FaGraduationCap } from 'react-icons/fa';
 import './WorkshopRegistration.css';
-import { fetchWorkshops, registerForWorkshop } from '../../api';
+import { fetchWorkshops, registerForWorkshop, userAxiosInstance } from '../../api';
 
 const WorkshopRegistration = () => {
   const { id } = useParams();
@@ -62,7 +62,10 @@ const WorkshopRegistration = () => {
       // Add workshop ID to the form data
       const registrationData = {
         ...formData,
-        workshop_id: parseInt(id)
+        workshop_id: parseInt(id),
+        status: 'pending',
+        workshop_title: workshop.title,
+        created_at: new Date().toISOString()
       };
 
       // Send registration data to backend

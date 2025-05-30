@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { UserContext } from '../UserContext';
 import { userAxiosInstance } from '../../api';
 import './FacultyDashboard.css';
-import Sidebar from './Sidebar';
 import { FaBook, FaUsers, FaCalendarAlt, FaGraduationCap, FaBullhorn, FaPlus } from 'react-icons/fa';
 
 const FacultyDashboard = () => {
@@ -34,7 +33,6 @@ const FacultyDashboard = () => {
   if (loading) {
     return (
       <div className="faculty-dashboard-container">
-        <Sidebar />
         <div className="dashboard-content">
           <div className="loading">Loading dashboard data...</div>
         </div>
@@ -44,7 +42,6 @@ const FacultyDashboard = () => {
 
   return (
     <div className="faculty-dashboard-container">
-      <Sidebar />
       <div className="dashboard-content">
         <div className="dashboard-header">
           <h1>Welcome, {user?.username || 'Faculty'}</h1>

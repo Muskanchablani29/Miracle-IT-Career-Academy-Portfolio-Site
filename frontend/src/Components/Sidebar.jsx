@@ -23,6 +23,7 @@ const Sidebar = () => {
         return [
           { to: '/admin', label: 'Dashboard', icon: <FaHome /> },
           { to: '/admin/users', label: 'User Management', icon: <FaUsers /> },
+          { to: '/admin/registered-users', label: 'Registered Users', icon: <FaUserCircle /> },
           { to: '/admin/courses', label: 'Course Management', icon: <FaBook /> },
           { to: '/admin/attendance', label: 'Attendance Logs', icon: <FaCalendarAlt /> },
           { to: '/admin/fees', label: 'Fee Tracking', icon: <FaMoneyBillWave /> },
@@ -37,6 +38,7 @@ const Sidebar = () => {
           { to: '/faculty/gradebook', label: 'Gradebook', icon: <FaClipboardList /> },
           { to: '/faculty/announcements', label: 'Faculty Announcements', icon: <FaBullhorn /> },
           { to: '/faculty/students', label: 'Student List', icon: <FaUserGraduate /> },
+          { to: '/faculty/registered-users', label: 'Registered Users', icon: <FaUserCircle /> },
         ];
       case 'student':
         return [

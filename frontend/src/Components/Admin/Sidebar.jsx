@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FaHome, FaBook, FaUsers, FaCalendarAlt, FaMoneyBillWave, FaCertificate, FaCog, FaPlus } from 'react-icons/fa';
+import { FaHome, FaBook, FaUsers, FaCalendarAlt, FaMoneyBillWave, FaCertificate, FaCog, FaPlus, FaUserCircle } from 'react-icons/fa';
 import './Sidebar.css';
 
 const Sidebar = () => {
@@ -45,6 +45,11 @@ const Sidebar = () => {
         <li className={isActive('/admin/users') ? 'active' : ''}>
           <Link to="/admin/users">
             <FaUsers className="icon" /> User Management
+          </Link>
+        </li>
+        <li className={isActive('/admin/registered-users') ? 'active' : ''}>
+          <Link to="/admin/registered-users">
+            <FaUserCircle className="icon" /> Registered Users
           </Link>
         </li>
         <li className={isActive('/admin/attendance') ? 'active' : ''}>
