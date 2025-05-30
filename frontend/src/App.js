@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import Navbar from './Components/Navbar';
 import Explore from './Components/Explore/Explore';
+import WorkshopDetails from './Components/Explore/WorkshopDetails';
 import { UserContext } from './Components/UserContext';
 import { userAxiosInstance, adminAxiosInstance } from './api';
 import AdminDashboard from './Components/Admin/AdminDashboard';
@@ -23,6 +24,7 @@ import AdminCertificates from './Components/Admin/Certificates';
 import SystemSettings from './Components/Admin/SystemSettings';
 import AddCourse from './Components/Admin/AddCourse';
 import AddWorkshop from './Components/Admin/AddWorkshop';
+import WorkshopRegistrations from './Components/Admin/WorkshopRegistrations';
 
 // Faculty components
 import ManageCourses from './Components/Faculty/ManageCourses';
@@ -96,6 +98,7 @@ function App() {
               <Route path="fees" element={<FeeTracking />} />
               <Route path="certificates" element={<AdminCertificates />} />
               <Route path="settings" element={<SystemSettings />} />
+              <Route path="workshop-registrations" element={<WorkshopRegistrations />} />
             </Route>
             
             {/* Faculty routes */}
@@ -109,6 +112,7 @@ function App() {
               <Route path="gradebook" element={<Gradebook />} />
               <Route path="announcements" element={<FacultyAnnouncements />} />
               <Route path="students" element={<StudentList />} />
+              <Route path="workshop-registrations" element={<WorkshopRegistrations />} />
             </Route>
             
             {/* Student routes */}

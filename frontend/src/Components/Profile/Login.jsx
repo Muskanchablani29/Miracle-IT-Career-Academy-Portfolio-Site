@@ -81,7 +81,7 @@ const Login = () => {
       } else {
         // Use a unique timestamp to prevent caching issues
         const timestamp = new Date().getTime();
-        res = await userAxiosInstance.post(`login/?_=${timestamp}`, {
+        res = await userAxiosInstance.post(`token/`, {
           username: credentials.username,
           password: credentials.password
         });

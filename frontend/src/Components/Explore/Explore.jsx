@@ -3,6 +3,8 @@ import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar-explore';
 import Certificates from './Certificates';
 import Workshops from './Workshops';
+import WorkshopDetails from './WorkshopDetails';
+import WorkshopRegistration from './WorkshopRegistration';
 import Quizzes from './Quizzes';
 import CourseDetail from './CourseDetail';
 import CoursesMain from './CoursesMain';
@@ -67,6 +69,8 @@ const Explore = () => {
           <Route index element={<CoursesList />} />
           <Route path="certificates" element={<Certificates />} />
           <Route path="workshops" element={<Workshops />} />
+          <Route path="workshops/:id" element={<WorkshopDetails />} />
+          <Route path="workshops/:id/register" element={<WorkshopRegistration />} />
           <Route path="quizzes" element={<Quizzes />} />
           <Route path="course/:courseId" element={<CourseDetail />} />
           

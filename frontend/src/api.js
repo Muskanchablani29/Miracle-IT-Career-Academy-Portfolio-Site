@@ -423,6 +423,28 @@ export const createWorkshop = async (workshopData) => {
   }
 };
 
+// Workshop Registration API
+export const registerForWorkshop = async (registrationData) => {
+  try {
+    const response = await axios.post(`${API_URL}workshop-registrations/`, registrationData);
+    return response.data;
+  } catch (error) {
+    console.error('Error registering for workshop:', error);
+    throw error;
+  }
+};
+
+// Fetch workshop registrations (admin and faculty only)
+export const fetchWorkshopRegistrations = async () => {
+  try {
+    const response = await adminAxiosInstance.get('workshop-registrations/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching workshop registrations:', error);
+    throw error;
+  }
+};
+
 // Quizzes API
 export const fetchQuizzes = async () => {
   try {

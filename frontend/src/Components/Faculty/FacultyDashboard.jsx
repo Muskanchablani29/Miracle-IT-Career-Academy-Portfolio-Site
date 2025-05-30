@@ -1,171 +1,174 @@
-import React from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { UserContext } from '../UserContext';
+import { userAxiosInstance } from '../../api';
 import './FacultyDashboard.css';
+import Sidebar from './Sidebar';
+import { FaBook, FaUsers, FaCalendarAlt, FaGraduationCap, FaBullhorn, FaPlus } from 'react-icons/fa';
 
 const FacultyDashboard = () => {
+  const { user } = useContext(UserContext);
+  const [dashboardData, setDashboardData] = useState({
+    courses: [],
+    students: [],
+    announcements: [],
+    upcomingClasses: []
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await userAxiosInstance.get('dashboard/');
+        setDashboardData(response.data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="faculty-dashboard-container">
+        <Sidebar />
+        <div className="dashboard-content">
+          <div className="loading">Loading dashboard data...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="dashboard-container">
-      <h1>Faculty Dashboard</h1>
+    <div className="faculty-dashboard-container">
+      <Sidebar />
       <div className="dashboard-content">
-        <div className="quick-actions">
-          <Link to="/faculty/add-course" className="action-button">
-            <span className="action-icon">📚</span>
-            <span>Add New Course</span>
-          </Link>
-          <Link to="/faculty/add-workshop" className="action-button">
-            <span className="action-icon">🔧</span>
-            <span>Add New Workshop</span>
-          </Link>
+        <div className="dashboard-header">
+          <h1>Welcome, {user?.username || 'Faculty'}</h1>
+          <p>Here's an overview of your teaching activities</p>
         </div>
-        
-        <div className="stats-container">
+
+        <div className="dashboard-stats">
           <div className="stat-card">
-            <h3>My Courses</h3>
-            <p className="stat-number">5</p>
-            <p className="stat-change">Active courses</p>
-          </div>
-          <div className="stat-card">
-            <h3>Total Students</h3>
-            <p className="stat-number">165</p>
-            <p className="stat-change">Across all courses</p>
-          </div>
-          <div className="stat-card">
-            <h3>Assignments</h3>
-            <p className="stat-number">12</p>
-            <p className="stat-change">8 pending review</p>
-          </div>
-          <div className="stat-card">
-            <h3>Average Attendance</h3>
-            <p className="stat-number">85%</p>
-            <p className="stat-change positive">+3% from last month</p>
-          </div>
-        </div>
-        
-        <div className="dashboard-row">
-          <div className="dashboard-column">
-            <div className="dashboard-card">
-              <h3>Upcoming Classes</h3>
-              <div className="class-list">
-                <div className="class-item">
-                  <div className="class-time">
-                    <p className="day">Today</p>
-                    <p className="time">10:00 AM</p>
-                  </div>
-                  <div className="class-info">
-                    <h4>Web Development</h4>
-                    <p>Introduction to React</p>
-                    <p className="class-students">45 students</p>
-                  </div>
-                  <button className="btn-primary">Start Class</button>
-                </div>
-                <div className="class-item">
-                  <div className="class-time">
-                    <p className="day">Today</p>
-                    <p className="time">02:00 PM</p>
-                  </div>
-                  <div className="class-info">
-                    <h4>Python Programming</h4>
-                    <p>Advanced Functions</p>
-                    <p className="class-students">38 students</p>
-                  </div>
-                  <button className="btn-primary">Start Class</button>
-                </div>
-                <div className="class-item">
-                  <div className="class-time">
-                    <p className="day">Tomorrow</p>
-                    <p className="time">11:00 AM</p>
-                  </div>
-                  <div className="class-info">
-                    <h4>Data Science</h4>
-                    <p>Data Visualization</p>
-                    <p className="class-students">32 students</p>
-                  </div>
-                  <button className="btn-secondary">Prepare</button>
-                </div>
-              </div>
+            <div className="stat-icon courses-icon">
+              <FaBook />
+            </div>
+            <div className="stat-details">
+              <h3>{dashboardData.courses?.length || 0}</h3>
+              <p>Active Courses</p>
             </div>
           </div>
-          
-          <div className="dashboard-column">
-            <div className="dashboard-card">
-              <h3>Recent Submissions</h3>
-              <div className="submission-list">
-                <div className="submission-item">
-                  <div className="submission-info">
-                    <h4>JavaScript Assignment</h4>
-                    <p>Submitted by: Rahul Sharma</p>
-                    <p className="submission-time">2 hours ago</p>
-                  </div>
-                  <button className="btn-secondary">Review</button>
-                </div>
-                <div className="submission-item">
-                  <div className="submission-info">
-                    <h4>Python Project</h4>
-                    <p>Submitted by: Priya Singh</p>
-                    <p className="submission-time">5 hours ago</p>
-                  </div>
-                  <button className="btn-secondary">Review</button>
-                </div>
-                <div className="submission-item">
-                  <div className="submission-info">
-                    <h4>Database Quiz</h4>
-                    <p>Submitted by: Amit Kumar</p>
-                    <p className="submission-time">1 day ago</p>
-                  </div>
-                  <button className="btn-secondary">Review</button>
-                </div>
-              </div>
+          <div className="stat-card">
+            <div className="stat-icon students-icon">
+              <FaUsers />
+            </div>
+            <div className="stat-details">
+              <h3>{dashboardData.students?.length || 0}</h3>
+              <p>Enrolled Students</p>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon classes-icon">
+              <FaCalendarAlt />
+            </div>
+            <div className="stat-details">
+              <h3>{dashboardData.upcomingClasses?.length || 0}</h3>
+              <p>Upcoming Classes</p>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon announcements-icon">
+              <FaBullhorn />
+            </div>
+            <div className="stat-details">
+              <h3>{dashboardData.announcements?.length || 0}</h3>
+              <p>Recent Announcements</p>
             </div>
           </div>
         </div>
-        
-        <div className="dashboard-card">
-          <h3>Course Performance</h3>
-          <div className="chart-container">
-            {/* Chart would be implemented with a library like Chart.js */}
-            <div className="mock-chart">
-              <div className="chart-bar" style={{ height: '85%', backgroundColor: '#4CAF50' }}>Web Dev</div>
-              <div className="chart-bar" style={{ height: '75%', backgroundColor: '#2196F3' }}>Python</div>
-              <div className="chart-bar" style={{ height: '65%', backgroundColor: '#FFC107' }}>Data Science</div>
-              <div className="chart-bar" style={{ height: '80%', backgroundColor: '#9C27B0' }}>AI/ML</div>
-              <div className="chart-bar" style={{ height: '70%', backgroundColor: '#F44336' }}>Cloud</div>
-            </div>
-          </div>
-          <div className="chart-legend">
-            <div className="legend-item">
-              <span className="legend-color" style={{ backgroundColor: '#4CAF50' }}></span>
-              <span>Average Grade</span>
-            </div>
-            <div className="legend-item">
-              <span className="legend-color" style={{ backgroundColor: '#2196F3' }}></span>
-              <span>Attendance</span>
-            </div>
-            <div className="legend-item">
-              <span className="legend-color" style={{ backgroundColor: '#FFC107' }}></span>
-              <span>Completion Rate</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="quick-actions">
-          <h3>Quick Actions</h3>
-          <div className="action-buttons-container">
-            <button className="action-button">
-              <span className="action-icon">📝</span>
-              <span>Create Assignment</span>
-            </button>
-            <button className="action-button">
-              <span className="action-icon">📊</span>
+
+        <div className="dashboard-quick-actions">
+          <h2>Quick Actions</h2>
+          <div className="quick-actions-grid">
+            <Link to="/faculty/add-course" className="quick-action-card">
+              <FaPlus className="action-icon" />
+              <span>Add New Course</span>
+            </Link>
+            <Link to="/faculty/add-workshop" className="quick-action-card">
+              <FaPlus className="action-icon" />
+              <span>Add New Workshop</span>
+            </Link>
+            <Link to="/faculty/workshop-registrations" className="quick-action-card">
+              <FaUsers className="action-icon" />
+              <span>Workshop Registrations</span>
+            </Link>
+            <Link to="/faculty/attendance" className="quick-action-card">
+              <FaCalendarAlt className="action-icon" />
               <span>Take Attendance</span>
-            </button>
-            <button className="action-button">
-              <span className="action-icon">📢</span>
-              <span>Make Announcement</span>
-            </button>
-            <button className="action-button">
-              <span className="action-icon">📅</span>
-              <span>Schedule Class</span>
-            </button>
+            </Link>
+            <Link to="/faculty/gradebook" className="quick-action-card">
+              <FaGraduationCap className="action-icon" />
+              <span>Update Grades</span>
+            </Link>
+            <Link to="/faculty/announcements" className="quick-action-card">
+              <FaBullhorn className="action-icon" />
+              <span>Post Announcement</span>
+            </Link>
+          </div>
+        </div>
+
+        <div className="dashboard-sections">
+          <div className="dashboard-section">
+            <div className="section-header">
+              <h2>My Courses</h2>
+              <Link to="/faculty/courses" className="view-all">View All</Link>
+            </div>
+            <div className="courses-list">
+              {dashboardData.courses && dashboardData.courses.length > 0 ? (
+                dashboardData.courses.slice(0, 3).map(course => (
+                  <div className="course-card" key={course.id}>
+                    <div className="course-image">
+                      <img src={course.image || 'https://via.placeholder.com/150'} alt={course.title} />
+                    </div>
+                    <div className="course-details">
+                      <h3>{course.title}</h3>
+                      <p>{course.students_count || 0} students enrolled</p>
+                      <Link to={`/faculty/courses/${course.id}`} className="view-course-btn">Manage Course</Link>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="no-data-message">No courses available. <Link to="/faculty/add-course">Add a new course</Link>.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="dashboard-section">
+            <div className="section-header">
+              <h2>Upcoming Classes</h2>
+              <Link to="/faculty/attendance" className="view-all">View Schedule</Link>
+            </div>
+            <div className="upcoming-classes">
+              {dashboardData.upcomingClasses && dashboardData.upcomingClasses.length > 0 ? (
+                dashboardData.upcomingClasses.map(classItem => (
+                  <div className="class-card" key={classItem.id}>
+                    <div className="class-date">
+                      <span className="date-day">{new Date(classItem.date).getDate()}</span>
+                      <span className="date-month">{new Date(classItem.date).toLocaleString('default', { month: 'short' })}</span>
+                    </div>
+                    <div className="class-details">
+                      <h3>{classItem.course_title}</h3>
+                      <p>{classItem.time} • {classItem.location}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="no-data-message">No upcoming classes scheduled.</p>
+              )}
+            </div>
           </div>
         </div>
       </div>

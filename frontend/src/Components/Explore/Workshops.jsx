@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './components.css';
 import { fetchLatestCourses, fetchWorkshops } from '../../api';
 import { FaCalendarAlt, FaBook, FaClock, FaChalkboardTeacher, FaMapMarkerAlt, 
@@ -7,6 +7,7 @@ import { FaCalendarAlt, FaBook, FaClock, FaChalkboardTeacher, FaMapMarkerAlt,
          FaCode, FaDatabase, FaMobile, FaServer, FaCloud, FaFilter } from 'react-icons/fa';
 
 const Workshops = () => {
+  const navigate = useNavigate();
   const [workshopsList, setWorkshopsList] = useState([]);
   const [latestCourses, setLatestCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -430,8 +431,18 @@ const Workshops = () => {
                           </div>
                         </div>
                         <div className="workshop-actions">
-                          <button className="register-btn">Register Now</button>
-                          <button className="details-btn">View Details</button>
+                          <button 
+                            className="register-btn"
+                            onClick={() => navigate(`/explore/workshops/${workshop.id}/register`)}
+                          >
+                            Register Now
+                          </button>
+                          <button 
+                            className="details-btn"
+                            onClick={() => navigate(`/explore/workshops/${workshop.id}`)}
+                          >
+                            View Details
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -450,7 +461,12 @@ const Workshops = () => {
               <div className="workshops-grid">
                 {filteredPastWorkshops.length > 0 ? (
                   filteredPastWorkshops.map((workshop) => (
-                    <div className="workshop-card past-workshop-card" key={workshop.id}>
+                    <div 
+                      className="workshop-card past-workshop-card" 
+                      key={workshop.id}
+                      onClick={() => navigate(`/explore/workshops/${workshop.id}`)}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <div className="workshop-image">
                         <img 
                           src={workshop.image ? workshop.image : 'https://via.placeholder.com/300x200?text=Past+Workshop'} 
