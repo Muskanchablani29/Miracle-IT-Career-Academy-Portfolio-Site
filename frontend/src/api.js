@@ -208,6 +208,106 @@ export const createStudentAccount = async (studentData) => {
   }
 };
 
+// Enroll student in a course (faculty only)
+export const enrollStudentInCourse = async (enrollmentData) => {
+  try {
+    const response = await userAxiosInstance.post('enroll-student/', enrollmentData);
+    return response.data;
+  } catch (error) {
+    console.error('Error enrolling student in course:', error);
+    throw error;
+  }
+};
+
+// Delete a single student by ID
+export const deleteStudent = async (studentId) => {
+  try {
+    // Try the direct student endpoint
+    const response = await userAxiosInstance.delete(`students/${studentId}/`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error deleting student ${studentId}:`, error);
+    throw error;
+  }
+};
+
+// Batch APIs
+export const fetchBatches = async () => {
+  try {
+    const response = await userAxiosInstance.get('batches/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching batches:', error);
+    throw error;
+  }
+};
+
+export const createBatch = async (batchData) => {
+  try {
+    const response = await userAxiosInstance.post('batches/', batchData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating batch:', error);
+    throw error;
+  }
+};
+
+// Create batch for a specific course
+export const createCourseBatch = async (batchData) => {
+  try {
+    const response = await userAxiosInstance.post('course-batches/', batchData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating course batch:', error);
+    throw error;
+  }
+};
+
+export const updateBatch = async (batchId, batchData) => {
+  try {
+    const response = await userAxiosInstance.put(`batches/${batchId}/`, batchData);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating batch ${batchId}:`, error);
+    throw error;
+  }
+};
+
+export const deleteBatch = async (batchId) => {
+  try {
+    const response = await userAxiosInstance.delete(`batches/${batchId}/`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error deleting batch ${batchId}:`, error);
+    throw error;
+  }
+};
+
+// Student APIs with batch filter
+export const fetchStudents = async (batchId = null) => {
+  try {
+    let url = 'students/';
+    if (batchId) {
+      url += `?batch_id=${batchId}`;
+    }
+    const response = await userAxiosInstance.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching students:', error);
+    throw error;
+  }
+};
+
+export const updateStudent = async (studentId, studentData) => {
+  try {
+    const response = await userAxiosInstance.put(`students/${studentId}/`, studentData);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating student ${studentId}:`, error);
+    throw error;
+  }
+};
+
 // Courses API - Public endpoint that doesn't require authentication
 export const fetchCourses = async () => {
   try {
@@ -468,3 +568,47 @@ export const fetchQuizzes = async () => {
 };
 
 export { userAxiosInstance, adminAxiosInstance };
+
+// Fetch batches for a specific course
+export const fetchCourseSpecificBatches = async (courseId) => {
+  try {
+    const response = await userAxiosInstance.get(`course-batches/?course_id=${courseId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching batches for course ${courseId}:`, error);
+    throw error;
+  }
+};
+
+// Assign students to a specific batch
+export const assignStudentsToBatch = async (batchId, studentIds) => {
+  try {
+    const response = await userAxiosInstance.post(`batches/${batchId}/assign-students/`, {
+      student_ids: studentIds
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error assigning students to batch ${batchId}:`, error);
+    throw error;
+  }
+};
+// Fetch batches for a specific course
+export const fetchCourseSpecificBatches = async (courseId) => {
+  try {
+    const response = await userAxiosInstance.get(`batches/?course=${courseId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching batches for course ${courseId}:`, error);
+    throw error;
+  }
+};
+// Fetch batches for a specific course
+export const fetchCourseSpecificBatches = async (courseId) => {
+  try {
+    const response = await userAxiosInstance.get(`batches/?course=${courseId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching batches for course ${courseId}:`, error);
+    throw error;
+  }
+};

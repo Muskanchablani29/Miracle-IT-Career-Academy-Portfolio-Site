@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { createStudentAccount } from '../../api';
+import { createStudentAccount, userAxiosInstance, fetchBatches } from '../../api';
 import './StudentList.css';
 
 const CreateStudent = ({ onClose, onSuccess }) => {
@@ -7,15 +7,19 @@ const CreateStudent = ({ onClose, onSuccess }) => {
     username: '',
     email: '',
     enrollment_id: '',
-    date_of_birth: ''
+    date_of_birth: '',
+    course_id: '',
+    batch_id: '',
+    password: '' // No default password
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [courses, setCourses] = useState([]);
+  const [batches, setBatches] = useState([]);
+  const [loadingCourses, setLoadingCourses] = useState(false);
   const [nextEnrollmentId, setNextEnrollmentId] = useState(() => {
-    // Get the last used enrollment ID from localStorage or use default
     const savedId = localStorage.getItem('lastEnrollmentId');
     if (savedId) {
-      // Increment the saved ID by 1
       const currentNum = parseInt(savedId.replace('MIRA', ''));
       const nextNum = currentNum + 1;
       return `MIRA${nextNum.toString().padStart(4, '0')}`;
@@ -24,12 +28,34 @@ const CreateStudent = ({ onClose, onSuccess }) => {
   });
 
   useEffect(() => {
-    // Update form data with the enrollment ID
     setFormData(prev => ({
       ...prev,
       enrollment_id: nextEnrollmentId
     }));
+    fetchCourses();
+    fetchBatchList();
   }, [nextEnrollmentId]);
+
+  const fetchCourses = async () => {
+    try {
+      setLoadingCourses(true);
+      const response = await userAxiosInstance.get('courses/courses/');
+      setCourses(response.data);
+      setLoadingCourses(false);
+    } catch (err) {
+      console.error('Error fetching courses:', err);
+      setLoadingCourses(false);
+    }
+  };
+
+  const fetchBatchList = async () => {
+    try {
+      const data = await fetchBatches();
+      setBatches(data);
+    } catch (err) {
+      console.error('Error fetching batches:', err);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -43,38 +69,22 @@ const CreateStudent = ({ onClose, onSuccess }) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    
+
     try {
-      console.log('Submitting student data:', formData);
       const response = await createStudentAccount(formData);
-      console.log('Student creation response:', response);
-      setLoading(false);
-      
-      // Increment enrollment ID for next student
       const currentNum = parseInt(nextEnrollmentId.replace('MIRA', ''));
       const nextNum = currentNum + 1;
       const newEnrollmentId = `MIRA${nextNum.toString().padStart(4, '0')}`;
-      
-      // Save to localStorage for persistence
       localStorage.setItem('lastEnrollmentId', nextEnrollmentId);
       setNextEnrollmentId(newEnrollmentId);
-      
+      setLoading(false);
       onSuccess && onSuccess();
       onClose && onClose();
     } catch (err) {
       console.error('Student creation error:', err);
-      console.error('Error response:', err.response);
-      console.error('Error data:', err.response?.data);
       setLoading(false);
       setError(err.response?.data?.detail || err.message || 'Failed to create student account.');
     }
-  };
-
-  // Format date as DD/MM/YYYY for display
-  const formatDateForDisplay = (dateStr) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
   };
 
   return (
@@ -84,10 +94,10 @@ const CreateStudent = ({ onClose, onSuccess }) => {
           <h2>Create Student Account</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
-        
+
         <form onSubmit={handleSubmit}>
           {error && <div className="error-message">{error}</div>}
-          
+
           <div className="form-group">
             <label htmlFor="username">Full Name</label>
             <input
@@ -99,7 +109,7 @@ const CreateStudent = ({ onClose, onSuccess }) => {
               required
             />
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="email">Email</label>
             <input
@@ -111,7 +121,7 @@ const CreateStudent = ({ onClose, onSuccess }) => {
               required
             />
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="enrollment_id">Enrollment ID</label>
             <input
@@ -125,7 +135,7 @@ const CreateStudent = ({ onClose, onSuccess }) => {
             />
             <small className="form-hint">Auto-generated unique ID</small>
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="date_of_birth">Date of Birth</label>
             <input
@@ -136,12 +146,59 @@ const CreateStudent = ({ onClose, onSuccess }) => {
               onChange={handleChange}
               required
             />
-            <small className="form-hint">
-              Please enter the student's date of birth
+          </div>
 
+          <div className="form-group">
+            <label htmlFor="course_id">Enroll in Course</label>
+            <select
+              id="course_id"
+              name="course_id"
+              value={formData.course_id}
+              onChange={handleChange}
+              disabled={loadingCourses}
+            >
+              <option value="">-- Select a Course (Optional) --</option>
+              {courses.map(course => (
+                <option key={course.id} value={course.id}>
+                  {course.title}
+                </option>
+              ))}
+            </select>
+            <small className="form-hint">
+              Student will be automatically enrolled in this course
             </small>
           </div>
-          
+
+          <div className="form-group">
+            <label htmlFor="batchNumber">Batch Number</label>
+            <input
+              type="text"
+              id="batchNumber"
+              name="batchNumber"
+              value={formData.batch_id}
+              onChange={(e) => setFormData({...formData, batch_id: e.target.value})}
+              placeholder="Enter Batch Number"
+            />
+            <small className="form-hint">
+              Enter the batch number for the student
+            </small>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password">Password (Date of Birth)</label>
+            <input
+              type="text"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Enter date of birth as password"
+            />
+            <small className="form-hint">
+              Student will use this password (DOB) to login
+            </small>
+          </div>
+
           <div className="form-actions">
             <button 
               type="button" 

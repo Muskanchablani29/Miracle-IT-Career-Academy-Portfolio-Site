@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { userAxiosInstance } from '../../api';
 import './ManageCourses.css';
-import { FaPlus, FaEdit, FaTrash, FaBook } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaBook, FaUsers } from 'react-icons/fa';
+import CourseBatchCreation from '../Faculty/CourseBatchCreation';
 
 const ManageCourses = () => {
   const [courses, setCourses] = useState([]);
@@ -32,6 +33,8 @@ const ManageCourses = () => {
   const [activeTab, setActiveTab] = useState('courses');
   const [editingSyllabus, setEditingSyllabus] = useState(null);
   const [editingSyllabusItem, setEditingSyllabusItem] = useState(null);
+  const [showBatchModal, setShowBatchModal] = useState(false);
+  const [selectedCourseForBatch, setSelectedCourseForBatch] = useState(null);
 
   useEffect(() => {
     fetchCourses();
@@ -270,6 +273,16 @@ const ManageCourses = () => {
       module_id: moduleId
     });
   };
+  
+  const handleCreateBatch = (course) => {
+    setSelectedCourseForBatch(course);
+    setShowBatchModal(true);
+  };
+  
+  const handleBatchCreationSuccess = () => {
+    // Refresh course data if needed
+    fetchCourses();
+  };
 
   if (loading) {
     return <div className="loading">Loading courses...</div>;
@@ -282,6 +295,15 @@ const ManageCourses = () => {
   return (
     <div className="manage-courses-container">
       <h1>Manage Courses</h1>
+      
+      {showBatchModal && (
+        <CourseBatchCreation 
+          onClose={() => setShowBatchModal(false)}
+          onSuccess={handleBatchCreationSuccess}
+          courseId={selectedCourseForBatch?.id}
+          courseName={selectedCourseForBatch?.title}
+        />
+      )}
 
       {!selectedCourse ? (
         <>
@@ -309,6 +331,13 @@ const ManageCourses = () => {
                         title="Manage Syllabus"
                       >
                         <FaBook />
+                      </button>
+                      <button 
+                        className="action-btn batch-btn"
+                        onClick={() => handleCreateBatch(course)}
+                        title="Create Batch"
+                      >
+                        <FaUsers />
                       </button>
                       <button 
                         className="action-btn edit-btn"

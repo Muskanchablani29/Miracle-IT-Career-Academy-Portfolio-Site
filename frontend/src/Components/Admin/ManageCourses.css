@@ -408,3 +408,10 @@
     flex-wrap: wrap;
   }
 }
+.batch-btn {
+  color: #9C27B0;
+}
+
+.batch-btn:hover {
+  background-color: rgba(156, 39, 176, 0.1);
+}

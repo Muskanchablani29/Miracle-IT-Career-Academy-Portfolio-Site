@@ -10,9 +10,12 @@ const StudentList = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('all');
+  const [selectedBatch, setSelectedBatch] = useState('all');
+  const [batches, setBatches] = useState([]);
 
   useEffect(() => {
     fetchStudents();
+    fetchBatches();
   }, []);
   
   // Update localStorage with highest enrollment ID when students change
@@ -42,7 +45,10 @@ const StudentList = () => {
         email: student.user.email,
         enrollmentId: student.enrollment_id,
         dateOfBirth: student.date_of_birth,
-        course: 'Web Development', // This would come from your actual data
+        course: student.course ? student.course.title : 'Not Assigned',
+        courseId: student.course ? student.course.id : null,
+        batch: student.batch ? student.batch.name : 'Not Assigned',
+        batchId: student.batch ? student.batch.id : null,
         attendance: '95%',
         performance: 'A (90%)',
         status: 'Active'
@@ -53,6 +59,15 @@ const StudentList = () => {
       console.error('Error fetching students:', error);
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const fetchBatches = async () => {
+    try {
+      const response = await userAxiosInstance.get('batches/');
+      setBatches(response.data);
+    } catch (error) {
+      console.error('Error fetching batches:', error);
     }
   };
 
@@ -78,7 +93,8 @@ const StudentList = () => {
   };
 
   const filteredStudents = students.filter(student => {
-    if (selectedCourse !== 'all' && student.course !== selectedCourse) return false;
+    if (selectedCourse !== 'all' && student.courseId !== selectedCourse) return false;
+    if (selectedBatch !== 'all' && student.batchId !== selectedBatch) return false;
     
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
@@ -111,11 +127,30 @@ const StudentList = () => {
               onChange={(e) => setSelectedCourse(e.target.value)}
             >
               <option value="all">All Courses</option>
-              <option value="Web Development">Web Development</option>
-              <option value="Python Programming">Python Programming</option>
-              <option value="Data Science Fundamentals">Data Science Fundamentals</option>
-              <option value="Machine Learning Basics">Machine Learning Basics</option>
-              <option value="JavaScript Fundamentals">JavaScript Fundamentals</option>
+              {/* Dynamically generate course options from student data */}
+              {Array.from(new Set(students.map(s => s.courseId)))
+                .filter(id => id !== null)
+                .map(courseId => {
+                  const courseName = students.find(s => s.courseId === courseId)?.course;
+                  return (
+                    <option key={courseId} value={courseId}>
+                      {courseName}
+                    </option>
+                  );
+                })
+              }
+            </select>
+            <select 
+              className="filter-select"
+              value={selectedBatch}
+              onChange={(e) => setSelectedBatch(e.target.value)}
+            >
+              <option value="all">All Batches</option>
+              {batches.map(batch => (
+                <option key={batch.id} value={batch.id}>
+                  {batch.name}
+                </option>
+              ))}
             </select>
             <button className="btn-primary">Search</button>
           </div>
@@ -160,6 +195,7 @@ const StudentList = () => {
                 <th>Enrollment ID</th>
                 <th>Name</th>
                 <th>Course</th>
+                <th>Batch</th>
                 <th>Email</th>
                 <th>Date of Birth</th>
                 <th>Status</th>
@@ -169,11 +205,11 @@ const StudentList = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="loading-cell">Loading students...</td>
+                  <td colSpan="8" className="loading-cell">Loading students...</td>
                 </tr>
               ) : filteredStudents.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="empty-cell">No students found</td>
+                  <td colSpan="8" className="empty-cell">No students found</td>
                 </tr>
               ) : (
                 filteredStudents.map(student => (
@@ -181,6 +217,7 @@ const StudentList = () => {
                     <td>{student.enrollmentId}</td>
                     <td>{student.name}</td>
                     <td>{student.course}</td>
+                    <td>{student.batch}</td>
                     <td>{student.email}</td>
                     <td>{student.dateOfBirth}</td>
                     <td className={`status-${student.status.toLowerCase().replace(' ', '-')}`}>
