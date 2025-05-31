@@ -8,10 +8,22 @@ from .views import (
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
+from rest_framework.routers import DefaultRouter
+from .views import (
+    RegisterView, CustomTokenObtainPairView, ProfileView, CreateAdminView,
+    CreateFacultyView, CreateStudentView, ListFacultyView, ListStudentView,
+    WorkshopViewSet, CertificateViewSet, IntegratedDashboardView, StudentLoginView,
+    WorkshopRegistrationViewSet, BatchViewSet, StudentViewSet
+)
+from django.urls import path, include
+from rest_framework_simplejwt.views import TokenRefreshView
+
 router = DefaultRouter()
 router.register(r'workshops', WorkshopViewSet)
 router.register(r'certificates', CertificateViewSet)
 router.register(r'workshop-registrations', WorkshopRegistrationViewSet)
+router.register(r'batches', BatchViewSet)
+router.register(r'students', StudentViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

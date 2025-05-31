@@ -9,10 +9,20 @@ class CustomUser(AbstractUser):
     )
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
 
+class Batch(models.Model):
+    name = models.CharField(max_length=100)
+    course_id = models.IntegerField(null=True, blank=True)  # Store the course ID this batch is associated with
+    created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='created_batches')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
 class Student(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='student_profile')
     enrollment_id = models.CharField(max_length=50, unique=True)
     date_of_birth = models.DateField()
+    batch = models.ForeignKey(Batch, on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
     created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='created_students')
 
 class Faculty(models.Model):
