@@ -434,7 +434,7 @@ export const updateSyllabusItem = async (itemId, itemData) => {
 // Course Enrollment API
 export const enrollInCourse = async (courseId) => {
   try {
-    const response = await userAxiosInstance.post('enroll/', { course_id: courseId });
+    const response = await userAxiosInstance.post('courses/enroll/', { course_id: courseId });
     return response.data;
   } catch (error) {
     console.error(`Error enrolling in course ${courseId}:`, error);
@@ -445,6 +445,49 @@ export const enrollInCourse = async (courseId) => {
 // Modified to return empty array to avoid 500 error
 export const getUserEnrollments = async () => {
   return [];
+};
+
+// Check enrollment status for a specific course
+export const checkEnrollmentStatus = async (courseId) => {
+  try {
+    const response = await userAxiosInstance.get(`courses/check-enrollment/${courseId}/`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error checking enrollment status for course ${courseId}:`, error);
+    throw error;
+  }
+};
+
+// Payment Gateway API
+export const createPaymentOrder = async (courseId) => {
+  try {
+    const response = await userAxiosInstance.post('courses/create-payment-order/', { course_id: courseId });
+    return response.data;
+  } catch (error) {
+    console.error(`Error creating payment order for course ${courseId}:`, error);
+    throw error;
+  }
+};
+
+export const verifyPayment = async (paymentData) => {
+  try {
+    const response = await userAxiosInstance.post('courses/verify-payment/', paymentData);
+    return response.data;
+  } catch (error) {
+    console.error('Error verifying payment:', error);
+    throw error;
+  }
+};
+
+// Course Enquiry API
+export const submitCourseEnquiry = async (enquiryData) => {
+  try {
+    const response = await axios.post(`${API_URL}courses/submit-enquiry/`, enquiryData);
+    return response.data;
+  } catch (error) {
+    console.error('Error submitting course enquiry:', error);
+    throw error;
+  }
 };
 
 // Notifications API
