@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate
+from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate, Batch
 
 @admin.register(CustomUser)
 class CustomUserAdmin(admin.ModelAdmin):
@@ -9,8 +9,10 @@ class CustomUserAdmin(admin.ModelAdmin):
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('user', 'enrollment_id', 'date_of_birth')
+    list_display = ('user', 'enrollment_id', 'date_of_birth', 'batch')
     search_fields = ('user__username', 'enrollment_id')
+    list_filter = ('batch',)
+    raw_id_fields = ('user',)
 
 @admin.register(Faculty)
 class FacultyAdmin(admin.ModelAdmin):
@@ -31,3 +33,8 @@ class WorkshopAdmin(admin.ModelAdmin):
 class CertificateAdmin(admin.ModelAdmin):
     list_display = ('title', 'level', 'duration')
     search_fields = ('title', 'description')
+
+@admin.register(Batch)
+class BatchAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+    search_fields = ('name',)

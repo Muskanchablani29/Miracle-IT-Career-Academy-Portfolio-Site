@@ -3,81 +3,37 @@ from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate, 
 from django.contrib.auth.password_validation import validate_password
 from datetime import datetime
 from courses.models import Course, CourseSyllabus, SyllabusItem, Video, Quiz, CourseEnrollment, Notification
-
+from django.utils import timezone
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['id', 'username', 'email', 'role']
 
+from .models import Batch, Student
+from django.contrib.auth.models import User
+from courses.serializers import CourseSerializer
+
 class BatchSerializer(serializers.ModelSerializer):
     class Meta:
         model = Batch
-        fields = ['id', 'name', 'created_by', 'created_at']
-        read_only_fields = ['created_by', 'created_at']
+        fields = ['id', 'name', 'course', 'created_at']
+        read_only_fields = ['created_at']
 
 class StudentSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    user = serializers.SerializerMethodField()
+    course = CourseSerializer(read_only=True)
     batch = BatchSerializer(read_only=True)
     
     class Meta:
         model = Student
-        fields = ['id', 'user', 'enrollment_id', 'date_of_birth', 'batch']
-
-class CreateStudentSerializer(serializers.Serializer):
-    username = serializers.CharField(required=True)
-    email = serializers.EmailField(required=True)
-    enrollment_id = serializers.CharField(required=False)
-    date_of_birth = serializers.DateField(required=True)
-    batch_id = serializers.IntegerField(required=False, allow_null=True)
-
-    def create(self, validated_data):
-        dob = validated_data['date_of_birth']
-        password = dob.strftime('%d%m%Y')
-
-        batch_id = validated_data.pop('batch_id', None)
-        batch = None
-        if batch_id:
-            try:
-                batch = Batch.objects.get(id=batch_id)
-            except Batch.DoesNotExist:
-                raise serializers.ValidationError({"batch_id": "Batch not found"})
-
-        if 'enrollment_id' not in validated_data or not validated_data['enrollment_id']:
-            current_year = datetime.now().year
-            prefix = f"ENRL{str(current_year)[-2:]}"
-            existing_ids = Student.objects.filter(enrollment_id__startswith=prefix).values_list('enrollment_id', flat=True)
-
-            if not existing_ids:
-                next_id = 1
-            else:
-                existing_numbers = set()
-                for eid in existing_ids:
-                    try:
-                        num = int(eid.replace(prefix, ''))
-                        existing_numbers.add(num)
-                    except ValueError:
-                        continue
-
-                next_id = 1
-                while next_id in existing_numbers:
-                    next_id += 1
-
-            validated_data['enrollment_id'] = f"{prefix}{next_id:03d}"
-
-        user = CustomUser.objects.create_user(
-            username=validated_data['username'],
-            email=validated_data['email'],
-            password=password,
-            role='student',
-        )
-        student = Student.objects.create(
-            user=user,
-            enrollment_id=validated_data['enrollment_id'],
-            date_of_birth=validated_data['date_of_birth'],
-            batch=batch,
-            created_by=self.context['request'].user
-        )
-        return student
+        fields = ['id', 'user', 'enrollment_id', 'date_of_birth', 'course', 'batch']
+    
+    def get_user(self, obj):
+        return {
+            'id': obj.user.id,
+            'username': obj.user.username,
+            'email': obj.user.email
+        }
 
 class FacultySerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
@@ -189,7 +145,11 @@ class IntegratedDashboardSerializer(serializers.Serializer):
         return WorkshopSerializer(workshops, many=True).data
     
     def get_certificates(self, obj):
-        certificates = Certificate.objects.all()
+        # Check if Certificate model has a user field, otherwise return all certificates
+        if hasattr(Certificate, 'user'):
+            certificates = Certificate.objects.filter(user=obj)
+        else:
+            certificates = Certificate.objects.all()
         return CertificateSerializer(certificates, many=True).data
     
     def get_notifications(self, obj):
@@ -217,12 +177,27 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         role = validated_data['role']
         if role == 'student':
-            Student.objects.create(user=user)
+        # Use raw SQL to create student with created_at field
+            from django.db import connection
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO users_student 
+                    (user_id, enrollment_id, date_of_birth, created_at, updated_at) 
+                    VALUES (%s, %s, %s, NOW(), NOW())
+                    """,
+                    [
+                        user.id, 
+                        f"ENRL{datetime.now().year}{user.id}",
+                        datetime.now().date()
+                    ]
+                    )
         elif role == 'faculty':
             Faculty.objects.create(user=user)
         elif role == 'admin':
             Admin.objects.create(user=user)
         return user
+
 
 class CreateAdminSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
@@ -272,11 +247,11 @@ class CreateStudentSerializer(serializers.Serializer):
     password = serializers.CharField(required=False, allow_blank=True)
 
     def create(self, validated_data):
-        # Use date of birth as password in ddmmyyyy format if password not provided
+    # Use date of birth as password in ddmmyyyy format if password not provided
         dob = validated_data['date_of_birth']
         password = validated_data.get('password', dob.strftime('%d%m%Y'))
 
-        # Handle batch_id if provided
+    # Handle batch_id if provided
         batch_id = validated_data.pop('batch_id', None)
         batch = None
         if batch_id:
@@ -287,19 +262,13 @@ class CreateStudentSerializer(serializers.Serializer):
 
         # Generate enrollment ID if not provided
         if 'enrollment_id' not in validated_data or not validated_data['enrollment_id']:
-            # Get the current year
             current_year = datetime.now().year
             prefix = f"ENRL{str(current_year)[-2:]}"
-
-            # Fetch all existing enrollment IDs with the current prefix
             existing_ids = Student.objects.filter(enrollment_id__startswith=prefix).values_list('enrollment_id', flat=True)
-            print(f"DEBUG: existing_ids = {list(existing_ids)}")  # Debug print
 
             if not existing_ids:
-                # No existing enrollment IDs, start from 001
                 next_id = 1
             else:
-                # Extract numeric suffixes
                 existing_numbers = set()
                 for eid in existing_ids:
                     try:
@@ -307,30 +276,83 @@ class CreateStudentSerializer(serializers.Serializer):
                         existing_numbers.add(num)
                     except ValueError:
                         continue
-                print(f"DEBUG: existing_numbers = {existing_numbers}")  # Debug print
 
-                # Find the lowest missing number starting from 1
                 next_id = 1
                 while next_id in existing_numbers:
                     next_id += 1
 
             validated_data['enrollment_id'] = f"{prefix}{next_id:03d}"
-            print(f"DEBUG: assigned enrollment_id = {validated_data['enrollment_id']}")  # Debug print
 
         user = CustomUser.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
             password=password,
             role='student',
-        )
-        student = Student.objects.create(
-            user=user,
-            enrollment_id=validated_data['enrollment_id'],
-            date_of_birth=validated_data['date_of_birth'],
-            batch=batch,
-            created_by=self.context['request'].user if 'request' in self.context and hasattr(self.context['request'], 'user') and self.context['request'].user.is_authenticated else None
-        )
+        )   
+    
+        # Use raw SQL to create student with created_at field
+        from django.db import connection
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO users_student 
+                (user_id, enrollment_id, date_of_birth, batch_id, created_at, course_id) 
+                VALUES (%s, %s, %s, %s, NOW(), %s)
+                """,
+                [
+                    user.id, 
+                    validated_data['enrollment_id'], 
+                    validated_data['date_of_birth'],
+                    batch.id if batch else None,
+                    validated_data.get('course_id', None)
+                ]
+            )
+        
+        # Get the created student
+        student = Student.objects.get(user=user)
         return student
+
+    def update(self, instance, validated_data):
+    # Update user fields
+        user = instance.user
+        if 'username' in validated_data:
+            user.username = validated_data.get('username', user.username)
+        if 'email' in validated_data:
+            user.email = validated_data.get('email', user.email)
+        if 'password' in validated_data and validated_data['password']:
+            user.set_password(validated_data['password'])
+        user.save()
+    
+        # Update student fields
+        if 'enrollment_id' in validated_data:
+            instance.enrollment_id = validated_data.get('enrollment_id', instance.enrollment_id)
+        if 'date_of_birth' in validated_data:
+            instance.date_of_birth = validated_data.get('date_of_birth', instance.date_of_birth)
+    
+        # Handle batch_id if provided
+        batch_id = validated_data.pop('batch_id', None)
+        if batch_id:
+            try:
+                batch = Batch.objects.get(id=batch_id)
+                instance.batch = batch
+            except Batch.DoesNotExist:
+                pass
+    
+        # Handle course_id if provided
+        course_id = validated_data.pop('course_id', None)
+        if course_id:
+            from courses.models import Course
+            try:
+                course = Course.objects.get(id=course_id)
+                instance.course = course
+            except Course.DoesNotExist:
+                pass
+    
+        instance.save()
+        return instance
+
+
+
 class StudentLoginSerializer(serializers.Serializer):
     enrollment_id = serializers.CharField(required=True)
     date_of_birth = serializers.CharField(required=True)

@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
@@ -11,19 +12,24 @@ class CustomUser(AbstractUser):
 
 class Batch(models.Model):
     name = models.CharField(max_length=100)
-    course_id = models.IntegerField(null=True, blank=True)  # Store the course ID this batch is associated with
-    created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='created_batches')
+    course = models.ForeignKey('courses.Course', on_delete=models.CASCADE, related_name='batches', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.name
+        return f"{self.name} - {self.course.title if self.course else 'No Course'}"
 
 class Student(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='student_profile')
-    enrollment_id = models.CharField(max_length=50, unique=True)
-    date_of_birth = models.DateField()
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+    enrollment_id = models.CharField(max_length=20, unique=True)
+    date_of_birth = models.DateField(null=True, blank=True)
+    course = models.ForeignKey('courses.Course', on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
     batch = models.ForeignKey(Batch, on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
+    created_at = models.DateTimeField(default=timezone.now)
     created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='created_students')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.enrollment_id}"
 
 class Faculty(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='faculty_profile')
@@ -42,7 +48,7 @@ class Workshop(models.Model):
     location = models.CharField(max_length=200)
     available_seats = models.IntegerField(default=0)
     category = models.CharField(max_length=50, null=True, blank=True)
-    
+
     def __str__(self):
         return self.title
 
@@ -52,7 +58,7 @@ class WorkshopRegistration(models.Model):
         ('intermediate', 'Intermediate'),
         ('advanced', 'Advanced'),
     )
-    
+
     workshop = models.ForeignKey(Workshop, on_delete=models.CASCADE, related_name='registrations')
     name = models.CharField(max_length=100)
     email = models.EmailField()
@@ -61,7 +67,7 @@ class WorkshopRegistration(models.Model):
     experience_level = models.CharField(max_length=20, choices=EXPERIENCE_CHOICES, default='beginner')
     special_requirements = models.TextField(blank=True, null=True)
     registration_date = models.DateTimeField(auto_now_add=True)
-    
+
     def __str__(self):
         return f"{self.name} - {self.workshop.title}"
 
@@ -71,6 +77,6 @@ class Certificate(models.Model):
     image = models.URLField()
     duration = models.CharField(max_length=50)
     level = models.CharField(max_length=50)
-    
+
     def __str__(self):
         return self.title
