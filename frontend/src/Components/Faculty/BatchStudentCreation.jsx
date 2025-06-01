@@ -4,12 +4,9 @@ import './StudentList.css';
 import { FaSpinner } from 'react-icons/fa';
 import axios from 'axios';
 
-const BatchStudentCreation = ({ onClose, onSuccess }) => {
+const BatchStudentCreation = ({ onClose, onSuccess, selectedCourse, selectedBatch }) => {
   const [courses, setCourses] = useState([]);
   const [batches, setBatches] = useState([]);
-  const [selectedCourse, setSelectedCourse] = useState('');
-  const [selectedBatch, setSelectedBatch] = useState('');
-
   const [numberOfStudents, setNumberOfStudents] = useState(15);
   const [startingId, setStartingId] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -17,10 +14,12 @@ const BatchStudentCreation = ({ onClose, onSuccess }) => {
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState(0);
   const [createdStudents, setCreatedStudents] = useState([]);
-  const [password, setPassword] = useState(''); // No default password
 
   useEffect(() => {
-    fetchCourses();
+    if (selectedCourse) {
+      fetchCourses();
+      fetchBatchList(selectedCourse);
+    }
 
     // Check localStorage for last enrollment ID
     const savedId = localStorage.getItem('lastEnrollmentId');
@@ -29,15 +28,6 @@ const BatchStudentCreation = ({ onClose, onSuccess }) => {
       setStartingId(currentNum + 1);
     } else {
       setStartingId(1);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Fetch batches when a course is selected
-    if (selectedCourse) {
-      fetchBatchList(selectedCourse);
-    } else {
-      setBatches([]);
     }
   }, [selectedCourse]);
 
@@ -68,25 +58,12 @@ const BatchStudentCreation = ({ onClose, onSuccess }) => {
     }
   };
 
-  const handleCourseChange = (e) => {
-    setSelectedCourse(e.target.value);
-    setSelectedBatch(''); // Reset batch selection when course changes
-  };
-
-  const handleBatchChange = (e) => {
-    setSelectedBatch(e.target.value);
-  };
-
   const handleNumberChange = (e) => {
     setNumberOfStudents(parseInt(e.target.value));
   };
   
   const handleStartingIdChange = (e) => {
     setStartingId(parseInt(e.target.value));
-  };
-  
-  const handlePasswordChange = (e) => {
-    setPassword(e.target.value);
   };
 
   const generateStudentData = (index) => {
@@ -110,14 +87,10 @@ const BatchStudentCreation = ({ onClose, onSuccess }) => {
       username: `Student_${enrollmentId}_${timestamp}_${randomSuffix}`,
       email: `student${enrollmentId.toLowerCase()}@example.com`,
       enrollment_id: enrollmentId,
-      date_of_birth: dateOfBirth
-      // course_id will be added in handleSubmit
+      date_of_birth: dateOfBirth,
+      batch_id: selectedBatch,
+      course_id: selectedCourse
     };
-    
-    // Only add password if it's not empty
-    if (password) {
-      studentData.password = password;
-    }
     
     return studentData;
   };
@@ -135,10 +108,6 @@ const BatchStudentCreation = ({ onClose, onSuccess }) => {
       return;
     }
     
-    // Convert selectedCourse to string to ensure it's not NaN
-    const courseId = String(selectedCourse);
-    const batchId = String(selectedBatch);
-    
     setCreating(true);
     setProgress(0);
     setCreatedStudents([]);
@@ -148,25 +117,17 @@ const BatchStudentCreation = ({ onClose, onSuccess }) => {
       const createdList = [];
       let successCount = 0;
       let errorCount = 0;
-      const createdStudentIds = [];
       
       // Create students one by one
       for (let i = 0; i < numberOfStudents; i++) {
         const studentData = generateStudentData(i);
         
         try {
-          // Add course_id and batch_id as strings to ensure proper handling
-          studentData.course_id = courseId;
-          studentData.batch_id = batchId;
+          // Make API call to create student
+          const response = await userAxiosInstance.post('create-student/', studentData);
           
-          // Make API call without authentication to avoid 401 errors
-          const response = await axios.post('http://localhost:8000/api/create-student/', studentData);
-          
-          // Add to created list and collect IDs for batch assignment
+          // Add to created list
           createdList.push(response.data);
-          if (response.data.id) {
-            createdStudentIds.push(response.data.id);
-          }
           successCount++;
           
           // Update progress
@@ -183,19 +144,6 @@ const BatchStudentCreation = ({ onClose, onSuccess }) => {
         
         // Add a small delay between requests to prevent server overload
         await new Promise(resolve => setTimeout(resolve, 300));
-      }
-      
-      // If we have successfully created students and have their IDs, assign them to the batch
-      if (createdStudentIds.length > 0) {
-        try {
-          await userAxiosInstance.post(`batches/${batchId}/assign-students/`, {
-            student_ids: createdStudentIds
-          });
-          console.log(`Successfully assigned ${createdStudentIds.length} students to batch ${batchId}`);
-        } catch (err) {
-          console.error('Error assigning students to batch:', err);
-          // Don't fail the whole operation if batch assignment fails
-        }
       }
       
       setCreatedStudents(createdList);
@@ -230,61 +178,12 @@ const BatchStudentCreation = ({ onClose, onSuccess }) => {
     <div className="modal-overlay">
       <div className="modal-content batch-creation">
         <div className="modal-header">
-          <h2>Create Multiple Student Accounts</h2>
+          <h2>Add Students to Batch</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
         
         <form onSubmit={handleSubmit}>
           {error && <div className="error-message">{error}</div>}
-          
-          <div className="form-group">
-            <label htmlFor="course">Select Course</label>
-            <select
-              id="course"
-              name="course"
-              value={selectedCourse || ""}
-              onChange={handleCourseChange}
-              required
-              disabled={creating || loading}
-            >
-              <option value="">-- Select a Course --</option>
-              {courses.map(course => (
-                <option key={course.id} value={course.id}>
-                  {course.title}
-                </option>
-              ))}
-            </select>
-            <small className="form-hint">Students will be enrolled in this course</small>
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="batch">Select Batch</label>
-            <select
-              id="batch"
-              name="batch"
-              value={selectedBatch || ""}
-              onChange={handleBatchChange}
-              required
-              disabled={creating || loading || !selectedCourse}
-            >
-              <option value="">-- Select a Batch --</option>
-              {batches.map(batch => (
-                <option key={batch.id} value={batch.id}>
-                  {batch.name}
-                </option>
-              ))}
-            </select>
-            {batches.length === 0 && selectedCourse && (
-              <small className="form-hint error-hint">
-                No batches available for this course. Please create a batch first.
-              </small>
-            )}
-            {!selectedCourse && (
-              <small className="form-hint">Select a course first to see available batches</small>
-            )}
-          </div>
-
-
           
           <div className="form-group">
             <label htmlFor="startingId">Starting Enrollment Number</label>
@@ -318,17 +217,7 @@ const BatchStudentCreation = ({ onClose, onSuccess }) => {
           </div>
           
           <div className="form-group">
-            <label htmlFor="password">Password (Date of Birth)</label>
-            <input
-              type="text"
-              id="password"
-              name="password"
-              value={password}
-              onChange={handlePasswordChange}
-              placeholder="Enter date of birth as password"
-              disabled={creating}
-            />
-            <small className="form-hint">Students will use this password (DOB) to login</small>
+            <small className="form-hint">Students will use their date of birth (DDMMYYYY format) as password to login</small>
           </div>
           
           <div className="form-group">

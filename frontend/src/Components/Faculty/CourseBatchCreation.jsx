@@ -26,19 +26,45 @@ const CourseBatchCreation = ({ onClose, onSuccess, courseId, courseName }) => {
     setError(null);
     try {
       // Create a batch associated with the selected course
-      await userAxiosInstance.post('batches/', {
+      const response = await userAxiosInstance.post('batches/', {
         name: batchName.trim(),
-        course: courseId
+        course_id: parseInt(courseId, 10) // Use course_id instead of course
       });
+      console.log('Batch created successfully:', response.data);
       setLoading(false);
       onSuccess && onSuccess();
       onClose && onClose();
     } catch (err) {
       console.error('Error creating course batch:', err);
-      setError('Failed to create batch. Please try again.');
+      // Extract more specific error message if available
+      let errorMessage = 'Failed to create batch. Please try again.';
+      
+      if (err.response?.data) {
+        // Handle different error formats
+        if (typeof err.response.data === 'string') {
+          errorMessage = err.response.data;
+        } else if (err.response.data.error) {
+          errorMessage = err.response.data.error;
+        } else if (err.response.data.detail) {
+          errorMessage = err.response.data.detail;
+        } else if (err.response.data.course) {
+          // Handle field-specific errors
+          errorMessage = `Course error: ${err.response.data.course}`;
+        } else if (err.response.data.name) {
+          errorMessage = `Batch name error: ${err.response.data.name}`;
+        } else if (typeof err.response.data === 'object') {
+          // Convert object to string for any other error format
+          errorMessage = Object.entries(err.response.data)
+            .map(([key, value]) => `${key}: ${value}`)
+            .join(', ');
+        }
+      }
+      
+      setError(errorMessage);
       setLoading(false);
     }
   };
+
 
   return (
     <div className="modal-overlay">

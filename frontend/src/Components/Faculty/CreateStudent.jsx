@@ -33,8 +33,16 @@ const CreateStudent = ({ onClose, onSuccess }) => {
       enrollment_id: nextEnrollmentId
     }));
     fetchCourses();
-    fetchBatchList();
   }, [nextEnrollmentId]);
+
+  useEffect(() => {
+    if (formData.course_id) {
+      fetchBatchesForCourse(formData.course_id);
+    } else {
+      setBatches([]);
+      setFormData(prev => ({ ...prev, batch_id: '' }));
+    }
+  }, [formData.course_id]);
 
   const fetchCourses = async () => {
     try {
@@ -48,10 +56,10 @@ const CreateStudent = ({ onClose, onSuccess }) => {
     }
   };
 
-  const fetchBatchList = async () => {
+  const fetchBatchesForCourse = async (courseId) => {
     try {
-      const data = await fetchBatches();
-      setBatches(data);
+      const response = await userAxiosInstance.get(`batches/?course=${courseId}`);
+      setBatches(response.data);
     } catch (err) {
       console.error('Error fetching batches:', err);
     }
@@ -170,17 +178,23 @@ const CreateStudent = ({ onClose, onSuccess }) => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="batchNumber">Batch Number</label>
-            <input
-              type="text"
-              id="batchNumber"
-              name="batchNumber"
+            <label htmlFor="batch_id">Select Batch</label>
+            <select
+              id="batch_id"
+              name="batch_id"
               value={formData.batch_id}
-              onChange={(e) => setFormData({...formData, batch_id: e.target.value})}
-              placeholder="Enter Batch Number"
-            />
+              onChange={handleChange}
+              disabled={!formData.course_id || batches.length === 0}
+            >
+              <option value="">-- Select a Batch (Optional) --</option>
+              {batches.map(batch => (
+                <option key={batch.id} value={batch.id}>
+                  {batch.name}
+                </option>
+              ))}
+            </select>
             <small className="form-hint">
-              Enter the batch number for the student
+              Select the batch for the student
             </small>
           </div>
 

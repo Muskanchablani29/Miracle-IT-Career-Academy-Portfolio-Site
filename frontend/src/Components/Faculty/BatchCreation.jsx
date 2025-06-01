@@ -2,25 +2,25 @@ import React, { useState } from 'react';
 import { createBatch } from '../../api';
 import './StudentList.css';
 
-const BatchCreation = ({ onClose, onSuccess }) => {
-  const [batchNumber, setBatchNumber] = useState('');
+const BatchCreation = ({ onClose, onSuccess, courseId }) => {
+  const [batchName, setBatchName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const handleBatchNumberChange = (e) => {
-    setBatchNumber(e.target.value);
+  const handleBatchNameChange = (e) => {
+    setBatchName(e.target.value);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!batchNumber.trim()) {
-      setError('Batch number is required');
+    if (!batchName.trim()) {
+      setError('Batch name is required');
       return;
     }
     setLoading(true);
     setError(null);
     try {
-      await createBatch({ name: batchNumber.trim() });
+      await createBatch({ name: batchName.trim(), course: courseId });
       setLoading(false);
       onSuccess && onSuccess();
       onClose && onClose();
@@ -41,16 +41,16 @@ const BatchCreation = ({ onClose, onSuccess }) => {
         <form onSubmit={handleSubmit}>
           {error && <div className="error-message">{error}</div>}
           <div className="form-group">
-            <label htmlFor="batchNumber">Batch Number</label>
+            <label htmlFor="batchName">Batch Name</label>
             <input
               type="text"
-              id="batchNumber"
-              name="batchNumber"
-              value={batchNumber}
-              onChange={handleBatchNumberChange}
+              id="batchName"
+              name="batchName"
+              value={batchName}
+              onChange={handleBatchNameChange}
               required
               disabled={loading}
-              placeholder="Enter batch number"
+              placeholder="Enter batch name"
             />
           </div>
           <div className="form-actions">

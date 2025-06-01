@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { userAxiosInstance } from '../../api';
 import { Link } from 'react-router-dom';
 import '../Admin/ManageCourses.css';
-import { FaEdit, FaBook, FaPlus, FaUsers } from 'react-icons/fa';
+import { FaEdit, FaBook, FaPlus, FaUsers, FaEye } from 'react-icons/fa';
 import CourseBatchCreation from './CourseBatchCreation';
+import ViewBatches from './ViewBatches';
 
 const FacultyManageCourses = () => {
   const [courses, setCourses] = useState([]);
@@ -25,6 +26,7 @@ const FacultyManageCourses = () => {
   });
   const [activeTab, setActiveTab] = useState('courses');
   const [showBatchModal, setShowBatchModal] = useState(false);
+  const [showViewBatches, setShowViewBatches] = useState(false);
   const [selectedCourseForBatch, setSelectedCourseForBatch] = useState(null);
 
   useEffect(() => {
@@ -138,6 +140,11 @@ const FacultyManageCourses = () => {
     setShowBatchModal(true);
   };
   
+  const handleViewBatches = (course) => {
+    setSelectedCourseForBatch(course);
+    setShowViewBatches(true);
+  };
+  
   const handleBatchCreationSuccess = () => {
     // Refresh course data if needed
     fetchCourses();
@@ -159,6 +166,14 @@ const FacultyManageCourses = () => {
         <CourseBatchCreation 
           onClose={() => setShowBatchModal(false)}
           onSuccess={handleBatchCreationSuccess}
+          courseId={selectedCourseForBatch?.id}
+          courseName={selectedCourseForBatch?.title}
+        />
+      )}
+      
+      {showViewBatches && (
+        <ViewBatches
+          onClose={() => setShowViewBatches(false)}
           courseId={selectedCourseForBatch?.id}
           courseName={selectedCourseForBatch?.title}
         />
@@ -199,6 +214,13 @@ const FacultyManageCourses = () => {
                       className="action-btn batch-btn"
                       onClick={() => handleCreateBatch(course)}
                       title="Create Batch"
+                    >
+                      <FaPlus />
+                    </button>
+                    <button 
+                      className="action-btn view-btn"
+                      onClick={() => handleViewBatches(course)}
+                      title="View Batches"
                     >
                       <FaUsers />
                     </button>

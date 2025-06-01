@@ -282,6 +282,7 @@ const ManageCourses = () => {
   const handleBatchCreationSuccess = () => {
     // Refresh course data if needed
     fetchCourses();
+    // Optionally, refresh batches if needed here or notify CreateStudent component
   };
 
   if (loading) {

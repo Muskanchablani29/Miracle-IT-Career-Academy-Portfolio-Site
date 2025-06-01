@@ -572,7 +572,7 @@ export { userAxiosInstance, adminAxiosInstance };
 // Fetch batches for a specific course
 export const fetchCourseSpecificBatches = async (courseId) => {
   try {
-    const response = await userAxiosInstance.get(`course-batches/?course_id=${courseId}`);
+    const response = await userAxiosInstance.get(`batches/?course=${courseId}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching batches for course ${courseId}:`, error);
@@ -589,26 +589,6 @@ export const assignStudentsToBatch = async (batchId, studentIds) => {
     return response.data;
   } catch (error) {
     console.error(`Error assigning students to batch ${batchId}:`, error);
-    throw error;
-  }
-};
-// Fetch batches for a specific course
-export const fetchCourseSpecificBatches = async (courseId) => {
-  try {
-    const response = await userAxiosInstance.get(`batches/?course=${courseId}`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching batches for course ${courseId}:`, error);
-    throw error;
-  }
-};
-// Fetch batches for a specific course
-export const fetchCourseSpecificBatches = async (courseId) => {
-  try {
-    const response = await userAxiosInstance.get(`batches/?course=${courseId}`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching batches for course ${courseId}:`, error);
     throw error;
   }
 };
