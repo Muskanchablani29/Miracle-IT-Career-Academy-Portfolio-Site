@@ -8,6 +8,7 @@ const EditStudent = ({ student, onClose, onSuccess }) => {
     email: '',
     enrollment_id: '',
     date_of_birth: '',
+    admission_date: '',
     batch_id: '',
     course_id: ''
     // Removed password field as students will login with enrollment ID and DOB
@@ -26,6 +27,7 @@ const EditStudent = ({ student, onClose, onSuccess }) => {
         email: student.email || '',
         enrollment_id: student.enrollmentId || '',
         date_of_birth: student.dateOfBirth || '',
+        admission_date: student.admissionDate || '',
         batch_id: student.batchId || '',
         course_id: student.courseId || ''
         // No password field as students will login with enrollment ID and DOB
@@ -83,6 +85,12 @@ const EditStudent = ({ student, onClose, onSuccess }) => {
       if (formData.email && formData.email !== student.email) updateData.email = formData.email;
       if (formData.date_of_birth && formData.date_of_birth !== student.dateOfBirth) updateData.date_of_birth = formData.date_of_birth;
       
+      // Always include admission_date in the update data if it exists in the form
+      if (formData.admission_date) {
+        console.log('Updating admission date:', formData.admission_date);
+        updateData.admission_date = formData.admission_date;
+      }
+      
       // Convert batch_id and course_id to numbers if they exist and have changed
       if (formData.batch_id && parseInt(formData.batch_id) !== student.batchId) {
         updateData.batch_id = parseInt(formData.batch_id);
@@ -99,6 +107,7 @@ const EditStudent = ({ student, onClose, onSuccess }) => {
       }
 
       console.log('Updating student with data:', updateData);
+      console.log('Student ID being updated:', student.id);
       
       // Use direct API call
       await userAxiosInstance.put(`students/${student.id}/`, updateData);
@@ -167,6 +176,18 @@ const EditStudent = ({ student, onClose, onSuccess }) => {
               id="date_of_birth"
               name="date_of_birth"
               value={formData.date_of_birth}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="admission_date">Admission Date</label>
+            <input
+              type="date"
+              id="admission_date"
+              name="admission_date"
+              value={formData.admission_date}
               onChange={handleChange}
               required
             />

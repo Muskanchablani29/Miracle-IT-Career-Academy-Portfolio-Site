@@ -1,7 +1,7 @@
 from rest_framework import serializers
-from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate, WorkshopRegistration, Batch
+from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate, WorkshopRegistration, Batch, Attendance, Holiday
 from django.contrib.auth.password_validation import validate_password
-from datetime import datetime
+from datetime import datetime, date
 from courses.models import Course, CourseSyllabus, SyllabusItem, Video, Quiz, CourseEnrollment, Notification
 from django.utils import timezone
 class UserSerializer(serializers.ModelSerializer):
@@ -28,7 +28,7 @@ class StudentSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Student
-        fields = ['id', 'user', 'enrollment_id', 'date_of_birth', 'course', 'batch']
+        fields = ['id', 'user', 'enrollment_id', 'date_of_birth', 'admission_date', 'course', 'batch']
     
     def get_user(self, obj):
         return {
@@ -245,6 +245,7 @@ class CreateStudentSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     enrollment_id = serializers.CharField(required=False)
     date_of_birth = serializers.DateField(required=True)
+    admission_date = serializers.DateField(required=False, default=date.today)
     batch_id = serializers.IntegerField(required=False, allow_null=True)
     password = serializers.CharField(required=False, allow_blank=True)
 
@@ -304,13 +305,14 @@ class CreateStudentSerializer(serializers.Serializer):
             cursor.execute(
                 """
                 INSERT INTO users_student 
-                (user_id, enrollment_id, date_of_birth, batch_id, created_at, course_id) 
-                VALUES (%s, %s, %s, %s, NOW(), %s)
+                (user_id, enrollment_id, date_of_birth, admission_date, batch_id, created_at, course_id) 
+                VALUES (%s, %s, %s, %s, %s, NOW(), %s)
                 """,
                 [
                     user.id, 
                     validated_data['enrollment_id'], 
                     validated_data['date_of_birth'],
+                    validated_data.get('admission_date', date.today()),
                     batch.id if batch else None,
                     validated_data.get('course_id', None)
                 ]
@@ -413,3 +415,28 @@ class CertificateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Certificate
         fields = ['id', 'title', 'description', 'image', 'duration', 'level']
+
+class HolidaySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Holiday
+        fields = ['id', 'date', 'name', 'is_government']
+
+class AttendanceSerializer(serializers.ModelSerializer):
+    student_name = serializers.SerializerMethodField()
+    enrollment_id = serializers.SerializerMethodField()
+    day_of_week = serializers.SerializerMethodField()
+    remarks = serializers.CharField(required=False, allow_blank=True, default='')
+    
+    class Meta:
+        model = Attendance
+        fields = ['id', 'student', 'student_name', 'enrollment_id', 'date', 'day_of_week', 'is_present', 'login_time', 'remarks']
+        read_only_fields = ['login_time']
+    
+    def get_student_name(self, obj):
+        return obj.student.user.username
+        
+    def get_enrollment_id(self, obj):
+        return obj.student.enrollment_id
+        
+    def get_day_of_week(self, obj):
+        return obj.date.strftime('%A')

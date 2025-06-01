@@ -44,6 +44,7 @@ const StudentList = () => {
     setLoading(true);
     try {
       // Fetch students created by this faculty
+      console.log('Fetching students from API');
       const response = await userAxiosInstance.get('students/');
       
       // Fetch batches to ensure we have the latest batch and course data
@@ -71,12 +72,16 @@ const StudentList = () => {
           courseId = student.course.id;
         }
         
+        // Format the admission date if it exists
+        const formattedAdmissionDate = student.admission_date ? student.admission_date : 'Not Available';
+        
         return {
           id: student.id,
           name: student.user.username,
           email: student.user.email,
           enrollmentId: student.enrollment_id,
           dateOfBirth: student.date_of_birth,
+          admissionDate: formattedAdmissionDate,
           course: courseTitle,
           courseId: courseId,
           batch: batchDetails ? batchDetails.name : (student.batch ? student.batch.name : 'Not Assigned'),
@@ -151,8 +156,12 @@ const StudentList = () => {
   };
   
   const handleStudentUpdated = () => {
-    fetchStudents();
-    setShowEditStudent(false);
+    console.log('Student updated, refreshing student list');
+    // Add a small delay to ensure the backend has processed the update
+    setTimeout(() => {
+      fetchStudents();
+      setShowEditStudent(false);
+    }, 300);
   };
   
   const handleBatchChange = (e) => {
@@ -199,7 +208,7 @@ const StudentList = () => {
   
   const handleExportList = () => {
     // Create CSV content
-    const headers = ['Enrollment ID', 'Name', 'Course', 'Batch', 'Email', 'Status'];
+    const headers = ['Enrollment ID', 'Name', 'Course', 'Batch', 'Email', 'Admission Date', 'Status'];
     const csvContent = [
       headers.join(','),
       ...filteredStudents.map(student => [
@@ -208,6 +217,7 @@ const StudentList = () => {
         student.course,
         student.batch,
         student.email,
+        student.admissionDate,
         student.status
       ].join(','))
     ].join('\n');
@@ -433,6 +443,10 @@ const StudentList = () => {
                               <div className="detail-item">
                                 <span className="detail-label">Date of Birth</span>
                                 <span className="detail-value">{student.dateOfBirth}</span>
+                              </div>
+                              <div className="detail-item">
+                                <span className="detail-label">Admission Date</span>
+                                <span className="detail-value">{student.admissionDate}</span>
                               </div>
                               <div className="detail-item">
                                 <span className="detail-label">Course</span>

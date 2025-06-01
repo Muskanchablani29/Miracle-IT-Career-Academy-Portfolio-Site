@@ -1,6 +1,8 @@
 from rest_framework import generics, permissions, status, viewsets
-from rest_framework.decorators import action
-from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate, WorkshopRegistration, Batch
+from rest_framework.decorators import action, api_view, permission_classes
+from django.db.models import Q
+from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate, WorkshopRegistration, Batch, Attendance, Holiday
+from datetime import datetime, date, timedelta
 from .serializers import (
     RegisterSerializer, UserSerializer, CreateAdminSerializer, 
     CreateFacultySerializer, CreateStudentSerializer, StudentSerializer,
@@ -47,6 +49,24 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 user = authenticate(username=username, password=request.data.get('password', ''))
                 if user is not None:
                     response.data['role'] = user.role
+                    
+                    # Mark attendance if user is a student
+                    if user.role == 'student':
+                        try:
+                            student = Student.objects.get(user=user)
+                            today = date.today()
+                            # Check if attendance already exists for today
+                            attendance, created = Attendance.objects.get_or_create(
+                                student=student,
+                                date=today,
+                                defaults={'is_present': True}
+                            )
+                            if created:
+                                logger.info(f"Attendance marked for student {username} on {today}")
+                            else:
+                                logger.info(f"Attendance already exists for student {username} on {today}")
+                        except Exception as e:
+                            logger.error(f"Error marking attendance: {str(e)}")
             else:
                 logger.warning(f"Login failed for username: {username}, response: {response.data}")
             return response
@@ -77,16 +97,29 @@ class StudentLoginView(APIView):
                 if not students.exists():
                      return Response({"detail": "Invalid enrollment ID."}, status=status.HTTP_401_UNAUTHORIZED)
     
-    # Get the student
+                # Get the student
                 student = students.first()
                 user = student.user
     
-            # Try direct authentication first
+                # Try direct authentication first
                 auth_user = authenticate(username=user.username, password=password)
     
                 if auth_user:
                     # Direct authentication succeeded
                     refresh = RefreshToken.for_user(auth_user)
+                    
+                    # Mark attendance for today
+                    today = date.today()
+                    attendance, created = Attendance.objects.get_or_create(
+                        student=student,
+                        date=today,
+                        defaults={'is_present': True}
+                    )
+                    if created:
+                        logger.info(f"Attendance marked for student {user.username} on {today}")
+                    else:
+                        logger.info(f"Attendance already exists for student {user.username} on {today}")
+                    
                     return Response({
                         'refresh': str(refresh),
                         'access': str(refresh.access_token),
@@ -103,11 +136,24 @@ class StudentLoginView(APIView):
         
                     if auth_user:
                         refresh = RefreshToken.for_user(auth_user)
+                        
+                        # Mark attendance for today
+                        today = date.today()
+                        attendance, created = Attendance.objects.get_or_create(
+                            student=student,
+                            date=today,
+                            defaults={'is_present': True}
+                        )
+                        if created:
+                            logger.info(f"Attendance marked for student {user.username} on {today}")
+                        else:
+                            logger.info(f"Attendance already exists for student {user.username} on {today}")
+                        
                         return Response({
                             'refresh': str(refresh),
                             'access': str(refresh.access_token),
                             'user': UserSerializer(auth_user).data
-                    })
+                        })
                     else:
                         return Response({"detail": "Login failed. Please contact support."}, 
                                             status=status.HTTP_401_UNAUTHORIZED)
@@ -483,6 +529,9 @@ class StudentViewSet(viewsets.ModelViewSet):
             # Update student fields
             if 'date_of_birth' in request.data:
                 instance.date_of_birth = request.data.get('date_of_birth')
+                
+            if 'admission_date' in request.data:
+                instance.admission_date = request.data.get('admission_date')
             
             # Handle batch_id if provided
             if 'batch_id' in request.data and request.data['batch_id']:
@@ -511,3 +560,395 @@ class StudentViewSet(viewsets.ModelViewSet):
                 {"detail": f"Error updating student: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+from .serializers import AttendanceSerializer
+
+class AttendanceViewSet(viewsets.ModelViewSet):
+    serializer_class = AttendanceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'student':
+            # Students can only see their own attendance
+            try:
+                student = Student.objects.get(user=user)
+                return Attendance.objects.filter(student=student).order_by('-date')
+            except Student.DoesNotExist:
+                return Attendance.objects.none()
+        else:
+            # Faculty and admin can see all attendance records
+            # Filter by student_id if provided
+            student_id = self.request.query_params.get('student_id', None)
+            date_param = self.request.query_params.get('date', None)
+            batch_id = self.request.query_params.get('batch_id', None)
+            
+            queryset = Attendance.objects.all()
+            
+            if student_id:
+                queryset = queryset.filter(student_id=student_id)
+            
+            if date_param:
+                queryset = queryset.filter(date=date_param)
+                
+            if batch_id:
+                queryset = queryset.filter(student__batch_id=batch_id)
+                
+            return queryset.order_by('-date')
+    
+    @action(detail=False, methods=['get'])
+    def my_attendance(self, request):
+        """Get attendance for the logged-in student"""
+        # Allow any authenticated user for testing
+        # if request.user.role != 'student':
+        #     return Response(
+        #         {"detail": "Only students can access their attendance records."},
+        #         status=status.HTTP_403_FORBIDDEN
+        #     )
+        
+        try:
+            student = Student.objects.get(user=request.user)
+            admission_date = student.admission_date
+            today = date.today()
+            
+            # Get all holidays
+            holidays = Holiday.objects.filter(date__gte=admission_date, date__lte=today)
+            holiday_dates = {h.date: h.name for h in holidays}
+            
+            # Calculate working days (excluding Sundays and holidays)
+            working_days = []
+            current_date = admission_date
+            while current_date <= today:
+                # Skip Sundays (weekday 6) and holidays
+                if current_date.weekday() != 6 and current_date not in holiday_dates:
+                    working_days.append(current_date)
+                current_date += timedelta(days=1)
+            
+            # Get student's attendance records for working days only
+            attendance = Attendance.objects.filter(
+                student=student,
+                date__gte=admission_date,
+                date__lte=today
+            ).order_by('-date')
+            
+            # If no attendance records, create one for today if it's a working day
+            if not attendance.exists() and today.weekday() != 6 and today not in holiday_dates:
+                Attendance.objects.create(
+                    student=student,
+                    date=today,
+                    is_present=True
+                )
+                attendance = Attendance.objects.filter(student=student).order_by('-date')
+            
+            serializer = self.get_serializer(attendance, many=True)
+            
+            # Calculate attendance statistics
+            total_working_days = len(working_days)
+            
+            # Get present days only for working days
+            present_days = 0
+            for work_day in working_days:
+                if attendance.filter(date=work_day, is_present=True).exists():
+                    present_days += 1
+            
+            # Calculate attendance percentage
+            attendance_percentage = (present_days / total_working_days * 100) if total_working_days > 0 else 0
+            
+            # Get attendance by month
+            attendance_by_month = {}
+            for att in attendance:
+                month_key = att.date.strftime('%B %Y')
+                if month_key not in attendance_by_month:
+                    attendance_by_month[month_key] = {'present': 0, 'absent': 0, 'total': 0}
+                
+                attendance_by_month[month_key]['total'] += 1
+                if att.is_present:
+                    attendance_by_month[month_key]['present'] += 1
+                else:
+                    attendance_by_month[month_key]['absent'] += 1
+            
+            # Log for debugging
+            logger.info(f"Student: {student.user.username}, Working days: {total_working_days}, Present: {present_days}")
+            logger.info(f"Working days count: {len(working_days)}")
+            logger.info(f"First few working days: {[d.isoformat() for d in working_days[:5]]}")
+            
+            return Response({
+                'attendance': serializer.data,
+                'statistics': {
+                    'total_working_days': total_working_days,
+                    'present_days': present_days,
+                    'absent_days': total_working_days - present_days,
+                    'attendance_percentage': round(attendance_percentage, 2)
+                },
+                'monthly_statistics': attendance_by_month,
+                'admission_date': student.admission_date,
+                'holidays': [{'date': date_obj.isoformat(), 'name': name} for date_obj, name in holiday_dates.items()]
+            })
+        except Student.DoesNotExist:
+            return Response(
+                {"detail": "Student profile not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+def get_user_enrollments(request):
+    """Get enrollments for the current user"""
+    if not request.user.is_authenticated:
+        return Response(
+            {"detail": "Authentication required"},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+    
+    try:
+        # Handle potential errors by using a try/except for each enrollment
+        enrollments = CourseEnrollment.objects.filter(user=request.user)
+        data = []
+        for enrollment in enrollments:
+            try:
+                data.append({
+                    'id': enrollment.id,
+                    'course': enrollment.course.id,
+                    'course_title': enrollment.course.title,
+                    'enrolled_date': enrollment.enrolled_date
+                })
+            except Exception:
+                # Skip any problematic enrollments
+                continue
+        return Response(data)
+    except Exception as e:
+        logger.error(f"Error fetching user enrollments: {str(e)}")
+        # Return empty list instead of error to prevent frontend issues
+        return Response([])
+        
+class AttendanceAPIView(APIView):
+    """Simple API endpoint to get attendance status for the current day"""
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        if request.user.role != 'student':
+            return Response(
+                {"detail": "Only students can access attendance status."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        try:
+            student = Student.objects.get(user=request.user)
+            today = date.today()
+            
+            # Check if attendance exists for today
+            attendance = Attendance.objects.filter(student=student, date=today).first()
+            
+            if attendance:
+                return Response({
+                    'date': today,
+                    'is_present': attendance.is_present,
+                    'login_time': attendance.login_time
+                })
+            else:
+                return Response({
+                    'date': today,
+                    'is_present': False,
+                    'message': 'No attendance record for today'
+                })
+                
+        except Student.DoesNotExist:
+            return Response(
+                {"detail": "Student profile not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+@api_view(['POST'])
+@permission_classes([IsFaculty])
+def mark_attendance(request):
+    """API endpoint for faculty to mark student attendance"""
+    try:
+        student_id = request.data.get('student_id')
+        date_str = request.data.get('date')
+        is_present = request.data.get('is_present', False)
+        remarks = request.data.get('remarks', '')
+        
+        if not student_id or not date_str:
+            return Response(
+                {"detail": "Student ID and date are required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Parse date
+        try:
+            attendance_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return Response(
+                {"detail": "Invalid date format. Use YYYY-MM-DD."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get student
+        try:
+            student = Student.objects.get(id=student_id)
+        except Student.DoesNotExist:
+            return Response(
+                {"detail": "Student not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check if date is valid (between admission date and today)
+        today = date.today()
+        if attendance_date > today:
+            return Response(
+                {"detail": "Cannot mark attendance for future dates."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if attendance_date < student.admission_date:
+            return Response(
+                {"detail": "Cannot mark attendance before student's admission date."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if date is a Sunday or holiday
+        if attendance_date.weekday() == 6:  # Sunday
+            return Response(
+                {"detail": "Cannot mark attendance for Sundays."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        # Check if date is a holiday
+        try:
+            holiday = Holiday.objects.get(date=attendance_date)
+            return Response(
+                {"detail": f"Cannot mark attendance for holiday: {holiday.name}."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Holiday.DoesNotExist:
+            pass  # Not a holiday, continue
+        
+        # Create or update attendance record
+        attendance, created = Attendance.objects.update_or_create(
+            student=student,
+            date=attendance_date,
+            defaults={'is_present': is_present, 'remarks': remarks}
+        )
+        
+        return Response({
+            'id': attendance.id,
+            'student_id': student.id,
+            'student_name': student.user.username,
+            'date': attendance_date,
+            'is_present': attendance.is_present,
+            'remarks': attendance.remarks,
+            'created': created
+        })
+        
+    except Exception as e:
+        return Response(
+            {"detail": f"Error marking attendance: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+@permission_classes([IsFaculty])
+def get_student_attendance_dates(request, student_id):
+    """Get available dates for marking attendance for a specific student"""
+    try:
+        student = Student.objects.get(id=student_id)
+        
+        # Get admission date and today's date
+        admission_date = student.admission_date
+        today = date.today()
+        
+        # Get all dates between admission date and today
+        all_dates = []
+        current_date = admission_date
+        while current_date <= today:
+            all_dates.append(current_date)
+            current_date += timedelta(days=1)
+        
+        # Get existing attendance records
+        existing_attendance = Attendance.objects.filter(
+            student=student
+        ).values_list('date', 'is_present')
+        
+        attendance_status = {}
+        for att_date, is_present in existing_attendance:
+            attendance_status[att_date.isoformat()] = is_present
+        
+        # Format response
+        date_range = {
+            'student_id': student.id,
+            'student_name': student.user.username,
+            'admission_date': admission_date.isoformat(),
+            'today': today.isoformat(),
+            'attendance_status': attendance_status
+        }
+        
+        return Response(date_range)
+        
+    except Student.DoesNotExist:
+        return Response(
+            {"detail": "Student not found."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return Response(
+            {"detail": f"Error retrieving attendance dates: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_student_attendance_stats(request, student_id):
+    """Get attendance statistics for a specific student"""
+    try:
+        student = Student.objects.get(id=student_id)
+        admission_date = student.admission_date
+        today = date.today()
+        
+        # Get holidays
+        holidays = Holiday.objects.filter(date__gte=admission_date, date__lte=today)
+        holiday_dates = [h.date for h in holidays]
+        
+        # Calculate working days (excluding Sundays and holidays)
+        working_days = []
+        current_date = admission_date
+        while current_date <= today:
+            # Skip Sundays (weekday 6) and holidays
+            if current_date.weekday() != 6 and current_date not in holiday_dates:
+                working_days.append(current_date)
+            current_date += timedelta(days=1)
+        
+        # Get student's attendance records
+        attendance = Attendance.objects.filter(
+            student=student,
+            date__gte=admission_date,
+            date__lte=today
+        )
+        
+        # Calculate attendance statistics
+        total_working_days = len(working_days)
+        
+        # Get present days only for working days
+        present_days = 0
+        for work_day in working_days:
+            if attendance.filter(date=work_day, is_present=True).exists():
+                present_days += 1
+        
+        # Calculate attendance percentage
+        attendance_percentage = (present_days / total_working_days * 100) if total_working_days > 0 else 0
+        
+        return Response({
+            'student_id': student.id,
+            'student_name': student.user.username,
+            'total_working_days': total_working_days,
+            'present_days': present_days,
+            'absent_days': total_working_days - present_days,
+            'percentage': round(attendance_percentage, 2)
+        })
+        
+    except Student.DoesNotExist:
+        return Response(
+            {"detail": "Student not found."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return Response(
+            {"detail": f"Error retrieving attendance statistics: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

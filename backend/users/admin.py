@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate, Batch
+from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate, Batch, Attendance, Holiday
 
 @admin.register(CustomUser)
 class CustomUserAdmin(admin.ModelAdmin):
@@ -9,10 +9,11 @@ class CustomUserAdmin(admin.ModelAdmin):
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('user', 'enrollment_id', 'date_of_birth', 'batch')
+    list_display = ('user', 'enrollment_id', 'date_of_birth', 'admission_date', 'batch')
     search_fields = ('user__username', 'enrollment_id')
-    list_filter = ('batch',)
+    list_filter = ('batch', 'admission_date')
     raw_id_fields = ('user',)
+    fields = ('user', 'enrollment_id', 'date_of_birth', 'admission_date', 'batch', 'course')
 
 @admin.register(Faculty)
 class FacultyAdmin(admin.ModelAdmin):
@@ -38,3 +39,16 @@ class CertificateAdmin(admin.ModelAdmin):
 class BatchAdmin(admin.ModelAdmin):
     list_display = ('name',)
     search_fields = ('name',)
+    
+@admin.register(Attendance)
+class AttendanceAdmin(admin.ModelAdmin):
+    list_display = ('student', 'date', 'is_present')
+    search_fields = ('student__user__username', 'date')
+    raw_id_fields = ('student',)
+    list_filter = ('is_present', 'date')
+
+@admin.register(Holiday)
+class HolidayAdmin(admin.ModelAdmin):
+    list_display = ('date', 'name', 'is_government')
+    search_fields = ('name', 'date')
+    list_filter = ('is_government',)

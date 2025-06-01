@@ -43,6 +43,10 @@ import StudentFees from './Components/Student/StudentFees';
 import StudentDocuments from './Components/Student/StudentDocuments';
 import StudentProfile from './Components/Student/StudentProfile';
 
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -130,6 +134,7 @@ function App() {
               <Route path="profile" element={<StudentProfile />} />
             </Route>
           </Routes>
+          <ToastContainer position="top-right" autoClose={3000} />
         </div>
       </Router>
     </UserContext.Provider>

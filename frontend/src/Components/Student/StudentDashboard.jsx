@@ -2,8 +2,8 @@ import React, { useContext, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { UserContext } from '../UserContext'
 import './StudentDashboard.css'
-import { FaSearch, FaBell, FaBook } from 'react-icons/fa'
-import { fetchCourseUpdateNotifications, getUserEnrollments } from '../../api'
+import { FaSearch, FaBell, FaBook, FaCalendarCheck } from 'react-icons/fa'
+import { fetchCourseUpdateNotifications, getUserEnrollments, checkAttendanceStatus } from '../../api'
 
 export default function StudentDashboard() {
   const { user } = useContext(UserContext);
@@ -11,19 +11,27 @@ export default function StudentDashboard() {
   const [notifications, setNotifications] = useState([]);
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [attendanceStatus, setAttendanceStatus] = useState({ is_present: false });
   
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // Fetch both notifications and enrollments
-        const [notificationsData, enrollmentsData] = await Promise.all([
-          fetchCourseUpdateNotifications(),
-          getUserEnrollments()
-        ]);
         
-        setNotifications(notificationsData);
-        setEnrollments(enrollmentsData);
+        // Fetch attendance status only (most important)
+        try {
+          const attendanceData = await checkAttendanceStatus();
+          setAttendanceStatus(attendanceData);
+        } catch (err) {
+          console.error('Error fetching attendance:', err);
+          // Set default attendance status if fetch fails
+          setAttendanceStatus({ is_present: false });
+        }
+        
+        // Set default values for other data
+        setNotifications([]);
+        setEnrollments([]);
+        
         setLoading(false);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
@@ -71,15 +79,17 @@ export default function StudentDashboard() {
       <div className="dashboard-stats">
         <div className="stat-card">
           <h3>Enrolled Courses</h3>
-          <p className="stat-number">{enrollments.length || 0}</p>
+          <p className="stat-number">{enrollments && enrollments.length || 0}</p>
         </div>
         <div className="stat-card">
           <h3>Completed Assignments</h3>
           <p className="stat-number">15</p>
         </div>
         <div className="stat-card">
-          <h3>Overall Progress</h3>
-          <p className="stat-number">68%</p>
+          <h3><FaCalendarCheck /> Attendance Status</h3>
+          <p className="stat-number attendance-status">
+            {attendanceStatus && attendanceStatus.is_present ? 'Present Today' : 'Not Marked'}
+          </p>
         </div>
       </div>
       

@@ -4,7 +4,9 @@ from .views import (
     RegisterView, CustomTokenObtainPairView, StudentLoginView, ProfileView,
     CreateAdminView, CreateFacultyView, CreateStudentView, ListFacultyView,
     ListStudentView, BatchViewSet, WorkshopViewSet, StudentViewSet,
-    WorkshopRegistrationViewSet, CertificateViewSet, IntegratedDashboardView
+    WorkshopRegistrationViewSet, CertificateViewSet, IntegratedDashboardView,
+    AttendanceViewSet, get_user_enrollments, AttendanceAPIView,
+    mark_attendance, get_student_attendance_dates, get_student_attendance_stats
 )
 
 router = DefaultRouter()
@@ -13,6 +15,7 @@ router.register(r'workshops', WorkshopViewSet, basename='workshop')
 router.register(r'workshop-registrations', WorkshopRegistrationViewSet, basename='workshop-registration')
 router.register(r'certificates', CertificateViewSet, basename='certificate')
 router.register(r'students', StudentViewSet, basename='student')
+router.register(r'attendance', AttendanceViewSet, basename='attendance')
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -27,6 +30,12 @@ urlpatterns = [
     path('students/', ListStudentView.as_view(), name='list_students'),
     path('dashboard/', IntegratedDashboardView.as_view(), name='dashboard'),
     path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('enrollments/', get_user_enrollments, name='user-enrollments'),
+    path('attendance-status/', AttendanceAPIView.as_view(), name='attendance-status'),
+    # Faculty attendance management endpoints
+    path('mark-attendance/', mark_attendance, name='mark-attendance'),
+    path('student-attendance-dates/<int:student_id>/', get_student_attendance_dates, name='student-attendance-dates'),
+    path('student-attendance-stats/<int:student_id>/', get_student_attendance_stats, name='student-attendance-stats'),
     # Other URLs
     
     # Add the new endpoint for assigning students to batches

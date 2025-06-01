@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
+from datetime import date
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
@@ -23,6 +24,7 @@ class Student(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='student_profile')
     enrollment_id = models.CharField(max_length=20, unique=True)
     date_of_birth = models.DateField(null=True, blank=True)
+    admission_date = models.DateField(default=date.today)
     course = models.ForeignKey('courses.Course', on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
     batch = models.ForeignKey(Batch, on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
     created_at = models.DateTimeField(default=timezone.now)
@@ -80,3 +82,24 @@ class Certificate(models.Model):
 
     def __str__(self):
         return self.title
+
+class Holiday(models.Model):
+    date = models.DateField(unique=True)
+    name = models.CharField(max_length=100)
+    is_government = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return f"{self.name} - {self.date}"
+
+class Attendance(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='attendances')
+    date = models.DateField(default=date.today)
+    is_present = models.BooleanField(default=True)
+    login_time = models.DateTimeField(auto_now_add=True)
+    remarks = models.TextField(blank=True, null=True)
+    
+    class Meta:
+        unique_together = ['student', 'date']
+        
+    def __str__(self):
+        return f"{self.student.user.username} - {self.date} - {'Present' if self.is_present else 'Absent'}"
