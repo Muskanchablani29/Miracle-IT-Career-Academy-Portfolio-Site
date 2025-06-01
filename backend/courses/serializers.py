@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Course, Video, Quiz, CourseSyllabus, SyllabusItem, CourseEnrollment, Notification
+from .models import Course, Video, Quiz, CourseSyllabus, SyllabusItem, CourseEnrollment, Notification, CourseEnquiry, Payment
 
 class SyllabusItemSerializer(serializers.ModelSerializer):
     class Meta:
@@ -16,7 +16,7 @@ class CourseSyllabusSerializer(serializers.ModelSerializer):
 class VideoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Video
-        fields = ['id', 'title', 'url', 'order']
+        fields = ['id', 'title', 'url', 'order', 'preview_duration']
 
 class CourseSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(required=False)
@@ -24,7 +24,8 @@ class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = ['id', 'title', 'description', 'image', 'duration', 'level', 
-                 'created_at', 'internship_duration', 'is_certified', 'last_updated']
+                 'created_at', 'internship_duration', 'is_certified', 'last_updated',
+                 'price', 'discount_price']
 
 class CourseDetailSerializer(serializers.ModelSerializer):
     syllabus_modules = CourseSyllabusSerializer(many=True, read_only=True)
@@ -34,7 +35,7 @@ class CourseDetailSerializer(serializers.ModelSerializer):
         model = Course
         fields = ['id', 'title', 'description', 'image', 'duration', 'level', 
                  'created_at', 'internship_duration', 'is_certified', 'last_updated',
-                 'syllabus_modules', 'videos']
+                 'syllabus_modules', 'videos', 'price', 'discount_price']
 
 class QuizSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(required=False)
@@ -56,3 +57,21 @@ class NotificationSerializer(serializers.ModelSerializer):
         model = Notification
         fields = ['id', 'title', 'message', 'created_at', 'is_read']
         read_only_fields = ['created_at']
+
+class CourseEnquirySerializer(serializers.ModelSerializer):
+    course_title = serializers.ReadOnlyField(source='course.title')
+    
+    class Meta:
+        model = CourseEnquiry
+        fields = ['id', 'name', 'email', 'phone', 'course', 'course_title', 'message', 'status', 'created_at']
+        read_only_fields = ['created_at']
+
+class PaymentSerializer(serializers.ModelSerializer):
+    course_title = serializers.ReadOnlyField(source='course.title')
+    user_email = serializers.ReadOnlyField(source='user.email')
+    
+    class Meta:
+        model = Payment
+        fields = ['id', 'user', 'user_email', 'course', 'course_title', 'amount', 
+                 'payment_id', 'order_id', 'status', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']

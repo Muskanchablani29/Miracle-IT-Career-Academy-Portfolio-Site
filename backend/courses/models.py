@@ -15,6 +15,9 @@ class Course(models.Model):
     internship_duration = models.CharField(max_length=50, blank=True, null=True)
     is_certified = models.BooleanField(default=False)
     last_updated = models.DateTimeField(auto_now=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    youtube_playlist_id = models.CharField(max_length=100, blank=True, null=True, help_text="YouTube playlist ID")
     
     def __str__(self):
         return self.title
@@ -44,10 +47,18 @@ class SyllabusItem(models.Model):
         ordering = ['order']
 
 class Video(models.Model):
+    VIDEO_SOURCE_CHOICES = (
+        ('url', 'Direct URL'),
+        ('youtube', 'YouTube Video'),
+    )
+    
     course = models.ForeignKey(Course, related_name='videos', on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
     url = models.URLField()
+    video_id = models.CharField(max_length=50, blank=True, null=True, help_text="YouTube video ID")
+    source_type = models.CharField(max_length=10, choices=VIDEO_SOURCE_CHOICES, default='url')
     order = models.IntegerField(default=0)
+    preview_duration = models.IntegerField(default=180, help_text="Preview duration in seconds (default: 3 minutes)")
     
     def __str__(self):
         return f"{self.course.title} - {self.title}"
@@ -86,6 +97,53 @@ class Notification(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.title}"
+    
+    class Meta:
+        ordering = ['-created_at']
+        
+class CourseEnquiry(models.Model):
+    ENQUIRY_STATUS = (
+        ('pending', 'Pending'),
+        ('contacted', 'Contacted'),
+        ('enrolled', 'Enrolled'),
+        ('rejected', 'Rejected')
+    )
+    
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    phone = models.CharField(max_length=15)
+    course = models.ForeignKey(Course, related_name='enquiries', on_delete=models.CASCADE)
+    message = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=ENQUIRY_STATUS, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, related_name='enquiries', on_delete=models.SET_NULL, null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.name} - {self.course.title}"
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = 'Course Enquiries'
+
+class Payment(models.Model):
+    PAYMENT_STATUS = (
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+        ('refunded', 'Refunded')
+    )
+    
+    user = models.ForeignKey(User, related_name='payments', on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, related_name='payments', on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_id = models.CharField(max_length=100, blank=True, null=True)
+    order_id = models.CharField(max_length=100, blank=True, null=True)
+    status = models.CharField(max_length=20, choices=PAYMENT_STATUS, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.course.title} - {self.amount}"
     
     class Meta:
         ordering = ['-created_at']
