@@ -103,7 +103,7 @@ const CreateStudent = ({ onClose, onSuccess }) => {
           <button className="close-button" onClick={onClose}>×</button>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="form-create">
           {error && <div className="error-message">{error}</div>}
 
           <div className="form-group">

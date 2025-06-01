@@ -18,6 +18,7 @@
 
 .dashboard-container {
   max-width: 1200px;
+
   margin: 0 auto;
   font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
   color: var(--text-primary);
@@ -51,7 +52,7 @@
   background-color: var(--background-color);
   border-radius: 20px;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-  padding: 35px;
+  padding: 15px;
   transition: all 0.3s ease;
 }
 

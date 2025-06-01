@@ -18,46 +18,93 @@ const StudentAttendance = () => {
         setLoading(true);
         const token = localStorage.getItem('access');
         
-        // Fetch attendance data for date range
-        const response = await axios.get('http://localhost:8000/api/attendance-report/', {
+        // Get students for the selected batch
+        const studentsResponse = await axios.get(`http://localhost:8000/api/students/`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+          params: { batch: selectedBatch }
+        });
+        
+        // Get attendance records for the date range
+        const attendanceResponse = await axios.get(`http://localhost:8000/api/attendance/`, {
           headers: { 'Authorization': `Bearer ${token}` },
           params: { 
-            batch_id: selectedBatch,
+            batch: selectedBatch,
             start_date: startDate,
             end_date: endDate
           }
         });
         
+        // Process data to create attendance report
+        const studentMap = {};
+        studentsResponse.data.forEach(student => {
+          studentMap[student.id] = {
+            enrollment_id: student.enrollment_id,
+            name: student.user.username,
+            present_days: 0,
+            absent_days: 0,
+            remarks: ''
+          };
+        });
+        
+        // Count present and absent days
+        attendanceResponse.data.forEach(record => {
+          if (studentMap[record.student]) {
+            if (record.is_present) {
+              studentMap[record.student].present_days += 1;
+            } else {
+              studentMap[record.student].absent_days += 1;
+            }
+            // Keep the most recent remark
+            if (record.remarks) {
+              studentMap[record.student].remarks = record.remarks;
+            }
+          }
+        });
+        
         // Create CSV content
         const headers = ['Enrollment ID', 'Student Name', 'Present Days', 'Absent Days', 'Attendance %', 'Remarks'];
-        const csvContent = [
-          headers.join(','),
-          ...response.data.map(record => {
-            return [
-              record.enrollment_id,
-              record.student_name,
-              record.present_days,
-              record.absent_days,
-              `${record.attendance_percentage}%`,
-              `"${record.remarks || ''}"`
-            ].join(',');
-          })
-        ].join('\\n');
+        const csvRows = [];
+        csvRows.push(headers.join(','));
         
-        // Create download link
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        Object.values(studentMap).forEach(student => {
+          const totalDays = student.present_days + student.absent_days;
+          const attendancePercentage = totalDays > 0 
+            ? Math.round((student.present_days / totalDays) * 100) 
+            : 0;
+            
+          csvRows.push([
+            student.enrollment_id,
+            student.name,
+            student.present_days,
+            student.absent_days,
+            `${attendancePercentage}%`,
+            `"${student.remarks || ''}"`
+          ].join(','));
+        });
+        
+        const csvContent = csvRows.join('\n');
+        
+        // Create download link with BOM for Excel compatibility
+        const BOM = "\uFEFF"; // UTF-8 BOM for Excel
+        const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.setAttribute('href', url);
         link.setAttribute('download', `attendance_${selectedBatch}_${startDate}_to_${endDate}.csv`);
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        
+        // Clean up
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        }, 100);
         
         setLoading(false);
       } catch (error) {
         console.error('Error downloading attendance report:', error);
-        toast.error('Failed to download attendance report');
+        console.error('Error details:', error.response?.data || error.message);
+        toast.error(`Failed to download report: ${error.message}`);
         setLoading(false);
       }
     } else {
