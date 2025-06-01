@@ -1,46 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { createStudentAccount, userAxiosInstance } from '../../api';
-import './CreateStudent.css';
+import { userAxiosInstance } from '../../api';
+import './EditStudent.css';
 
-const CreateStudent = ({ onClose, onSuccess }) => {
+const EditStudent = ({ student, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     enrollment_id: '',
     date_of_birth: '',
-    course_id: '',
     batch_id: '',
-    password: '' // No default password
+    course_id: ''
+    // Removed password field as students will login with enrollment ID and DOB
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [courses, setCourses] = useState([]);
   const [batches, setBatches] = useState([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
-  const [nextEnrollmentId, setNextEnrollmentId] = useState(() => {
-    const savedId = localStorage.getItem('lastEnrollmentId');
-    if (savedId) {
-      const currentNum = parseInt(savedId.replace('MIRA', ''));
-      const nextNum = currentNum + 1;
-      return `MIRA${nextNum.toString().padStart(4, '0')}`;
-    }
-    return 'MIRA0001';
-  });
 
   useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      enrollment_id: nextEnrollmentId
-    }));
+    // Initialize form with student data
+    if (student) {
+      setFormData({
+        username: student.name || '',
+        email: student.email || '',
+        enrollment_id: student.enrollmentId || '',
+        date_of_birth: student.dateOfBirth || '',
+        batch_id: student.batchId || '',
+        course_id: student.courseId || ''
+        // No password field as students will login with enrollment ID and DOB
+      });
+    }
     fetchCourses();
-  }, [nextEnrollmentId]);
+  }, [student]);
 
   useEffect(() => {
     if (formData.course_id) {
       fetchBatchesForCourse(formData.course_id);
     } else {
       setBatches([]);
-      setFormData(prev => ({ ...prev, batch_id: '' }));
     }
   }, [formData.course_id]);
 
@@ -79,19 +77,38 @@ const CreateStudent = ({ onClose, onSuccess }) => {
     setError(null);
 
     try {
-      const response = await createStudentAccount(formData);
-      const currentNum = parseInt(nextEnrollmentId.replace('MIRA', ''));
-      const nextNum = currentNum + 1;
-      const newEnrollmentId = `MIRA${nextNum.toString().padStart(4, '0')}`;
-      localStorage.setItem('lastEnrollmentId', nextEnrollmentId);
-      setNextEnrollmentId(newEnrollmentId);
+      // Only include fields that have values and that have actually changed
+      const updateData = {};
+      if (formData.username && formData.username !== student.name) updateData.username = formData.username;
+      if (formData.email && formData.email !== student.email) updateData.email = formData.email;
+      if (formData.date_of_birth && formData.date_of_birth !== student.dateOfBirth) updateData.date_of_birth = formData.date_of_birth;
+      
+      // Convert batch_id and course_id to numbers if they exist and have changed
+      if (formData.batch_id && parseInt(formData.batch_id) !== student.batchId) {
+        updateData.batch_id = parseInt(formData.batch_id);
+      }
+      if (formData.course_id && parseInt(formData.course_id) !== student.courseId) {
+        updateData.course_id = parseInt(formData.course_id);
+      }
+
+      // Only proceed if there are actual changes
+      if (Object.keys(updateData).length === 0) {
+        setLoading(false);
+        onClose && onClose();
+        return;
+      }
+
+      console.log('Updating student with data:', updateData);
+      
+      // Use direct API call
+      await userAxiosInstance.put(`students/${student.id}/`, updateData);
       setLoading(false);
       onSuccess && onSuccess();
       onClose && onClose();
     } catch (err) {
-      console.error('Student creation error:', err);
+      console.error('Student update error:', err);
       setLoading(false);
-      setError(err.response?.data?.detail || err.message || 'Failed to create student account.');
+      setError(err.response?.data?.detail || err.message || 'Failed to update student account.');
     }
   };
 
@@ -99,7 +116,7 @@ const CreateStudent = ({ onClose, onSuccess }) => {
     <div className="modal-overlay">
       <div className="modal-content">
         <div className="modal-header">
-          <h2>Create Student Account</h2>
+          <h2>Edit Student Account</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
 
@@ -141,7 +158,6 @@ const CreateStudent = ({ onClose, onSuccess }) => {
               required
               readOnly
             />
-            <small className="form-hint">Auto-generated unique ID</small>
           </div>
 
           <div className="form-group">
@@ -172,9 +188,6 @@ const CreateStudent = ({ onClose, onSuccess }) => {
                 </option>
               ))}
             </select>
-            <small className="form-hint">
-              Student will be automatically enrolled in this course
-            </small>
           </div>
 
           <div className="form-group">
@@ -193,24 +206,17 @@ const CreateStudent = ({ onClose, onSuccess }) => {
                 </option>
               ))}
             </select>
-            <small className="form-hint">
-              Select the batch for the student
-            </small>
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password (Date of Birth)</label>
-            <input
-              type="text"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Enter date of birth as password"
-            />
-            <small className="form-hint">
-              Student will use this password (DOB) to login
-            </small>
+            <label htmlFor="login_info">Login Information</label>
+            <div className="login-info-box">
+              <p>Students can login using:</p>
+              <ul>
+                <li><strong>Username:</strong> Enrollment ID ({formData.enrollment_id})</li>
+                <li><strong>Password:</strong> Date of Birth</li>
+              </ul>
+            </div>
           </div>
 
           <div className="form-actions">
@@ -227,7 +233,7 @@ const CreateStudent = ({ onClose, onSuccess }) => {
               className="btn-primary" 
               disabled={loading}
             >
-              {loading ? 'Creating...' : 'Create Student'}
+              {loading ? 'Updating...' : 'Update Student'}
             </button>
           </div>
         </form>
@@ -236,4 +242,4 @@ const CreateStudent = ({ onClose, onSuccess }) => {
   );
 };
 
-export default CreateStudent;
+export default EditStudent;

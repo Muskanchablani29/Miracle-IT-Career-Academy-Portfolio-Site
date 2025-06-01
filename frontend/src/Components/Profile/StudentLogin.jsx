@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import axios from '../../api';
+import { userAxiosInstance } from '../../api';
 import { useNavigate, Link } from 'react-router-dom';
 import './Login.css';
 import { UserContext } from '../UserContext';
@@ -16,11 +16,19 @@ const StudentLogin = () => {
     try {
       console.log('Attempting student login with:', credentials);
       
-      // Use direct axios instance to avoid interceptors
-      const res = await axios.post('student-login/', credentials, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
+      // Format date of birth as password (DDMMYYYY)
+      const dobDate = new Date(credentials.date_of_birth);
+      const day = String(dobDate.getDate()).padStart(2, '0');
+      const month = String(dobDate.getMonth() + 1).padStart(2, '0');
+      const year = dobDate.getFullYear();
+      const formattedDOB = `${day}${month}${year}`;
+      
+      console.log('Formatted DOB password:', formattedDOB);
+      
+      // Send login request with enrollment_id and formatted DOB as password
+      const res = await userAxiosInstance.post('student-login/', {
+        enrollment_id: credentials.enrollment_id.trim(),
+        date_of_birth: formattedDOB
       });
       
       console.log('Login response:', res.data);
@@ -39,7 +47,7 @@ const StudentLogin = () => {
       console.error('Request data:', credentials);
       if (err.response && err.response.data) {
         console.error('Error response data:', err.response.data);
-        alert('Login failed: ' + JSON.stringify(err.response.data));
+        alert('Login failed: ' + (err.response.data.detail || JSON.stringify(err.response.data)));
       } else {
         alert('Login failed. Please check your enrollment ID and date of birth.');
       }
