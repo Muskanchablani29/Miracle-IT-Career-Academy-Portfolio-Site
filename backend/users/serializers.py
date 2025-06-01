@@ -14,6 +14,8 @@ from django.contrib.auth.models import User
 from courses.serializers import CourseSerializer
 
 class BatchSerializer(serializers.ModelSerializer):
+    course = CourseSerializer(read_only=True)
+    
     class Meta:
         model = Batch
         fields = ['id', 'name', 'course', 'created_at']
@@ -249,7 +251,13 @@ class CreateStudentSerializer(serializers.Serializer):
     def create(self, validated_data):
     # Use date of birth as password in ddmmyyyy format if password not provided
         dob = validated_data['date_of_birth']
-        password = validated_data.get('password', dob.strftime('%d%m%Y'))
+        dob_password = dob.strftime('%d%m%Y')
+        password = validated_data.get('password', dob_password)
+        
+        # Log the password being used
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Creating student with DOB: {dob}, password: {dob_password}")
 
     # Handle batch_id if provided
         batch_id = validated_data.pop('batch_id', None)

@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     RegisterView, CustomTokenObtainPairView, StudentLoginView, ProfileView,
     CreateAdminView, CreateFacultyView, CreateStudentView, ListFacultyView,
-    ListStudentView, BatchViewSet, WorkshopViewSet,
+    ListStudentView, BatchViewSet, WorkshopViewSet, StudentViewSet,
     WorkshopRegistrationViewSet, CertificateViewSet, IntegratedDashboardView
 )
 
@@ -12,6 +12,7 @@ router.register(r'batches', BatchViewSet, basename='batch')
 router.register(r'workshops', WorkshopViewSet, basename='workshop')
 router.register(r'workshop-registrations', WorkshopRegistrationViewSet, basename='workshop-registration')
 router.register(r'certificates', CertificateViewSet, basename='certificate')
+router.register(r'students', StudentViewSet, basename='student')
 
 urlpatterns = [
     path('', include(router.urls)),

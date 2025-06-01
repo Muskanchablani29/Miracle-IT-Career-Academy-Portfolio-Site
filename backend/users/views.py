@@ -68,79 +68,53 @@ class StudentLoginView(APIView):
             enrollment_id = serializer.validated_data['enrollment_id']
             password = serializer.validated_data['date_of_birth']
             
-            logger.debug(f"Looking for student with enrollment_id={enrollment_id}")
+            logger.debug(f"Looking for student with enrollment_id={enrollment_id}, password={password}")
             
             try:
-                # Find all students with this enrollment ID
+                # Find student with this enrollment ID
                 students = Student.objects.filter(enrollment_id=enrollment_id.strip())
-                
+    
                 if not students.exists():
-                    logger.error(f"No student found with enrollment_id={enrollment_id}")
-                    return Response(
-                        {"detail": "Invalid enrollment ID or password."},
-                        status=status.HTTP_401_UNAUTHORIZED
-                    )
-                
-                # Get the student
+                     return Response({"detail": "Invalid enrollment ID."}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    # Get the student
                 student = students.first()
                 user = student.user
-                
-                # Try to authenticate with username and password
+    
+            # Try direct authentication first
                 auth_user = authenticate(username=user.username, password=password)
-                
-                if auth_user is None:
-                    # If direct authentication fails, try with DOB format
-                    try:
-                        # Try to parse the password as a date in DDMMYYYY format
-                        day = int(password[:2])
-                        month = int(password[2:4])
-                        year = int(password[4:])
-                        
-                        # Create a date object
-                        dob_date = date(year, month, day)
-                        
-                        # Check if this matches the student's DOB
-                        if student.date_of_birth == dob_date:
-                            # If it matches, generate token
-                            refresh = RefreshToken.for_user(user)
-                            
-                            return Response({
-                                'refresh': str(refresh),
-                                'access': str(refresh.access_token),
-                                'user': UserSerializer(user).data
-                            })
-                        else:
-                            logger.error(f"DOB mismatch for student {student.id}")
-                            return Response(
-                                {"detail": "Invalid enrollment ID or password."},
-                                status=status.HTTP_401_UNAUTHORIZED
-                            )
-                    except (ValueError, IndexError):
-                        logger.error(f"Failed to parse password as date: {password}")
-                        return Response(
-                            {"detail": "Invalid enrollment ID or password."},
-                            status=status.HTTP_401_UNAUTHORIZED
-                        )
-                else:
+    
+                if auth_user:
                     # Direct authentication succeeded
                     refresh = RefreshToken.for_user(auth_user)
-                    
                     return Response({
                         'refresh': str(refresh),
                         'access': str(refresh.access_token),
                         'user': UserSerializer(auth_user).data
                     })
-                
+                else:
+                    # Update the user's password to match their current DOB
+                    dob_password = student.date_of_birth.strftime('%d%m%Y')
+                    user.set_password(dob_password)
+                    user.save()
+        
+                    # Try authentication with the new password
+                    auth_user = authenticate(username=user.username, password=dob_password)
+        
+                    if auth_user:
+                        refresh = RefreshToken.for_user(auth_user)
+                        return Response({
+                            'refresh': str(refresh),
+                            'access': str(refresh.access_token),
+                            'user': UserSerializer(auth_user).data
+                    })
+                    else:
+                        return Response({"detail": "Login failed. Please contact support."}, 
+                                            status=status.HTTP_401_UNAUTHORIZED)
             except Exception as e:
-                logger.error(f"Exception during student login: {str(e)}")
-                return Response(
-                    {"detail": "An error occurred during login."},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-        else:
-            logger.error(f"Invalid serializer data: {serializer.errors}")
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+                    logger.error(f"Exception during student login: {str(e)}")
+                    return Response({"detail": f"An error occurred: {str(e)}"}, 
+                                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 class ProfileView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -481,3 +455,59 @@ class IntegratedDashboardView(APIView):
             return Response({'message': 'Notification marked as read'}, status=status.HTTP_200_OK)
         except Notification.DoesNotExist:
             return Response({'error': 'Notification not found'}, status=status.HTTP_404_NOT_FOUND)
+class StudentViewSet(viewsets.ModelViewSet):
+    queryset = Student.objects.all()
+    serializer_class = StudentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            
+            # Update user fields
+            user = instance.user
+            if 'username' in request.data:
+                new_username = request.data.get('username')
+                # Check if username already exists for a different user
+                if CustomUser.objects.filter(username=new_username).exclude(id=user.id).exists():
+                    return Response(
+                        {"detail": f"Username '{new_username}' is already taken."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                user.username = new_username
+                
+            if 'email' in request.data:
+                user.email = request.data.get('email')
+            user.save()
+            
+            # Update student fields
+            if 'date_of_birth' in request.data:
+                instance.date_of_birth = request.data.get('date_of_birth')
+            
+            # Handle batch_id if provided
+            if 'batch_id' in request.data and request.data['batch_id']:
+                try:
+                    batch = Batch.objects.get(id=request.data['batch_id'])
+                    instance.batch = batch
+                except Batch.DoesNotExist:
+                    pass
+            
+            # Handle course_id if provided
+            if 'course_id' in request.data and request.data['course_id']:
+                from courses.models import Course
+                try:
+                    course = Course.objects.get(id=request.data['course_id'])
+                    instance.course = course
+                except Course.DoesNotExist:
+                    pass
+            
+            instance.save()
+            return Response(StudentSerializer(instance).data)
+        except Exception as e:
+            import traceback
+            logger.error(f"Error updating student: {str(e)}")
+            logger.error(traceback.format_exc())
+            return Response(
+                {"detail": f"Error updating student: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
