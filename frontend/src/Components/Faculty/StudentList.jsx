@@ -19,11 +19,16 @@ const StudentList = () => {
   const [batches, setBatches] = useState([]);
   const [courses, setCourses] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    activeStudents: 0,
+    onLeaveStudents: 0,
+    inactiveStudents: 0
+  });
   const studentsPerPage = 10;
 
   useEffect(() => {
-    fetchStudents();
-    fetchBatches();
+    fetchAllData();
   }, []);
   
   // Update localStorage with highest enrollment ID when students change
@@ -40,22 +45,31 @@ const StudentList = () => {
     }
   }, [students]);
 
-  const fetchStudents = async () => {
+  const fetchAllData = async () => {
     setLoading(true);
     try {
-      // Fetch students created by this faculty
-      console.log('Fetching students from API');
-      const response = await userAxiosInstance.get('students/');
+      // Fetch all data in parallel for better performance
+      const [studentsResponse, batchesResponse, coursesResponse] = await Promise.all([
+        userAxiosInstance.get('students/'),
+        userAxiosInstance.get('batches/'),
+        userAxiosInstance.get('courses/')
+      ]);
       
-      // Fetch batches to ensure we have the latest batch and course data
-      const batchesResponse = await userAxiosInstance.get('batches/');
+      // Process batches data
       const batchesMap = {};
       batchesResponse.data.forEach(batch => {
         batchesMap[batch.id] = batch;
       });
+      setBatches(batchesResponse.data);
       
-      // Format the data
-      const formattedStudents = response.data.map(student => {
+      // Process courses data
+      const coursesMap = {};
+      coursesResponse.data.forEach(course => {
+        coursesMap[course.id] = course;
+      });
+      
+      // Format the students data
+      const formattedStudents = studentsResponse.data.map(student => {
         // Get batch details and associated course
         const batchId = student.batch?.id;
         const batchDetails = batchId && batchesMap[batchId] ? batchesMap[batchId] : null;
@@ -75,6 +89,9 @@ const StudentList = () => {
         // Format the admission date if it exists
         const formattedAdmissionDate = student.admission_date ? student.admission_date : 'Not Available';
         
+        // Determine student status (use actual status from API if available)
+        const status = student.status || 'Active';
+        
         return {
           id: student.id,
           name: student.user.username,
@@ -86,13 +103,25 @@ const StudentList = () => {
           courseId: courseId,
           batch: batchDetails ? batchDetails.name : (student.batch ? student.batch.name : 'Not Assigned'),
           batchId: batchId,
-          attendance: '95%',
-          performance: 'A (90%)',
-          status: 'Active'
+          attendance: student.attendance_percentage || '95%',
+          performance: student.performance_grade || 'A (90%)',
+          status: status
         };
       });
       
       setStudents(formattedStudents);
+      
+      // Calculate statistics
+      const activeStudents = formattedStudents.filter(s => s.status === 'Active').length;
+      const onLeaveStudents = formattedStudents.filter(s => s.status === 'On Leave').length;
+      const inactiveStudents = formattedStudents.filter(s => s.status === 'Inactive').length;
+      
+      setStats({
+        totalStudents: formattedStudents.length,
+        activeStudents,
+        onLeaveStudents,
+        inactiveStudents
+      });
       
       // Extract unique courses for filter
       const uniqueCourses = Array.from(
@@ -106,7 +135,7 @@ const StudentList = () => {
       
       setCourses(uniqueCourses);
     } catch (error) {
-      console.error('Error fetching students:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -142,7 +171,7 @@ const StudentList = () => {
     if (window.confirm('Are you sure you want to delete this student?')) {
       try {
         await userAxiosInstance.delete(`students/${studentId}/`);
-        fetchStudents(); // Refresh the list after deletion
+        fetchAllData(); // Refresh all data after deletion
       } catch (error) {
         console.error('Error deleting student:', error);
         alert('Failed to delete student. Please try again.');
@@ -151,7 +180,7 @@ const StudentList = () => {
   };
 
   const handleStudentCreated = () => {
-    fetchStudents();
+    fetchAllData();
     setShowCreateStudent(false);
   };
   
@@ -159,7 +188,7 @@ const StudentList = () => {
     console.log('Student updated, refreshing student list');
     // Add a small delay to ensure the backend has processed the update
     setTimeout(() => {
-      fetchStudents();
+      fetchAllData();
       setShowEditStudent(false);
     }, 300);
   };
@@ -346,10 +375,10 @@ const StudentList = () => {
             </select>
           </div>
           <div className="filter-actions">
-            <button className="btn-primary" onClick={handleCreateStudent}>
+            <button className="btn-primary-student" onClick={handleCreateStudent}>
               <span className="btn-icon-text">+ Add Student</span>
             </button>
-            <button className="btn-secondary" onClick={handleExportList}>
+            <button className="btn-secondary-student" onClick={handleExportList}>
               <span className="btn-icon-text">↓ Export List</span>
             </button>
           </div>
@@ -358,27 +387,27 @@ const StudentList = () => {
         <div className="student-stats">
           <div className="stat-card">
             <h3>Total Students</h3>
-            <p className="stat-number">{students.length}</p>
+            <p className="stat-number">{stats.totalStudents}</p>
           </div>
           <div className="stat-card">
             <h3>Active</h3>
-            <p className="stat-number">{students.filter(s => s.status === 'Active').length}</p>
+            <p className="stat-number">{stats.activeStudents}</p>
             <p className="stat-percentage">
-              {students.length ? Math.round((students.filter(s => s.status === 'Active').length / students.length) * 100) : 0}%
+              {stats.totalStudents ? Math.round((stats.activeStudents / stats.totalStudents) * 100) : 0}%
             </p>
           </div>
           <div className="stat-card">
             <h3>On Leave</h3>
-            <p className="stat-number">{students.filter(s => s.status === 'On Leave').length}</p>
+            <p className="stat-number">{stats.onLeaveStudents}</p>
             <p className="stat-percentage">
-              {students.length ? Math.round((students.filter(s => s.status === 'On Leave').length / students.length) * 100) : 0}%
+              {stats.totalStudents ? Math.round((stats.onLeaveStudents / stats.totalStudents) * 100) : 0}%
             </p>
           </div>
           <div className="stat-card">
             <h3>Inactive</h3>
-            <p className="stat-number">{students.filter(s => s.status === 'Inactive').length}</p>
+            <p className="stat-number">{stats.inactiveStudents}</p>
             <p className="stat-percentage">
-              {students.length ? Math.round((students.filter(s => s.status === 'Inactive').length / students.length) * 100) : 0}%
+              {stats.totalStudents ? Math.round((stats.inactiveStudents / stats.totalStudents) * 100) : 0}%
             </p>
           </div>
         </div>
