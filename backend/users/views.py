@@ -357,7 +357,26 @@ class ListStudentView(APIView):
             
             # Filter students by batch_id if provided
             if batch_id:
-                students = Student.objects.filter(batch_id=batch_id)
+                # Convert batch_id to integer for proper filtering
+                try:
+                    batch_id = int(batch_id)
+                    # Use direct SQL query to ensure proper filtering
+                    from django.db import connection
+                    with connection.cursor() as cursor:
+                        cursor.execute(
+                            "SELECT * FROM users_student WHERE batch_id = %s",
+                            [batch_id]
+                        )
+                        columns = [col[0] for col in cursor.description]
+                        student_data = [dict(zip(columns, row)) for row in cursor.fetchall()]
+                    
+                    # Get the student objects based on the IDs from the SQL query
+                    student_ids = [student['id'] for student in student_data]
+                    students = Student.objects.filter(id__in=student_ids)
+                    logger.info(f"Filtered students by batch_id={batch_id}, found {students.count()} students")
+                except ValueError:
+                    logger.error(f"Invalid batch_id format: {batch_id}")
+                    students = Student.objects.none()
             else:
                 students = Student.objects.all()
                 
@@ -502,9 +521,21 @@ class IntegratedDashboardView(APIView):
         except Notification.DoesNotExist:
             return Response({'error': 'Notification not found'}, status=status.HTTP_404_NOT_FOUND)
 class StudentViewSet(viewsets.ModelViewSet):
-    queryset = Student.objects.all()
     serializer_class = StudentSerializer
     permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        queryset = Student.objects.all()
+        batch_id = self.request.query_params.get('batch_id', None)
+        if batch_id:
+            try:
+                batch_id = int(batch_id)
+                queryset = queryset.filter(batch_id=batch_id)
+                logger.info(f"StudentViewSet: Filtered by batch_id={batch_id}, found {queryset.count()} students")
+            except ValueError:
+                logger.error(f"StudentViewSet: Invalid batch_id format: {batch_id}")
+                queryset = Student.objects.none()
+        return queryset
     
     def update(self, request, *args, **kwargs):
         try:

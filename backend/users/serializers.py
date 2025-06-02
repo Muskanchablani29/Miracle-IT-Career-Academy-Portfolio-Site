@@ -15,11 +15,22 @@ from courses.serializers import CourseSerializer
 
 class BatchSerializer(serializers.ModelSerializer):
     course = CourseSerializer(read_only=True)
+    students_count = serializers.SerializerMethodField()
     
     class Meta:
         model = Batch
-        fields = ['id', 'name', 'course', 'created_at']
+        fields = ['id', 'name', 'course', 'created_at', 'students_count']
         read_only_fields = ['created_at']
+    
+    def get_students_count(self, obj):
+        # Count students directly from Student model
+        from users.models import Student
+        count = Student.objects.filter(batch=obj).count()
+        # Debug log
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Batch {obj.name} (ID: {obj.id}) has {count} students")
+        return count
 
 class StudentSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
@@ -247,6 +258,7 @@ class CreateStudentSerializer(serializers.Serializer):
     date_of_birth = serializers.DateField(required=True)
     admission_date = serializers.DateField(required=False, default=date.today)
     batch_id = serializers.IntegerField(required=False, allow_null=True)
+    course_id = serializers.IntegerField(required=False, allow_null=True)
     password = serializers.CharField(required=False, allow_blank=True)
 
     def create(self, validated_data):
