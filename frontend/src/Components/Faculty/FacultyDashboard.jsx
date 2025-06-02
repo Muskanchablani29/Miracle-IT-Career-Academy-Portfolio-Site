@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { UserContext } from '../UserContext';
-import { userAxiosInstance, fetchCourses } from '../../api';
+import { userAxiosInstance, fetchCourses, fetchWorkshops } from '../../api';
 import './FacultyDashboard.css';
 import { 
   FaBook, FaUsers, FaCalendarAlt, FaBullhorn, 
@@ -19,7 +19,7 @@ const FacultyDashboard = () => {
     courses: [],
     students: [],
     announcements: [],
-    upcomingClasses: [],
+    upcomingWorkshops: [],
     batches: [],
     recentActivities: []
   });
@@ -28,7 +28,8 @@ const FacultyDashboard = () => {
     totalStudents: 0,
     activeStudents: 0,
     completionRate: 0,
-    averageAttendance: 0
+    averageAttendance: 0,
+    workshopsCount: 0
   });
 
   useEffect(() => {
@@ -36,11 +37,12 @@ const FacultyDashboard = () => {
       setLoading(true);
       try {
         // Create an array of promises for parallel fetching
-        const [dashboardResponse, studentsResponse, batchesResponse, coursesResponse] = await Promise.all([
-          userAxiosInstance.get('dashboard/').catch(err => ({ data: { courses: [], upcomingClasses: [], recentActivities: [] } })),
+        const [dashboardResponse, studentsResponse, batchesResponse, coursesResponse, workshopsResponse] = await Promise.all([
+          userAxiosInstance.get('dashboard/').catch(err => ({ data: { courses: [], recentActivities: [] } })),
           userAxiosInstance.get('students/').catch(err => ({ data: [] })),
           userAxiosInstance.get('batches/').catch(err => ({ data: [] })),
-          fetchCourses().catch(err => ({ data: [] }))
+          fetchCourses().catch(err => []),
+          fetchWorkshops().catch(err => [])
         ]);
         
         // Calculate statistics
@@ -65,13 +67,14 @@ const FacultyDashboard = () => {
         
         // Use courses from the courses API if available, otherwise fallback to dashboard data
         const courses = coursesResponse || [];
+        const workshops = workshopsResponse || [];
         
         // Combine all data
         setDashboardData({
           courses: courses,
           students: students,
           announcements: [], // Set to empty array since endpoint doesn't exist
-          upcomingClasses: dashboardResponse.data.upcomingClasses || [],
+          upcomingWorkshops: workshops,
           batches: batchesResponse.data || [],
           recentActivities: dashboardResponse.data.recentActivities || []
         });
@@ -81,7 +84,8 @@ const FacultyDashboard = () => {
           activeStudents: activeStudents,
           completionRate: students.length > 0 ? 
             ((students.filter(s => s.completion_status === 'Completed').length / students.length) * 100).toFixed(1) : 0,
-          averageAttendance: averageAttendance
+          averageAttendance: averageAttendance,
+          workshopsCount: workshops.length
         });
         
         setLoading(false);
@@ -109,10 +113,12 @@ const FacultyDashboard = () => {
 
   return (
     <div className="faculty-dashboard-container">
-      <div className="dashboard-content">
         <div className="dashboard-header">
           <h1>Welcome, {user?.username || 'Faculty'}</h1>
           <p>Here's an overview of your teaching activities and course management</p>
+          <div className="header-actions">
+            <div className="date-display">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+          </div>
         </div>
 
         <div className="dashboard-stats">
@@ -148,8 +154,8 @@ const FacultyDashboard = () => {
               <HiClock />
             </div>
             <div className="stat-details">
-              <h3>{dashboardData.upcomingClasses?.length || 0}</h3>
-              <p>Upcoming Sessions</p>
+              <h3>{stats.workshopsCount || 0}</h3>
+              <p>Workshops</p>
             </div>
           </div>
           <div className="stat-card">
@@ -212,8 +218,8 @@ const FacultyDashboard = () => {
                       <div className="course-list-content">
                         <h3>{course.title}</h3>
                         <div className="course-list-meta">
-                          <span className="course-students"><HiAcademicCap /> {course.students_count || 0} students</span>
-                          <span className="course-level"><HiCollection /> {course.level || 'All Levels'}</span>
+                          <span className="course-students"><HiAcademicCap /> <span className="count-badge">{course.students_count !== undefined ? course.students_count : 0}</span> students</span>
+                          <span className="course-level"><HiCollection /> <span className="level-badge">{course.level || 'All Levels'}</span></span>
                         </div>
                       </div>
                       <div className="course-list-actions">
@@ -226,7 +232,7 @@ const FacultyDashboard = () => {
                 <div className="no-data-message">
                   <FaExclamationTriangle />
                   <p>No courses available.</p>
-                  <Link to="/faculty/add-course">Add a new course</Link>
+                  <Link to="/faculty/add-course" className="create-link">Add a new course</Link>
                 </div>
               )}
             </div>
@@ -246,13 +252,13 @@ const FacultyDashboard = () => {
                     <div className="batch-details">
                       <h3>{batch.name}</h3>
                       <p>
-                        <strong>Course:</strong> {batch.course ? batch.course.title : 'Not assigned'}
+                        <strong>Course:</strong> <span>{batch.course ? batch.course.title : 'Not assigned'}</span>
                       </p>
                       <p>
-                        <strong>Students:</strong> {batch.students_count || 0}
+                        <strong>Students:</strong> <span className="student-count">{batch.students_count !== undefined ? batch.students_count : 0}</span>
                       </p>
                       <p>
-                        <strong>Start Date:</strong> {new Date(batch.start_date).toLocaleDateString()}
+                        <strong>Created:</strong> <span>{new Date(batch.created_at).toLocaleDateString()}</span>
                       </p>
                       <Link to={`/faculty/batches/${batch.id}`} className="view-batch-btn">Manage Batch</Link>
                     </div>
@@ -262,7 +268,7 @@ const FacultyDashboard = () => {
                 <div className="no-data-message">
                   <FaExclamationTriangle />
                   <p>No batches available.</p>
-                  <Link to="/faculty/add-batch">Create a new batch</Link>
+                  <Link to="/faculty/add-batch" className="create-link">Create a new batch</Link>
                 </div>
               )}
             </div>
@@ -270,30 +276,30 @@ const FacultyDashboard = () => {
 
           <div className="dashboard-section">
             <div className="section-header">
-              <h2>Upcoming Classes</h2>
-              <Link to="/faculty/attendance" className="view-all">
-                View Schedule <FaArrowRight />
+              <h2>Upcoming Workshops</h2>
+              <Link to="/faculty/workshops" className="view-all">
+                View All Workshops <FaArrowRight />
               </Link>
             </div>
             <div className="upcoming-classes">
-              {dashboardData.upcomingClasses && dashboardData.upcomingClasses.length > 0 ? (
-                dashboardData.upcomingClasses.map(classItem => (
-                  <div className="class-card" key={classItem.id}>
+              {dashboardData.upcomingWorkshops && dashboardData.upcomingWorkshops.length > 0 ? (
+                dashboardData.upcomingWorkshops.map(workshop => (
+                  <div className="class-card" key={workshop.id}>
                     <div className="class-date">
-                      <span className="date-day">{new Date(classItem.date).getDate()}</span>
-                      <span className="date-month">{new Date(classItem.date).toLocaleString('default', { month: 'short' })}</span>
+                      <span className="date-day">{new Date(workshop.date).getDate()}</span>
+                      <span className="date-month">{new Date(workshop.date).toLocaleString('default', { month: 'short' })}</span>
                     </div>
                     <div className="class-details">
-                      <h3>{classItem.course_title}</h3>
-                      <p>{classItem.time} • {classItem.location}</p>
+                      <h3>{workshop.title}</h3>
+                      <p>{workshop.location} • <span className="seats-badge">{workshop.available_seats} seats available</span></p>
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="no-data-message">
                   <FaExclamationTriangle />
-                  <p>No upcoming classes scheduled.</p>
-                  <Link to="/faculty/schedule">Schedule a class</Link>
+                  <p>No upcoming workshops scheduled.</p>
+                  <Link to="/faculty/add-workshop" className="create-link">Create a workshop</Link>
                 </div>
               )}
             </div>
@@ -329,7 +335,6 @@ const FacultyDashboard = () => {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 };

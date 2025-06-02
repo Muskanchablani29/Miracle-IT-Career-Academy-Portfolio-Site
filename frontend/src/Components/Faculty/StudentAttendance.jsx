@@ -5,118 +5,17 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const StudentAttendance = () => {
-  // Function to download attendance report
-  const [showDateRange, setShowDateRange] = useState(false);
+  const [students, setStudents] = useState([]);
+  const [batches, setBatches] = useState([]);
+  const [selectedBatch, setSelectedBatch] = useState('');
+  const [selectedCourse, setSelectedCourse] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
-  
-  const downloadAttendanceReport = async () => {
-    if (!selectedBatch) return;
-    
-    if (showDateRange) {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem('access');
-        
-        // Get students for the selected batch
-        const studentsResponse = await axios.get(`http://localhost:8000/api/students/`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-          params: { batch: selectedBatch }
-        });
-        
-        // Get attendance records for the date range
-        const attendanceResponse = await axios.get(`http://localhost:8000/api/attendance/`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-          params: { 
-            batch: selectedBatch,
-            start_date: startDate,
-            end_date: endDate
-          }
-        });
-        
-        // Process data to create attendance report
-        const studentMap = {};
-        studentsResponse.data.forEach(student => {
-          studentMap[student.id] = {
-            enrollment_id: student.enrollment_id,
-            name: student.user.username,
-            present_days: 0,
-            absent_days: 0,
-            remarks: ''
-          };
-        });
-        
-        // Count present and absent days
-        attendanceResponse.data.forEach(record => {
-          if (studentMap[record.student]) {
-            if (record.is_present) {
-              studentMap[record.student].present_days += 1;
-            } else {
-              studentMap[record.student].absent_days += 1;
-            }
-            // Keep the most recent remark
-            if (record.remarks) {
-              studentMap[record.student].remarks = record.remarks;
-            }
-          }
-        });
-        
-        // Create CSV content
-        const headers = ['Enrollment ID', 'Student Name', 'Present Days', 'Absent Days', 'Attendance %', 'Remarks'];
-        const csvRows = [];
-        csvRows.push(headers.join(','));
-        
-        Object.values(studentMap).forEach(student => {
-          const totalDays = student.present_days + student.absent_days;
-          const attendancePercentage = totalDays > 0 
-            ? Math.round((student.present_days / totalDays) * 100) 
-            : 0;
-            
-          csvRows.push([
-            student.enrollment_id,
-            student.name,
-            student.present_days,
-            student.absent_days,
-            `${attendancePercentage}%`,
-            `"${student.remarks || ''}"`
-          ].join(','));
-        });
-        
-        const csvContent = csvRows.join('\n');
-        
-        // Create download link with BOM for Excel compatibility
-        const BOM = "\uFEFF"; // UTF-8 BOM for Excel
-        const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', `attendance_${selectedBatch}_${startDate}_to_${endDate}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        
-        // Clean up
-        setTimeout(() => {
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-        }, 100);
-        
-        setLoading(false);
-      } catch (error) {
-        console.error('Error downloading attendance report:', error);
-        console.error('Error details:', error.response?.data || error.message);
-        toast.error(`Failed to download report: ${error.message}`);
-        setLoading(false);
-      }
-    } else {
-      setShowDateRange(true);
-    }
-  };
-  const [students, setStudents] = useState([]);
-  const [selectedBatch, setSelectedBatch] = useState('');
-  const [batches, setBatches] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [showDateRange, setShowDateRange] = useState(false);
   const [loading, setLoading] = useState(false);
   const [attendanceData, setAttendanceData] = useState({});
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
   const [summary, setSummary] = useState({
     totalStudents: 0,
     present: 0,
@@ -133,6 +32,7 @@ const StudentAttendance = () => {
         const response = await axios.get('http://localhost:8000/api/batches/', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+        console.log('Batches from API:', response.data);
         setBatches(response.data);
       } catch (error) {
         console.error('Error fetching batches:', error);
@@ -142,10 +42,14 @@ const StudentAttendance = () => {
     fetchBatches();
   }, []);
 
-  // Only fetch students when Search button is clicked, not automatically
-  // This removes the auto-fetch on batch selection
+  // Reset batch when course changes
   useEffect(() => {
-    // Clear students when batch is deselected
+    setSelectedBatch('');
+    setStudents([]);
+  }, [selectedCourse]);
+
+  // Clear students when batch is deselected
+  useEffect(() => {
     if (!selectedBatch) {
       setStudents([]);
       setAttendanceData({});
@@ -157,6 +61,20 @@ const StudentAttendance = () => {
       });
     }
   }, [selectedBatch]);
+
+  // Extract unique courses from batches
+  const courses = batches
+    .filter(batch => batch.course)
+    .reduce((uniqueCourses, batch) => {
+      const courseId = batch.course.id;
+      if (!uniqueCourses.some(course => String(course.id) === String(courseId))) {
+        uniqueCourses.push({
+          id: courseId,
+          title: batch.course.title
+        });
+      }
+      return uniqueCourses;
+    }, []);
 
   const fetchStudents = async (batchId, date) => {
     try {
@@ -177,22 +95,12 @@ const StudentAttendance = () => {
       const token = localStorage.getItem('access');
       
       // Fetch students by batch with explicit batch_id parameter
-      // Using batch_id as a query parameter
       const response = await axios.get(`http://localhost:8000/api/students/`, {
         headers: { 'Authorization': `Bearer ${token}` },
-        params: { 
-          batch: batchId  // Changed from batch_id to batch
-        }
+        params: batchId === 'all' ? {} : { batch: batchId }
       });
       
-      // Fetch attendance for the selected date and batch
-      const attendanceResponse = await axios.get(`http://localhost:8000/api/attendance/`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-        params: { 
-          date: date, 
-          batch: batchId  // Changed from batch_id to batch
-        }
-      });
+      console.log('Students API response:', response.data);
       
       // Fetch attendance statistics for each student
       const studentsWithStats = await Promise.all(response.data.map(async (student) => {
@@ -220,10 +128,9 @@ const StudentAttendance = () => {
       try {
         const attendanceResponse = await axios.get(`http://localhost:8000/api/attendance/`, {
           headers: { 'Authorization': `Bearer ${token}` },
-          params: { 
-            date: selectedDate,
-            batch: batchId  // Changed from batch_id to batch
-          }
+          params: batchId === 'all'
+            ? { date: selectedDate }
+            : { date: selectedDate, batch: batchId }
         });
         
         // Create a map of student_id to attendance record
@@ -327,6 +234,46 @@ const StudentAttendance = () => {
     updateSummary(updatedData);
   };
 
+  // Function to sort students
+  const requestSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // Get sorted students
+  const getSortedStudents = () => {
+    if (!sortConfig.key) return students;
+    
+    return [...students].sort((a, b) => {
+      let aValue, bValue;
+      
+      if (sortConfig.key === 'enrollment_id') {
+        aValue = a.enrollment_id;
+        bValue = b.enrollment_id;
+      } else if (sortConfig.key === 'name') {
+        aValue = a.user.username;
+        bValue = b.user.username;
+      } else if (sortConfig.key === 'admission_date') {
+        aValue = a.admission_date || '';
+        bValue = b.admission_date || '';
+      } else if (sortConfig.key === 'attendance') {
+        aValue = a.attendanceStats?.percentage || 0;
+        bValue = b.attendanceStats?.percentage || 0;
+      }
+      
+      if (aValue < bValue) {
+        return sortConfig.direction === 'ascending' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'ascending' ? 1 : -1;
+      }
+      return 0;
+    });
+  };
+
   const saveAttendance = async () => {
     setLoading(true);
     setMessage('');
@@ -376,51 +323,255 @@ const StudentAttendance = () => {
     }
   };
 
+  const downloadAttendanceReport = async () => {
+    if (!selectedCourse || !selectedBatch) {
+      toast.warning('Please select both course and batch first');
+      return;
+    }
+    
+    if (showDateRange) {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('access');
+        
+        // Get students for the selected batch
+        const studentsResponse = await axios.get(`http://localhost:8000/api/students/`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+          params: { batch: selectedBatch }
+        });
+        
+        // Get attendance records for the date range
+        const attendanceResponse = await axios.get(`http://localhost:8000/api/attendance/`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+          params: { 
+            batch: selectedBatch,
+            start_date: startDate,
+            end_date: endDate
+          }
+        });
+        
+        // Process data to create attendance report
+        const studentMap = {};
+        studentsResponse.data.forEach(student => {
+          studentMap[student.id] = {
+            enrollment_id: student.enrollment_id,
+            name: student.user.username,
+            present_days: 0,
+            absent_days: 0,
+            remarks: ''
+          };
+        });
+        
+        // Count present and absent days
+        attendanceResponse.data.forEach(record => {
+          if (studentMap[record.student]) {
+            if (record.is_present) {
+              studentMap[record.student].present_days += 1;
+            } else {
+              studentMap[record.student].absent_days += 1;
+            }
+            // Keep the most recent remark
+            if (record.remarks) {
+              studentMap[record.student].remarks = record.remarks;
+            }
+          }
+        });
+        
+        // Create CSV content
+        const headers = ['Enrollment ID', 'Student Name', 'Present Days', 'Absent Days', 'Attendance %', 'Remarks'];
+        const csvRows = [];
+        csvRows.push(headers.join(','));
+        
+        Object.values(studentMap).forEach(student => {
+          const totalDays = student.present_days + student.absent_days;
+          const attendancePercentage = totalDays > 0 
+            ? Math.round((student.present_days / totalDays) * 100) 
+            : 0;
+            
+          csvRows.push([
+            student.enrollment_id,
+            student.name,
+            student.present_days,
+            student.absent_days,
+            `${attendancePercentage}%`,
+            `"${student.remarks || ''}"`
+          ].join(','));
+        });
+        
+        const csvContent = csvRows.join('\n');
+        
+        // Create download link with BOM for Excel compatibility
+        const BOM = "\uFEFF"; // UTF-8 BOM for Excel
+        const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `attendance_${selectedBatch}_${startDate}_to_${endDate}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        
+        // Clean up
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        }, 100);
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('Error downloading attendance report:', error);
+        console.error('Error details:', error.response?.data || error.message);
+        toast.error(`Failed to download report: ${error.message}`);
+        setLoading(false);
+      }
+    } else {
+      setShowDateRange(true);
+    }
+  };
+
   return (
     <div className="dashboard-container">
       <h1 className="page-title">Student Attendance</h1>
+      
+      {/* Attendance Percentage Slider */}
+      <div className="attendance-slider-container">
+        <div className="attendance-slider">
+          {students.map(student => (
+            <div key={student.id} className="slider-item">
+              <div className="profile-icon">
+                {student.user.username.charAt(0).toUpperCase()}
+              </div>
+              <div className="slider-info">
+                <span className="slider-name">{student.user.username}</span>
+                <div className="percentage-container">
+                  <div 
+                    className="percentage-bar" 
+                    style={{width: `${student.attendanceStats?.percentage || 0}%`}}
+                  ></div>
+                  <span className={`slider-percentage ${
+                    student.attendanceStats?.percentage >= 85 ? 'status-excellent' : 
+                    student.attendanceStats?.percentage >= 75 ? 'status-good' : 
+                    student.attendanceStats?.percentage >= 60 ? 'status-average' : 'status-poor'
+                  }`}>
+                    {student.attendanceStats?.percentage || 0}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+          {/* Duplicate items for continuous animation */}
+          {students.length > 0 && students.slice(0, 5).map(student => (
+            <div key={`dup-${student.id}`} className="slider-item">
+              <div className="profile-icon">
+                {student.user.username.charAt(0).toUpperCase()}
+              </div>
+              <div className="slider-info">
+                <span className="slider-name">{student.user.username}</span>
+                <div className="percentage-container">
+                  <div 
+                    className="percentage-bar" 
+                    style={{width: `${student.attendanceStats?.percentage || 0}%`}}
+                  ></div>
+                  <span className={`slider-percentage ${
+                    student.attendanceStats?.percentage >= 85 ? 'status-excellent' : 
+                    student.attendanceStats?.percentage >= 75 ? 'status-good' : 
+                    student.attendanceStats?.percentage >= 60 ? 'status-average' : 'status-poor'
+                  }`}>
+                    {student.attendanceStats?.percentage || 0}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      
       <div className="dashboard-content">
         <div className="attendance-filters">
-          <div className="filter-group">
-            <label>Batch:</label>
-            <select 
-              className="filter-select"
-              value={selectedBatch}
-              onChange={(e) => setSelectedBatch(e.target.value)}
-            >
-              <option value="">Select Batch</option>
-              {batches.map(batch => (
-                <option key={batch.id} value={batch.id}>
-                  {batch.name} {batch.course ? `- ${batch.course.title}` : ''}
-                </option>
-              ))}
-            </select>
+          <div className="filters-left">
+            <div className="filter-group">
+              <label>Course:</label>
+              <select 
+                className="filter-select"
+                value={selectedCourse}
+                onChange={(e) => {
+                  const courseId = e.target.value;
+                  console.log('Selected course changed to:', courseId);
+                  setSelectedCourse(courseId);
+                  // Clear students when course changes
+                  setStudents([]);
+                  setAttendanceData({});
+                }}
+              >
+                <option value="">Select Course</option>
+                {courses.map(course => (
+                  <option key={course.id} value={course.id}>
+                    {course.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="filter-group">
+              <label>Batch:</label>
+              <select 
+                className="filter-select"
+                value={selectedBatch}
+                onChange={(e) => {
+                  console.log('Selected batch changed to:', e.target.value);
+                  setSelectedBatch(e.target.value);
+                }}
+                disabled={!selectedCourse}
+              >
+                <option value="">Select Batch</option>
+                {selectedCourse && <option value="all">All Students</option>}
+                {batches
+                  .filter(batch => batch.course && String(batch.course.id) === String(selectedCourse))
+                  .map(batch => (
+                    <option key={batch.id} value={batch.id}>
+                      {batch.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            
+            <div className="filter-group">
+              <label>Date:</label>
+              <input 
+                type="date" 
+                className="date-input" 
+                value={selectedDate}
+                onChange={handleDateChange}
+              />
+            </div>
+            
+            <div className="filter-group">
+              <button 
+                className="btn-secondary"
+                onClick={() => {
+                  if (selectedCourse) {
+                    if (selectedBatch) {
+                      console.log(`Searching for batch: ${selectedBatch}`);
+                      fetchStudents(selectedBatch, selectedDate);
+                    } else {
+                      toast.warning('Please select a batch from the selected course');
+                    }
+                  } else {
+                    toast.warning('Please select a course first');
+                  }
+                }}
+              >
+                Search
+              </button>
+            </div>
+            
+            {students.length > 0 && (
+              <div className="filter-group">
+                <button className="btn-primary" onClick={saveAttendance}>Save Attendance</button>
+              </div>
+            )}
           </div>
-          <div className="filter-group">
-            <label>Date:</label>
-            <input 
-              type="date" 
-              className="date-input" 
-              value={selectedDate}
-              onChange={handleDateChange}
-            />
-          </div>
-          <div className="filter-group">
-            <button 
-              className="btn-secondary"
-              onClick={() => {
-                if (selectedBatch) {
-                  console.log(`Searching for batch: ${selectedBatch}`);
-                  fetchStudents(selectedBatch, selectedDate);
-                } else {
-                  toast.warning('Please select a batch first');
-                }
-              }}
-            >
-              Search
-            </button>
-          </div>
-          <div className="filter-group ml-auto">
+          
+          <div className="filters-right">
             {showDateRange ? (
               <div className="date-range-container">
                 <div className="date-range-inputs">
@@ -446,7 +597,7 @@ const StudentAttendance = () => {
                 <button 
                   className="btn-download"
                   onClick={downloadAttendanceReport}
-                  disabled={!selectedBatch}
+                  disabled={!selectedCourse || !selectedBatch}
                 >
                   Download
                 </button>
@@ -461,7 +612,7 @@ const StudentAttendance = () => {
               <button 
                 className="btn-download"
                 onClick={downloadAttendanceReport}
-                disabled={!selectedBatch}
+                disabled={!selectedCourse || !selectedBatch}
               >
                 Download Report
               </button>
@@ -496,23 +647,42 @@ const StudentAttendance = () => {
                 
                 <div className="attendance-actions">
                   <button className="btn-secondary" onClick={markAllPresent}>Mark All Present</button>
-                  <button className="btn-primary" onClick={saveAttendance}>Save Attendance</button>
                 </div>
                 
                 <div className="attendance-table">
                   <table>
                     <thead>
                       <tr>
-                        <th>Enrollment ID</th>
-                        <th>Student Name</th>
+                        <th onClick={() => requestSort('enrollment_id')} className="sortable-header">
+                          Enrollment ID
+                          <span className="sort-icon">
+                            {sortConfig.key === 'enrollment_id' ? (sortConfig.direction === 'ascending' ? '↑' : '↓') : '⇅'}
+                          </span>
+                        </th>
+                        <th onClick={() => requestSort('name')} className="sortable-header">
+                          Student Name
+                          <span className="sort-icon">
+                            {sortConfig.key === 'name' ? (sortConfig.direction === 'ascending' ? '↑' : '↓') : '⇅'}
+                          </span>
+                        </th>
                         <th>Status</th>
                         <th>Remarks</th>
-                        <th>Admission Date</th>
-                        <th>Attendance %</th>
+                        <th onClick={() => requestSort('admission_date')} className="sortable-header">
+                          Admission Date
+                          <span className="sort-icon">
+                            {sortConfig.key === 'admission_date' ? (sortConfig.direction === 'ascending' ? '↑' : '↓') : '⇅'}
+                          </span>
+                        </th>
+                        <th onClick={() => requestSort('attendance')} className="sortable-header">
+                          Attendance %
+                          <span className="sort-icon">
+                            {sortConfig.key === 'attendance' ? (sortConfig.direction === 'ascending' ? '↑' : '↓') : '⇅'}
+                          </span>
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {students.map(student => {
+                      {getSortedStudents().map(student => {
                         const studentData = attendanceData[student.id] || { isPresent: false, remarks: '' };
                         const admissionDate = student.admission_date ? 
                           new Date(student.admission_date).toLocaleDateString() : 'N/A';
@@ -570,7 +740,9 @@ const StudentAttendance = () => {
               </>
             ) : (
               <div className="no-students">
-                {selectedBatch ? 'No students found in this batch.' : 'Please select a batch to view students.'}
+                {selectedBatch ? 'No students found in this batch.' : 
+                 selectedCourse ? 'Please select a batch from this course to view students.' : 
+                 'Please select a course and batch to view students.'}
               </div>
             )}
           </>

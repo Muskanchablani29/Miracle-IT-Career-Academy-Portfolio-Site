@@ -89,9 +89,10 @@ const BatchStudentCreation = ({ onClose, onSuccess, selectedCourse, selectedBatc
       enrollment_id: enrollmentId,
       date_of_birth: dateOfBirth,
       batch_id: selectedBatch,
-      course_id: selectedCourse
+      course_id: parseInt(selectedCourse) // Ensure course_id is an integer
     };
     
+    console.log('Creating student with data:', studentData);
     return studentData;
   };
 

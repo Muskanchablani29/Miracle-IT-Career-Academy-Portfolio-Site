@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { userAxiosInstance } from '../../api';
 import { Link } from 'react-router-dom';
-import '../Admin/ManageCourses.css';
-import { FaEdit, FaBook, FaPlus, FaUsers, FaEye } from 'react-icons/fa';
+import './ManageCourses.css';
+import { FaEdit, FaBook, FaPlus, FaUsers, FaEye, FaArrowLeft, FaLayerGroup } from 'react-icons/fa';
 import CourseBatchCreation from './CourseBatchCreation';
 import ViewBatches from './ViewBatches';
 
@@ -151,7 +151,12 @@ const FacultyManageCourses = () => {
   };
 
   if (loading) {
-    return <div className="loading">Loading courses...</div>;
+    return (
+      <div className="loading">
+        <div className="loading-spinner"></div>
+        <div className="loading-text">Loading courses...</div>
+      </div>
+    );
   }
 
   if (error) {
@@ -161,6 +166,9 @@ const FacultyManageCourses = () => {
   return (
     <div className="manage-courses-container">
       <h1>Manage Course Content</h1>
+      <div className="page-description">
+        Organize your courses, create batches, and manage syllabus content
+      </div>
       
       {showBatchModal && (
         <CourseBatchCreation 
@@ -248,7 +256,7 @@ const FacultyManageCourses = () => {
                 setActiveTab('courses');
               }}
             >
-              Back to Courses
+              <FaArrowLeft /> Back to Courses
             </button>
           </div>
 
@@ -257,13 +265,13 @@ const FacultyManageCourses = () => {
               className={`tab ${activeTab === 'syllabus' ? 'active' : ''}`}
               onClick={() => setActiveTab('syllabus')}
             >
-              Syllabus Modules
+              <FaBook className="tab-icon" /> Syllabus Modules
             </button>
             <button
               className={`tab ${activeTab === 'items' ? 'active' : ''}`}
               onClick={() => setActiveTab('items')}
             >
-              Module Items
+              <FaLayerGroup className="tab-icon" /> Module Items
             </button>
           </div>
 

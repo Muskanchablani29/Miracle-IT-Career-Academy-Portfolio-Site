@@ -289,8 +289,10 @@ export const fetchStudents = async (batchId = null) => {
     let url = 'students/';
     if (batchId) {
       url += `?batch_id=${batchId}`;
+      console.log(`Fetching students with batch_id=${batchId}`);
     }
     const response = await userAxiosInstance.get(url);
+    console.log(`Fetched ${response.data.length} students:`, response.data);
     return response.data;
   } catch (error) {
     console.error('Error fetching students:', error);

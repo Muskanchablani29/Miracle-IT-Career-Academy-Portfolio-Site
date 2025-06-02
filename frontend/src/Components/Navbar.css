@@ -41,7 +41,7 @@ color: white;
   border-bottom: none;
   transition: background 0.5s ease;
   left: 250px; /* Increased width of sidebar */
-  width: calc(100% - 280px); /* Adjust width to fit properly */
+  width: calc(100% - 250px); /* Adjust width to fit properly */
 }
 
 .navbar.logged-in:hover {

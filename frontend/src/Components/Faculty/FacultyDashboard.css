@@ -1,23 +1,26 @@
 /* Ultra-Modern Faculty Dashboard Styles */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --primary-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
-  --secondary-gradient: linear-gradient(135deg, #3b82f6, #2dd4bf);
+  --primary-gradient: linear-gradient(135deg, #4f46e5, #7c3aed);
+  --secondary-gradient: linear-gradient(135deg, #0ea5e9, #06b6d4);
   --accent-gradient: linear-gradient(135deg, #f43f5e, #ec4899);
   --success-gradient: linear-gradient(135deg, #10b981, #059669);
   --warning-gradient: linear-gradient(135deg, #f59e0b, #d97706);
-  --card-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
-  --card-hover-shadow: 0 20px 35px rgba(0, 0, 0, 0.08);
+  --card-shadow: 0 10px 15px rgba(0, 0, 0, 0.03);
+  --card-hover-shadow: 0 20px 30px rgba(0, 0, 0, 0.07);
   --border-radius: 16px;
   --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  --bg-gradient: linear-gradient(135deg, #f8fafc, #f1f5f9);
 }
 
 .faculty-dashboard-container {
-  font-family: 'Inter', sans-serif;
-  padding: 2rem;
-  background-color: #f9fafb;
-  min-height: 100vh;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  padding: 1.5rem;
+  background: var(--bg-gradient);
+  min-height: calc(100vh - 60px);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .dashboard-content {
@@ -29,7 +32,10 @@
 .dashboard-header {
   margin-bottom: 2.5rem;
   position: relative;
-  padding-bottom: 1rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
 }
 
 .dashboard-header h1 {
@@ -48,6 +54,22 @@
   color: #64748b;
   animation: fadeInUp 0.8s ease-out;
   font-weight: 400;
+}
+
+.header-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.date-display {
+  background: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #64748b;
+  box-shadow: var(--card-shadow);
+  border: 1px solid rgba(0, 0, 0, 0.03);
 }
 
 /* Stats Cards */
@@ -79,7 +101,7 @@
 .stat-card:nth-child(5) { animation-delay: 0.5s; }
 
 .stat-card:hover {
-  transform: translateY(-10px);
+  transform: translateY(-8px);
   box-shadow: var(--card-hover-shadow);
 }
 
@@ -88,18 +110,18 @@
   position: absolute;
   top: 0;
   right: 0;
-  width: 100px;
-  height: 100px;
-  background: rgba(99, 102, 241, 0.05);
+  width: 120px;
+  height: 120px;
+  background: rgba(99, 102, 241, 0.04);
   border-radius: 50%;
   transform: translate(30%, -30%);
   z-index: 0;
 }
 
 .stat-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 16px;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -108,6 +130,7 @@
   transition: var(--transition);
   position: relative;
   z-index: 1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .courses-icon {
@@ -140,7 +163,7 @@
 }
 
 .stat-details h3 {
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: 700;
   margin: 0 0 0.3rem 0;
   color: #1e293b;
@@ -152,6 +175,8 @@
   color: #64748b;
   font-size: 0.9rem;
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* Quick Actions */
@@ -224,12 +249,12 @@
 }
 
 .quick-action-card:hover {
-  transform: translateY(-10px);
+  transform: translateY(-8px);
   box-shadow: var(--card-hover-shadow);
 }
 
 .action-icon {
-  font-size: 2.2rem;
+  font-size: 2.4rem;
   margin-bottom: 1rem;
   color: #6366f1;
   transition: var(--transition);
@@ -269,6 +294,7 @@
   transition: var(--transition);
   animation: fadeInUp 0.8s ease-out;
   border: 1px solid rgba(0, 0, 0, 0.03);
+  height: 100%;
 }
 
 .dashboard-section:nth-child(1) { animation-delay: 0.7s; }
@@ -305,6 +331,7 @@
   transition: var(--transition);
   display: flex;
   align-items: center;
+  font-size: 0.9rem;
 }
 
 .view-all:hover {
@@ -334,7 +361,7 @@
 .course-list-item {
   display: flex;
   align-items: center;
-  padding: 1rem;
+  padding: 1.2rem;
   background: white;
   border-radius: var(--border-radius);
   margin-bottom: 1rem;
@@ -351,10 +378,11 @@
 .course-list-image {
   width: 80px;
   height: 80px;
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
   margin-right: 1.5rem;
   flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 .course-list-image img {
@@ -402,13 +430,30 @@
   align-items: center;
 }
 
+.count-badge {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  margin-right: 0.3rem;
+}
+
+.level-badge {
+  background: rgba(14, 165, 233, 0.1);
+  color: #0ea5e9;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
 .course-list-actions {
   margin-left: 1rem;
 }
 
 .course-list-actions .view-course-btn {
   display: inline-block;
-  padding: 0.5rem 1.2rem;
+  padding: 0.6rem 1.4rem;
   background: var(--primary-gradient);
   color: white;
   text-decoration: none;
@@ -438,17 +483,28 @@
   box-shadow: var(--card-shadow);
   transition: var(--transition);
   background: white;
-  border-left: 5px solid #3b82f6;
   border: 1px solid rgba(0, 0, 0, 0.03);
+  position: relative;
+  padding: 1.5rem;
+}
+
+.batch-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 5px;
+  background: var(--secondary-gradient);
 }
 
 .batch-card:hover {
-  transform: translateY(-10px);
+  transform: translateY(-8px);
   box-shadow: var(--card-hover-shadow);
 }
 
 .batch-details {
-  padding: 1.5rem;
+  padding: 0.5rem 0;
 }
 
 .batch-details h3 {
@@ -456,52 +512,62 @@
   font-size: 1.2rem;
   font-weight: 600;
   color: #1e293b;
-  letter-spacing: -0.3px;
 }
 
 .batch-details p {
-  margin: 0 0 0.8rem 0;
+  margin: 0.5rem 0;
+  font-size: 0.95rem;
   color: #64748b;
-  font-size: 0.9rem;
+  display: flex;
+  justify-content: space-between;
 }
 
 .batch-details p strong {
-  color: #1e293b;
+  color: #475569;
+}
+
+.student-count {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
   font-weight: 600;
 }
 
 .view-batch-btn {
   display: inline-block;
+  width: 100%;
+  padding: 0.7rem 0;
   margin-top: 1rem;
-  padding: 0.6rem 1.2rem;
   background: var(--secondary-gradient);
   color: white;
   text-decoration: none;
-  border-radius: 50px;
+  border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 500;
   transition: var(--transition);
-  box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);
 }
 
 .view-batch-btn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 6px 15px rgba(14, 165, 233, 0.3);
 }
 
-/* Upcoming Classes */
+/* Upcoming Workshops */
 .upcoming-classes {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: 1fr;
+  gap: 1rem;
 }
 
 .class-card {
   display: flex;
   align-items: center;
-  padding: 1.2rem;
-  border-radius: var(--border-radius);
+  padding: 1rem;
   background: white;
+  border-radius: var(--border-radius);
   box-shadow: var(--card-shadow);
   transition: var(--transition);
   border: 1px solid rgba(0, 0, 0, 0.03);
@@ -517,17 +583,18 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 60px;
-  height: 60px;
+  width: 70px;
+  height: 70px;
   background: var(--accent-gradient);
-  color: white;
   border-radius: 12px;
-  margin-right: 1rem;
-  box-shadow: 0 5px 15px rgba(244, 63, 94, 0.3);
+  color: white;
+  margin-right: 1.2rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2);
 }
 
 .date-day {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 700;
   line-height: 1;
 }
@@ -536,38 +603,49 @@
   font-size: 0.8rem;
   text-transform: uppercase;
   font-weight: 500;
+  margin-top: 0.2rem;
+}
+
+.class-details {
+  flex: 1;
 }
 
 .class-details h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1rem;
+  margin: 0 0 0.3rem 0;
+  font-size: 1.1rem;
   font-weight: 600;
   color: #1e293b;
-  letter-spacing: -0.3px;
 }
 
 .class-details p {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: #64748b;
 }
 
-/* Student Activities */
+.seats-badge {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+  margin-left: 0.3rem;
+}
+
+/* Activities List */
 .activities-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 1rem;
 }
 
 .activity-card {
   display: flex;
-  align-items: center;
-  padding: 1.2rem;
-  border-radius: var(--border-radius);
+  padding: 1rem;
   background: white;
+  border-radius: var(--border-radius);
   box-shadow: var(--card-shadow);
   transition: var(--transition);
-  border-left: 5px solid #10b981;
   border: 1px solid rgba(0, 0, 0, 0.03);
 }
 
@@ -577,15 +655,19 @@
 }
 
 .activity-time {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
-  color: #10b981;
-  padding: 0.5rem 0.8rem;
-  border-radius: 50px;
-  font-size: 0.85rem;
-  font-weight: 600;
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  height: fit-content;
   margin-right: 1rem;
-  min-width: 80px;
-  text-align: center;
+  white-space: nowrap;
+}
+
+.activity-details {
+  flex: 1;
 }
 
 .activity-details h3 {
@@ -593,7 +675,6 @@
   font-size: 1rem;
   font-weight: 600;
   color: #1e293b;
-  letter-spacing: -0.3px;
 }
 
 .activity-details p {
@@ -603,9 +684,10 @@
 }
 
 .activity-course {
-  font-size: 0.8rem !important;
-  color: #94a3b8 !important;
   margin-top: 0.3rem !important;
+  font-size: 0.8rem !important;
+  color: #6366f1 !important;
+  font-weight: 500;
 }
 
 /* No Data Message */
@@ -614,73 +696,73 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2.5rem;
+  padding: 2rem;
   text-align: center;
   color: #64748b;
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-  border-radius: var(--border-radius);
-  min-height: 200px;
 }
 
 .no-data-message svg {
-  font-size: 3rem;
-  color: #94a3b8;
+  font-size: 2.5rem;
+  color: #cbd5e1;
   margin-bottom: 1rem;
+}
+
+.no-data-message p {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
 }
 
 .no-data-message a {
   color: #6366f1;
   text-decoration: none;
   font-weight: 500;
-  margin-top: 1rem;
-  padding: 0.6rem 1.2rem;
-  background: white;
-  border-radius: 50px;
-  box-shadow: var(--card-shadow);
   transition: var(--transition);
 }
 
 .no-data-message a:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--card-hover-shadow);
-  color: #8b5cf6;
+  color: #4f46e5;
+  text-decoration: underline;
 }
 
-/* Loading State */
+.create-link {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: var(--primary-gradient);
+  color: white !important;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: var(--transition);
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);
+}
+
+.create-link:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(99, 102, 241, 0.3);
+  text-decoration: none !important;
+}
+
+/* Loading Animation */
 .loading {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  min-height: 300px;
-  font-size: 1.2rem;
-  color: #64748b;
+  justify-content: center;
+  height: 50vh;
 }
 
 .loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 5px solid #f1f5f9;
-  border-top: 5px solid #6366f1;
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(99, 102, 241, 0.1);
   border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-right: 1rem;
+  border-top-color: #6366f1;
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 1rem;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Animations */
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes fadeInUp {
@@ -694,8 +776,19 @@
   }
 }
 
-/* Responsive Design */
-@media (max-width: 991px) {
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
   .faculty-dashboard-container {
     padding: 1.5rem;
   }
@@ -705,11 +798,8 @@
   }
   
   .dashboard-stats {
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  }
-  
-  .stat-card {
-    padding: 1.2rem;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
   }
   
   .stat-icon {
@@ -719,86 +809,15 @@
   }
   
   .stat-details h3 {
-    font-size: 1.5rem;
-  }
-  
-  .dashboard-section {
-    padding: 1.5rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .dashboard-stats {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 1rem;
-  }
-  
-  .quick-actions-grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  }
-  
-  .courses-list-dashboard-faculty,
-  .batches-list,
-  .upcoming-classes {
-    grid-template-columns: 1fr;
-  }
-  
-  .course-list-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .course-list-image {
-    margin-right: 0;
-    margin-bottom: 1rem;
-  }
-  
-  .course-list-meta {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .course-list-actions {
-    margin-left: 0;
-    margin-top: 1rem;
-    width: 100%;
-  }
-  
-  .course-list-actions .view-course-btn {
-    display: block;
-    text-align: center;
-  }
-}
-
-@media (max-width: 576px) {
-  .faculty-dashboard-container {
-    padding: 1rem;
-  }
-  
-  .dashboard-header h1 {
     font-size: 1.8rem;
   }
   
-  .dashboard-stats {
-    grid-template-columns: 1fr 1fr;
+  .quick-actions-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
   
-  .stat-card {
-    padding: 1rem;
-  }
-  
-  .stat-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 1.2rem;
-    margin-right: 0.8rem;
-  }
-  
-  .stat-details h3 {
-    font-size: 1.3rem;
-  }
-  
-  .dashboard-section {
-    padding: 1.2rem;
+  .course-list-image {
+    width: 60px;
+    height: 60px;
   }
 }

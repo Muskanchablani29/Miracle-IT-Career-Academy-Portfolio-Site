@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { userAxiosInstance } from '../../api';
+import { userAxiosInstance, fetchStudents as fetchStudentsApi } from '../../api';
 import './StudentList.css';
 import { FaSearch, FaTrash, FaEdit } from 'react-icons/fa';
 
@@ -16,8 +16,11 @@ const BatchStudentList = ({ batchId, batchName, onClose }) => {
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const response = await userAxiosInstance.get(`students/?batch_id=${batchId}`);
-      setStudents(response.data);
+      console.log(`Fetching students for batch ID: ${batchId}`);
+      // Use the API function directly from the imported module
+      const data = await fetchStudentsApi(batchId);
+      console.log('Students response:', data);
+      setStudents(data);
       setLoading(false);
     } catch (err) {
       console.error('Error fetching students:', err);
