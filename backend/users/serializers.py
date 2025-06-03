@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate, WorkshopRegistration, Batch, Attendance, Holiday
+from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate, WorkshopRegistration, Batch, Attendance, Holiday, Project, ProjectSubmission, StudentAchievement
 from django.contrib.auth.password_validation import validate_password
 from datetime import datetime, date
 from courses.models import Course, CourseSyllabus, SyllabusItem, Video, Quiz, CourseEnrollment, Notification
@@ -452,3 +452,43 @@ class AttendanceSerializer(serializers.ModelSerializer):
         
     def get_day_of_week(self, obj):
         return obj.date.strftime('%A')
+
+class ProjectSerializer(serializers.ModelSerializer):
+    submission_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Project
+        fields = ['id', 'title', 'description', 'technologies', 'batch', 'batch_name', 
+                 'difficulty', 'deadline', 'status', 'created_at', 'submission_count']
+        read_only_fields = ['created_at', 'batch_name', 'submission_count']
+    
+    def get_submission_count(self, obj):
+        return obj.submissions.count()
+    
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['created_by'] = request.user
+        return super().create(validated_data)
+
+class ProjectSubmissionSerializer(serializers.ModelSerializer):
+    student_name = serializers.SerializerMethodField()
+    enrollment_id = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ProjectSubmission
+        fields = ['id', 'project', 'student', 'student_name', 'enrollment_id', 'repository_url', 
+                 'live_url', 'notes', 'status', 'grade', 'feedback', 'submission_date']
+        read_only_fields = ['submission_date', 'student_name', 'enrollment_id']
+    
+    def get_student_name(self, obj):
+        return obj.student.user.username
+    
+    def get_enrollment_id(self, obj):
+        return obj.student.enrollment_id
+
+class StudentAchievementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentAchievement
+        fields = ['id', 'student', 'name', 'description', 'icon', 'created_at']
+        read_only_fields = ['created_at']

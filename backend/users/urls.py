@@ -8,6 +8,10 @@ from .views import (
     AttendanceViewSet, get_user_enrollments, AttendanceAPIView,
     mark_attendance, get_student_attendance_dates, get_student_attendance_stats
 )
+from .views_projects import (
+    ProjectViewSet, ProjectSubmissionViewSet, StudentAchievementViewSet,
+    current_user_view, project_technologies
+)
 
 router = DefaultRouter()
 router.register(r'batches', BatchViewSet, basename='batch')
@@ -16,6 +20,9 @@ router.register(r'workshop-registrations', WorkshopRegistrationViewSet, basename
 router.register(r'certificates', CertificateViewSet, basename='certificate')
 router.register(r'students', StudentViewSet, basename='student')
 router.register(r'attendance', AttendanceViewSet, basename='attendance')
+router.register(r'projects', ProjectViewSet, basename='project')
+router.register(r'project-submissions', ProjectSubmissionViewSet, basename='project-submission')
+router.register(r'student-achievements', StudentAchievementViewSet, basename='student-achievement')
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -36,8 +43,11 @@ urlpatterns = [
     path('mark-attendance/', mark_attendance, name='mark-attendance'),
     path('student-attendance-dates/<int:student_id>/', get_student_attendance_dates, name='student-attendance-dates'),
     path('student-attendance-stats/<int:student_id>/', get_student_attendance_stats, name='student-attendance-stats'),
-    # Other URLs
-    
+    # Project management endpoints
+    path('current-user/', current_user_view, name='current-user'),
+    path('projects/technologies/', project_technologies, name='project-technologies'),
+    path('project-leaderboard/', ProjectViewSet.as_view({'get': 'leaderboard'}), name='project-leaderboard'),
+    path('project-submissions/mark-submitted/', ProjectSubmissionViewSet.as_view({'post': 'mark_submitted'}), name='mark-project-submitted'),
     # Add the new endpoint for assigning students to batches
     path('batches/<int:pk>/assign-students/', BatchViewSet.as_view({'post': 'assign_students'}), name='assign_students_to_batch'),
 ]

@@ -1,4 +1,5 @@
 from rest_framework import generics, permissions, status, viewsets
+from .views_projects import ProjectViewSet, ProjectSubmissionViewSet, StudentAchievementViewSet, current_user_view, project_technologies
 from rest_framework.decorators import action, api_view, permission_classes
 from django.db.models import Q
 from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate, WorkshopRegistration, Batch, Attendance, Holiday

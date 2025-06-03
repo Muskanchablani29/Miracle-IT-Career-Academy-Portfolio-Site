@@ -103,3 +103,63 @@ class Attendance(models.Model):
         
     def __str__(self):
         return f"{self.student.user.username} - {self.date} - {'Present' if self.is_present else 'Absent'}"
+
+class Project(models.Model):
+    DIFFICULTY_CHOICES = (
+        ('beginner', 'Beginner'),
+        ('intermediate', 'Intermediate'),
+        ('advanced', 'Advanced'),
+    )
+    STATUS_CHOICES = (
+        ('active', 'Active'),
+        ('archived', 'Archived'),
+    )
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    technologies = models.JSONField(default=list)
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='projects')
+    batch_name = models.CharField(max_length=100, blank=True)
+    difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, default='intermediate')
+    deadline = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='created_projects')
+    
+    def save(self, *args, **kwargs):
+        if self.batch and not self.batch_name:
+            self.batch_name = self.batch.name
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"{self.title} - {self.batch_name}"
+
+class ProjectSubmission(models.Model):
+    STATUS_CHOICES = (
+        ('submitted', 'Submitted'),
+        ('reviewed', 'Reviewed'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='submissions')
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='project_submissions')
+    repository_url = models.URLField()
+    live_url = models.URLField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='submitted')
+    grade = models.IntegerField(null=True, blank=True)
+    feedback = models.TextField(blank=True, null=True)
+    submission_date = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.student.enrollment_id} - {self.project.title}"
+
+class StudentAchievement(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='achievements')
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+    icon = models.CharField(max_length=50, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.student.enrollment_id} - {self.name}"
