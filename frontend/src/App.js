@@ -31,6 +31,7 @@ import AdminRegisteredUsers from './Components/Admin/RegisteredUsers';
 import ManageCourses from './Components/Faculty/ManageCourses';
 import FacultyStudentAttendance from './Components/Faculty/StudentAttendance';
 import Gradebook from './Components/Faculty/Gradebook';
+import ProjectManagement from './Components/Faculty/ProjectManagement';
 import FacultyAnnouncements from './Components/Faculty/FacultyAnnouncements';
 import StudentList from './Components/Faculty/StudentList';
 import FacultyRegisteredUsers from './Components/Faculty/RegisteredUsers';
@@ -117,6 +118,7 @@ function App() {
               <Route path="courses/:courseId/syllabus" element={<SyllabusEditor />} />
               <Route path="attendance" element={<FacultyStudentAttendance />} />
               <Route path="gradebook" element={<Gradebook />} />
+              <Route path="projects" element={<ProjectManagement />} />
               <Route path="announcements" element={<FacultyAnnouncements />} />
               <Route path="students" element={<StudentList />} />
               <Route path="workshop-registrations" element={<WorkshopRegistrations />} />

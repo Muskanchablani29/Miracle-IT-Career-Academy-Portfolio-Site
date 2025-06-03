@@ -97,7 +97,7 @@ const StudentAttendance = () => {
       // Fetch students by batch with explicit batch_id parameter
       const response = await axios.get(`http://localhost:8000/api/students/`, {
         headers: { 'Authorization': `Bearer ${token}` },
-        params: batchId === 'all' ? {} : { batch: batchId }
+        params: batchId === 'all' ? {} : { batch_id: batchId }
       });
       
       console.log('Students API response:', response.data);
@@ -227,6 +227,19 @@ const StudentAttendance = () => {
       updatedData[student.id] = {
         ...attendanceData[student.id],
         isPresent: true
+      };
+    });
+    
+    setAttendanceData(updatedData);
+    updateSummary(updatedData);
+  };
+  
+  const markAllAbsent = () => {
+    const updatedData = {};
+    students.forEach(student => {
+      updatedData[student.id] = {
+        ...attendanceData[student.id],
+        isPresent: false
       };
     });
     
@@ -429,59 +442,89 @@ const StudentAttendance = () => {
   };
 
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-container-studentlist">
       <h1 className="page-title">Student Attendance</h1>
       
       {/* Attendance Percentage Slider */}
       <div className="attendance-slider-container">
         <div className="attendance-slider">
-          {students.map(student => (
-            <div key={student.id} className="slider-item">
-              <div className="profile-icon">
-                {student.user.username.charAt(0).toUpperCase()}
-              </div>
-              <div className="slider-info">
-                <span className="slider-name">{student.user.username}</span>
-                <div className="percentage-container">
-                  <div 
-                    className="percentage-bar" 
-                    style={{width: `${student.attendanceStats?.percentage || 0}%`}}
-                  ></div>
-                  <span className={`slider-percentage ${
-                    student.attendanceStats?.percentage >= 85 ? 'status-excellent' : 
-                    student.attendanceStats?.percentage >= 75 ? 'status-good' : 
-                    student.attendanceStats?.percentage >= 60 ? 'status-average' : 'status-poor'
-                  }`}>
-                    {student.attendanceStats?.percentage || 0}%
-                  </span>
+          {students.map((student, index) => {
+            const percentage = student.attendanceStats?.percentage || 0;
+            const rotation = (percentage / 100) * 360;
+            const statusClass = 
+              percentage >= 85 ? 'status-excellent' : 
+              percentage >= 75 ? 'status-good' : 
+              percentage >= 60 ? 'status-average' : 'status-poor';
+            
+            return (
+              <div 
+                key={student.id} 
+                className={`slider-item ${index < 10 ? 'animate' : ''}`}
+                style={{'--animation-delay': `${index * 0.2}s`}}
+              >
+                <div className="slider-header">
+                  <div className="profile-icon">
+                    {student.user.username.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="slider-name">{student.user.username}</div>
+                    <div className="slider-role">Student</div>
+                  </div>
                 </div>
+                
+                <div className="attendance-circle-container">
+                  <div className="attendance-circle">
+                    <div className="circle-bg"></div>
+                    <div 
+                      className={`circle-progress ${percentage >= 50 ? 'full' : ''}`}
+                      style={{'--progress-rotation': `${percentage >= 50 ? 180 : (rotation)}deg`}}
+                    ></div>
+                    <div className="circle-value">{percentage}%</div>
+                  </div>
+                </div>
+                <div className="attendance-label">Attendance Rate</div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           {/* Duplicate items for continuous animation */}
-          {students.length > 0 && students.slice(0, 5).map(student => (
-            <div key={`dup-${student.id}`} className="slider-item">
-              <div className="profile-icon">
-                {student.user.username.charAt(0).toUpperCase()}
-              </div>
-              <div className="slider-info">
-                <span className="slider-name">{student.user.username}</span>
-                <div className="percentage-container">
-                  <div 
-                    className="percentage-bar" 
-                    style={{width: `${student.attendanceStats?.percentage || 0}%`}}
-                  ></div>
-                  <span className={`slider-percentage ${
-                    student.attendanceStats?.percentage >= 85 ? 'status-excellent' : 
-                    student.attendanceStats?.percentage >= 75 ? 'status-good' : 
-                    student.attendanceStats?.percentage >= 60 ? 'status-average' : 'status-poor'
-                  }`}>
-                    {student.attendanceStats?.percentage || 0}%
-                  </span>
+          {students.length > 0 && students.slice(0, 5).map((student, index) => {
+            const percentage = student.attendanceStats?.percentage || 0;
+            const rotation = (percentage / 100) * 360;
+            const statusClass = 
+              percentage >= 85 ? 'status-excellent' : 
+              percentage >= 75 ? 'status-good' : 
+              percentage >= 60 ? 'status-average' : 'status-poor';
+            
+            return (
+              <div 
+                key={`dup-${student.id}`} 
+                className={`slider-item animate`}
+                style={{'--animation-delay': `${(index + students.length) * 0.2}s`}}
+              >
+                <div className="slider-header">
+                  <div className="profile-icon">
+                    {student.user.username.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="slider-name">{student.user.username}</div>
+                    <div className="slider-role">Student</div>
+                  </div>
                 </div>
+                
+                <div className="attendance-circle-container">
+                  <div className="attendance-circle">
+                    <div className="circle-bg"></div>
+                    <div 
+                      className={`circle-progress ${percentage >= 50 ? 'full' : ''}`}
+                      style={{'--progress-rotation': `${percentage >= 50 ? 180 : (rotation)}deg`}}
+                    ></div>
+                    <div className="circle-value">{percentage}%</div>
+                  </div>
+                </div>
+                <div className="attendance-label">Attendance Rate</div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
       
@@ -665,7 +708,17 @@ const StudentAttendance = () => {
                             {sortConfig.key === 'name' ? (sortConfig.direction === 'ascending' ? '↑' : '↓') : '⇅'}
                           </span>
                         </th>
-                        <th>Status</th>
+                        <th className="status-header">
+                          Status
+                          <div className="status-header-options">
+                            <button className="status-option present-all" onClick={markAllPresent}>
+                              Present All
+                            </button>
+                            <button className="status-option absent-all" onClick={markAllAbsent}>
+                              Absent All
+                            </button>
+                          </div>
+                        </th>
                         <th>Remarks</th>
                         <th onClick={() => requestSort('admission_date')} className="sortable-header">
                           Admission Date
@@ -700,7 +753,7 @@ const StudentAttendance = () => {
                         return (
                           <tr key={student.id}>
                             <td>{student.enrollment_id}</td>
-                            <td>{student.user.username}</td>
+                            <td className="student-name">{student.user.username}</td>
                             <td>
                               <select 
                                 className={`status-select ${studentData.isPresent ? 'present' : 'absent'}`}

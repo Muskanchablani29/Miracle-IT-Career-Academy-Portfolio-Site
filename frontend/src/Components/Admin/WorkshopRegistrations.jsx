@@ -95,7 +95,7 @@ const WorkshopRegistrations = () => {
                   <td>{registration.name}</td>
                   <td>{registration.email}</td>
                   <td>{registration.phone}</td>
-                  <td>{registration.workshop.title}</td>
+                  <td>{registration.workshop?.title || 'N/A'}</td>
                   <td className="experience-level">
                     <span className={`level-badge ${registration.experience_level}`}>
                       {registration.experience_level.charAt(0).toUpperCase() + registration.experience_level.slice(1)}

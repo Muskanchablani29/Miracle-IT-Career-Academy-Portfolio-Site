@@ -84,7 +84,7 @@ const FacultyDashboard = () => {
           activeStudents: activeStudents,
           completionRate: students.length > 0 ? 
             ((students.filter(s => s.completion_status === 'Completed').length / students.length) * 100).toFixed(1) : 0,
-          averageAttendance: averageAttendance,
+          averageAttendance: averageAttendance || 0,
           workshopsCount: workshops.length
         });
         
@@ -163,7 +163,7 @@ const FacultyDashboard = () => {
               <HiChartBar />
             </div>
             <div className="stat-details">
-              <h3>{stats.averageAttendance}%</h3>
+              <h3>{String(stats.averageAttendance)}%</h3>
               <p>Avg. Attendance</p>
             </div>
           </div>
@@ -291,7 +291,7 @@ const FacultyDashboard = () => {
                     </div>
                     <div className="class-details">
                       <h3>{workshop.title}</h3>
-                      <p>{workshop.location} • <span className="seats-badge">{workshop.available_seats} seats available</span></p>
+                    <p>{workshop.location} • <span className="seats-badge">{workshop.available_seats ?? 0} seats available</span></p>
                     </div>
                   </div>
                 ))

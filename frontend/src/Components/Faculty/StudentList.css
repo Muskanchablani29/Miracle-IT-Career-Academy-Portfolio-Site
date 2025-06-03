@@ -16,8 +16,9 @@
   --success-color: #008000;
 }
 
-.dashboard-container {
+.dashboard-container-studentlist {
   max-width: 1200px;
+  padding-top: 15px;
   margin: 0 auto;
   font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
   color: var(--text-primary);
@@ -47,11 +48,11 @@
   border-radius: 3px;
 }
 
-.dashboard-content {
+.dashboard-content-studentlist {
   background-color: var(--background-color);
   border-radius: 20px;
+  padding: 10px;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-  padding: 15px;
   transition: all 0.3s ease;
 }
 

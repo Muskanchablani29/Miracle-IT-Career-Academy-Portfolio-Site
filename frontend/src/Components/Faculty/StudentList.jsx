@@ -31,6 +31,21 @@ const StudentList = () => {
     fetchAllData();
   }, []);
   
+  // Update available batches when course selection changes
+  useEffect(() => {
+    if (selectedCourse !== 'all') {
+      // Filter batches based on selected course
+      const filteredBatches = batches.filter(batch => 
+        batch.course && batch.course.id === parseInt(selectedCourse)
+      );
+      if (filteredBatches.length === 0) {
+        console.log('No batches found for the selected course');
+      }
+      // Reset batch selection when course changes
+      setSelectedBatch('all');
+    }
+  }, [selectedCourse, batches]);
+  
   // Update localStorage with highest enrollment ID when students change
   useEffect(() => {
     if (students.length > 0) {
@@ -55,6 +70,20 @@ const StudentList = () => {
         userAxiosInstance.get('courses/')
       ]);
       
+      console.log('API Responses:', {
+        students: studentsResponse.data,
+        batches: batchesResponse.data,
+        courses: coursesResponse.data
+      });
+      
+      // Log the exact structure of coursesResponse to debug
+      console.log('Courses response structure:', {
+        type: typeof coursesResponse.data,
+        isArray: Array.isArray(coursesResponse.data),
+        keys: coursesResponse.data ? Object.keys(coursesResponse.data) : [],
+        data: coursesResponse.data
+      });
+      
       // Process batches data
       const batchesMap = {};
       batchesResponse.data.forEach(batch => {
@@ -64,9 +93,14 @@ const StudentList = () => {
       
       // Process courses data
       const coursesMap = {};
-      coursesResponse.data.forEach(course => {
-        coursesMap[course.id] = course;
-      });
+      // Check if coursesResponse.data is an array before using forEach
+      if (Array.isArray(coursesResponse.data)) {
+        coursesResponse.data.forEach(course => {
+          coursesMap[course.id] = course;
+        });
+      } else {
+        console.log('Courses data is not an array:', coursesResponse.data);
+      }
       
       // Format the students data
       const formattedStudents = studentsResponse.data.map(student => {
@@ -123,17 +157,22 @@ const StudentList = () => {
         inactiveStudents
       });
       
-      // Extract unique courses for filter
-      const uniqueCourses = Array.from(
-        new Set(formattedStudents.map(s => s.courseId))
-      )
-        .filter(id => id !== null)
-        .map(courseId => {
-          const courseName = formattedStudents.find(s => s.courseId === courseId)?.course;
-          return { id: courseId, title: courseName };
-        });
+      // Check if coursesResponse.data is an object with results property (common API pattern)
+      if (coursesResponse.data && typeof coursesResponse.data === 'object' && coursesResponse.data.results) {
+        console.log('Using courses from results array:', coursesResponse.data.results);
+        setCourses(coursesResponse.data.results);
+      } else if (Array.isArray(coursesResponse.data)) {
+        console.log('Using courses directly from array:', coursesResponse.data);
+        setCourses(coursesResponse.data);
+      } else {
+        console.log('No valid courses data found, using empty array');
+        setCourses([]);
+      }
       
-      setCourses(uniqueCourses);
+      // Debug log to check if students are being loaded correctly
+      console.log('Loaded students:', formattedStudents.length);
+      console.log('Student course IDs:', formattedStudents.map(s => s.courseId));
+      console.log('Student batch IDs:', formattedStudents.map(s => s.batchId));
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -209,16 +248,16 @@ const StudentList = () => {
   };
   
   const filteredStudents = students.filter(student => {
-    // Handle null batchId case
-    if (selectedBatch !== 'all') {
-      if (!student.batchId && selectedBatch) return false;
-      if (student.batchId && String(student.batchId) !== String(selectedBatch)) return false;
-    }
-    
-    // Handle null courseId case
+    // First filter by course
     if (selectedCourse !== 'all') {
       if (!student.courseId && selectedCourse) return false;
       if (student.courseId && String(student.courseId) !== String(selectedCourse)) return false;
+    }
+    
+    // Then filter by batch if a course is selected
+    if (selectedBatch !== 'all') {
+      if (!student.batchId && selectedBatch) return false;
+      if (student.batchId && String(student.batchId) !== String(selectedBatch)) return false;
     }
     
     if (selectedStatus !== 'all' && student.status !== selectedStatus) return false;
@@ -303,7 +342,7 @@ const StudentList = () => {
             className={`pagination-btn ${currentPage === i ? 'active' : ''}`}
             onClick={() => paginate(i)}
           >
-            {i}
+            {String(i)}
           </button>
         );
       } else if (i === currentPage - 2 || i === currentPage + 2) {
@@ -317,7 +356,7 @@ const StudentList = () => {
         key="next" 
         className="pagination-btn" 
         onClick={() => paginate(currentPage + 1)}
-        disabled={currentPage === totalPages}
+        disabled={currentPage === totalPages || totalPages === 0}
       >
         Next
       </button>
@@ -327,9 +366,9 @@ const StudentList = () => {
   };
 
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-container-studentlist">
       <h1 className="page-title">Student List</h1>
-      <div className="dashboard-content">
+      <div className="dashboard-content-studentlist">
         <div className="student-filters">
           <div className="search-filter">
             <input 
@@ -355,13 +394,17 @@ const StudentList = () => {
               className="filter-select"
               value={selectedBatch}
               onChange={handleBatchChange}
+              disabled={selectedCourse === 'all'}
             >
               <option value="all">All Batches</option>
-              {batches.map(batch => (
-                <option key={batch.id} value={batch.id}>
-                  {batch.name}
-                </option>
-              ))}
+              {batches
+                .filter(batch => selectedCourse === 'all' || 
+                  (batch.course && batch.course.id === parseInt(selectedCourse)))
+                .map(batch => (
+                  <option key={batch.id} value={batch.id}>
+                    {batch.name}
+                  </option>
+                ))}
             </select>
             <select 
               className="filter-select"
@@ -393,21 +436,21 @@ const StudentList = () => {
             <h3>Active</h3>
             <p className="stat-number">{stats.activeStudents}</p>
             <p className="stat-percentage">
-              {stats.totalStudents ? Math.round((stats.activeStudents / stats.totalStudents) * 100) : 0}%
+              {String(stats.totalStudents ? Math.round((stats.activeStudents / stats.totalStudents) * 100) : 0)}%
             </p>
           </div>
           <div className="stat-card">
             <h3>On Leave</h3>
             <p className="stat-number">{stats.onLeaveStudents}</p>
             <p className="stat-percentage">
-              {stats.totalStudents ? Math.round((stats.onLeaveStudents / stats.totalStudents) * 100) : 0}%
+              {String(stats.totalStudents ? Math.round((stats.onLeaveStudents / stats.totalStudents) * 100) : 0)}%
             </p>
           </div>
           <div className="stat-card">
             <h3>Inactive</h3>
             <p className="stat-number">{stats.inactiveStudents}</p>
             <p className="stat-percentage">
-              {stats.totalStudents ? Math.round((stats.inactiveStudents / stats.totalStudents) * 100) : 0}%
+              {String(stats.totalStudents ? Math.round((stats.inactiveStudents / stats.totalStudents) * 100) : 0)}%
             </p>
           </div>
         </div>

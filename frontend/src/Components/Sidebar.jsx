@@ -35,6 +35,7 @@ const Sidebar = () => {
           { to: '/faculty', label: 'Dashboard', icon: <FaHome /> },
           { to: '/faculty/courses', label: 'Manage Courses', icon: <FaBook /> },
           { to: '/faculty/attendance', label: 'Student Attendance', icon: <FaCalendarAlt /> },
+          { to: '/faculty/projects', label: 'Projects', icon: <FaListAlt /> },
           { to: '/faculty/gradebook', label: 'Gradebook', icon: <FaClipboardList /> },
           { to: '/faculty/announcements', label: 'Faculty Announcements', icon: <FaBullhorn /> },
           { to: '/faculty/students', label: 'Student List', icon: <FaUserGraduate /> },
