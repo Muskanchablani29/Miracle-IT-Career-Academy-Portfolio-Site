@@ -6,7 +6,8 @@ import './FacultyDashboard.css';
 import { 
   FaBook, FaUsers, FaCalendarAlt, FaBullhorn, 
   FaPlus, FaChartLine, FaArrowRight, FaLayerGroup, 
-  FaClipboardList, FaUserGraduate, FaRegClock, FaExclamationTriangle
+  FaClipboardList, FaUserGraduate, FaRegClock, FaExclamationTriangle,
+  FaChevronLeft, FaChevronRight
 } from 'react-icons/fa';
 import { 
   HiAcademicCap, HiChartBar, HiClock, HiCollection, 
@@ -33,6 +34,23 @@ const FacultyDashboard = () => {
   });
 
   useEffect(() => {
+    // Initialize carousel navigation
+    const initCarousel = () => {
+      const carousel = document.querySelector('.batches-carousel');
+      const prevBtn = document.querySelector('.carousel-prev');
+      const nextBtn = document.querySelector('.carousel-next');
+      
+      if (carousel && prevBtn && nextBtn) {
+        prevBtn.addEventListener('click', () => {
+          carousel.scrollBy({ left: -300, behavior: 'smooth' });
+        });
+        
+        nextBtn.addEventListener('click', () => {
+          carousel.scrollBy({ left: 300, behavior: 'smooth' });
+        });
+      }
+    };
+    
     const fetchAllData = async () => {
       setLoading(true);
       try {
@@ -89,6 +107,8 @@ const FacultyDashboard = () => {
         });
         
         setLoading(false);
+        // Initialize carousel after data is loaded
+        setTimeout(initCarousel, 100);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         setLoading(false);
@@ -202,7 +222,7 @@ const FacultyDashboard = () => {
         <div className="dashboard-sections">
           <div className="dashboard-section">
             <div className="section-header">
-              <h2>My Courses</h2>
+              <h2><FaBook /> My Courses</h2>
               <Link to="/faculty/courses" className="view-all">
                 View All <FaArrowRight />
               </Link>
@@ -213,7 +233,7 @@ const FacultyDashboard = () => {
                   {dashboardData.courses.map(course => (
                     <li className="course-list-item" key={course.id}>
                       <div className="course-list-image">
-                        <img src={course.image || 'https://via.placeholder.com/80x80?text=Course'} alt={course.title} />
+                        <img src={course.image || 'https://via.placeholder.com/280x160?text=Course'} alt={course.title} />
                       </div>
                       <div className="course-list-content">
                         <h3>{course.title}</h3>
@@ -223,7 +243,7 @@ const FacultyDashboard = () => {
                         </div>
                       </div>
                       <div className="course-list-actions">
-                        <Link to={`/faculty/courses/${course.id}`} className="view-course-btn">Manage</Link>
+                        <Link to={`/faculty/courses/${course.id}`} className="view-course-btn">Manage <FaArrowRight /></Link>
                       </div>
                     </li>
                   ))}
@@ -238,63 +258,82 @@ const FacultyDashboard = () => {
             </div>
           </div>
 
-          <div className="dashboard-section">
+          <div className="dashboard-section batches-section">
             <div className="section-header">
-              <h2>Active Batches</h2>
+              <h2><FaLayerGroup /> Active Batches</h2>
               <Link to="/faculty/batches" className="view-all">
                 View All Batches <FaArrowRight />
               </Link>
             </div>
-            <div className="batches-list">
-              {dashboardData.batches && dashboardData.batches.length > 0 ? (
-                dashboardData.batches.slice(0, 3).map(batch => (
-                  <div className="batch-card" key={batch.id}>
-                    <div className="batch-details">
-                      <h3>{batch.name}</h3>
-                      <p>
-                        <strong>Course:</strong> <span>{batch.course ? batch.course.title : 'Not assigned'}</span>
-                      </p>
-                      <p>
-                        <strong>Students:</strong> <span className="student-count">{batch.students_count !== undefined ? batch.students_count : 0}</span>
-                      </p>
-                      <p>
-                        <strong>Created:</strong> <span>{new Date(batch.created_at).toLocaleDateString()}</span>
-                      </p>
-                      <Link to={`/faculty/batches/${batch.id}`} className="view-batch-btn">Manage Batch</Link>
+            <div className="batches-carousel-container">
+              <button className="carousel-arrow carousel-prev">
+                <FaChevronLeft />
+              </button>
+              <div className="batches-carousel">
+                {dashboardData.batches && dashboardData.batches.length > 0 ? (
+                  dashboardData.batches.map(batch => (
+                    <div className="batch-card" key={batch.id}>
+                      <div className="batch-details">
+                        <h3>{batch.name}</h3>
+                        <p>
+                          <strong><FaBook /> Course:</strong> <span>{batch.course ? batch.course.title : 'Not assigned'}</span>
+                        </p>
+                        <p>
+                          <strong><FaUsers /> Students:</strong> <span className="student-count"><FaUserGraduate /> {batch.students_count !== undefined ? batch.students_count : 0}</span>
+                        </p>
+                        <p>
+                          <strong><FaRegClock /> Created:</strong> <span>{new Date(batch.created_at).toLocaleDateString()}</span>
+                        </p>
+                      </div>
+                      <Link to={`/faculty/batches/${batch.id}`} className="view-batch-btn">Manage Batch <FaArrowRight /></Link>
                     </div>
+                  ))
+                ) : (
+                  <div className="no-data-message">
+                    <FaExclamationTriangle />
+                    <p>No batches available.</p>
+                    <Link to="/faculty/add-batch" className="create-link">Create a new batch</Link>
                   </div>
-                ))
-              ) : (
-                <div className="no-data-message">
-                  <FaExclamationTriangle />
-                  <p>No batches available.</p>
-                  <Link to="/faculty/add-batch" className="create-link">Create a new batch</Link>
-                </div>
-              )}
+                )}
+              </div>
+              <button className="carousel-arrow carousel-next">
+                <FaChevronRight />
+              </button>
             </div>
           </div>
 
           <div className="dashboard-section">
             <div className="section-header">
-              <h2>Upcoming Workshops</h2>
+              <h2><FaCalendarAlt /> Upcoming Workshops</h2>
               <Link to="/faculty/workshops" className="view-all">
                 View All Workshops <FaArrowRight />
               </Link>
             </div>
             <div className="upcoming-classes">
               {dashboardData.upcomingWorkshops && dashboardData.upcomingWorkshops.length > 0 ? (
-                dashboardData.upcomingWorkshops.map(workshop => (
-                  <div className="class-card" key={workshop.id}>
-                    <div className="class-date">
-                      <span className="date-day">{new Date(workshop.date).getDate()}</span>
-                      <span className="date-month">{new Date(workshop.date).toLocaleString('default', { month: 'short' })}</span>
+                dashboardData.upcomingWorkshops.map(workshop => {
+                  const workshopDate = new Date(workshop.date);
+                  const isUpcoming = workshopDate >= new Date();
+                  
+                  return (
+                    <div className="class-card" key={workshop.id}>
+                      <div className={`workshop-tag ${isUpcoming ? 'upcoming-tag' : 'past-tag'}`}>
+                        {isUpcoming ? 'Upcoming' : 'Past'} {isUpcoming ? <HiLightningBolt /> : <HiClock />}
+                      </div>
+                      <div className="class-date">
+                        <span className="date-day">{workshopDate.getDate()}</span>
+                        <span className="date-month">{workshopDate.toLocaleString('default', { month: 'short' })}</span>
+                      </div>
+                      <div className="class-details">
+                        <h3>{workshop.title}</h3>
+                        <p>{workshop.location} • <span className="seats-badge"><FaUsers /> {workshop.available_seats ?? 0} seats available</span></p>
+                      </div>
+                      <div className="class-actions">
+                        <Link to={`/faculty/workshops/${workshop.id}`} className="view-workshop-btn">View Details <FaArrowRight /></Link>
+                      </div>
                     </div>
-                    <div className="class-details">
-                      <h3>{workshop.title}</h3>
-                    <p>{workshop.location} • <span className="seats-badge">{workshop.available_seats ?? 0} seats available</span></p>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="no-data-message">
                   <FaExclamationTriangle />
@@ -307,7 +346,7 @@ const FacultyDashboard = () => {
           
           <div className="dashboard-section">
             <div className="section-header">
-              <h2>Recent Student Activities</h2>
+              <h2><FaChartLine /> Recent Student Activities</h2>
               <Link to="/faculty/students" className="view-all">
                 View All Students <FaArrowRight />
               </Link>

@@ -146,7 +146,7 @@ const WorkshopRegistration = () => {
           {error}
         </div>
       )}
-      
+       
       <form onSubmit={handleSubmit} className="registration-form">
         <div className="form-group">
           <label htmlFor="name">
