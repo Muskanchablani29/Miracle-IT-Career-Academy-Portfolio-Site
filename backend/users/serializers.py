@@ -1,5 +1,9 @@
 from rest_framework import serializers
-from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate, WorkshopRegistration, Batch, Attendance, Holiday, Project, ProjectSubmission, StudentAchievement
+from .models import (
+    CustomUser, Student, Faculty, Admin, Workshop, Certificate, WorkshopRegistration, 
+    Batch, Attendance, Holiday, Project, ProjectSubmission, StudentAchievement,
+    FeeStructure, FeeInstallment, StudentFee, FeePayment, FeeDiscount, FeeFine
+)
 from django.contrib.auth.password_validation import validate_password
 from datetime import datetime, date
 from courses.models import Course, CourseSyllabus, SyllabusItem, Video, Quiz, CourseEnrollment, Notification
@@ -492,3 +496,80 @@ class StudentAchievementSerializer(serializers.ModelSerializer):
         model = StudentAchievement
         fields = ['id', 'student', 'name', 'description', 'icon', 'created_at']
         read_only_fields = ['created_at']
+
+# Fee Management System Serializers
+class FeeStructureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FeeStructure
+        fields = ['id', 'name', 'course', 'total_amount', 'installments', 'created_at', 'updated_at', 'created_by']
+        read_only_fields = ['created_at', 'updated_at']
+
+class FeeInstallmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FeeInstallment
+        fields = ['id', 'fee_structure', 'amount', 'due_date', 'sequence']
+
+class StudentFeeSerializer(serializers.ModelSerializer):
+    student_name = serializers.SerializerMethodField()
+    fee_structure_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = StudentFee
+        fields = ['id', 'student', 'student_name', 'fee_structure', 'fee_structure_name', 
+                 'total_amount', 'amount_paid', 'status', 'assigned_date', 'assigned_by']
+        read_only_fields = ['assigned_date', 'status']
+    
+    def get_student_name(self, obj):
+        return obj.student.user.username
+    
+    def get_fee_structure_name(self, obj):
+        return obj.fee_structure.name
+
+class FeePaymentSerializer(serializers.ModelSerializer):
+    student_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = FeePayment
+        fields = ['id', 'student_fee', 'student_name', 'amount', 'payment_date', 
+                 'payment_mode', 'transaction_id', 'receipt_number', 'status', 
+                 'remarks', 'recorded_by']
+        read_only_fields = ['receipt_number']
+    
+    def get_student_name(self, obj):
+        return obj.student_fee.student.user.username
+    
+    def create(self, validated_data):
+        # Generate receipt number
+        import uuid
+        validated_data['receipt_number'] = f"REC-{uuid.uuid4().hex[:8].upper()}"
+        
+        # Set recorded_by to current user if not provided
+        request = self.context.get('request')
+        if request and hasattr(request, 'user') and not validated_data.get('recorded_by'):
+            validated_data['recorded_by'] = request.user
+            
+        return super().create(validated_data)
+
+class FeeDiscountSerializer(serializers.ModelSerializer):
+    student_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = FeeDiscount
+        fields = ['id', 'student_fee', 'student_name', 'amount', 'discount_type', 
+                 'reason', 'applied_date', 'applied_by']
+        read_only_fields = ['applied_date']
+    
+    def get_student_name(self, obj):
+        return obj.student_fee.student.user.username
+
+class FeeFineSerializer(serializers.ModelSerializer):
+    student_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = FeeFine
+        fields = ['id', 'student_fee', 'student_name', 'amount', 'reason', 
+                 'due_date', 'is_paid', 'applied_date', 'applied_by']
+        read_only_fields = ['applied_date']
+    
+    def get_student_name(self, obj):
+        return obj.student_fee.student.user.username

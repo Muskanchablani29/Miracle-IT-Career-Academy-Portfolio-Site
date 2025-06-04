@@ -12,6 +12,10 @@ from .views_projects import (
     ProjectViewSet, ProjectSubmissionViewSet, StudentAchievementViewSet,
     current_user_view, project_technologies
 )
+from .views_fees import (
+    FeeStructureViewSet, StudentFeeViewSet, FeePaymentViewSet,
+    AdminFeeReportView, StudentFeeDetailView, FacultyStudentFeeView
+)
 
 router = DefaultRouter()
 router.register(r'batches', BatchViewSet, basename='batch')
@@ -23,6 +27,11 @@ router.register(r'attendance', AttendanceViewSet, basename='attendance')
 router.register(r'projects', ProjectViewSet, basename='project')
 router.register(r'project-submissions', ProjectSubmissionViewSet, basename='project-submission')
 router.register(r'student-achievements', StudentAchievementViewSet, basename='student-achievement')
+
+# Fee Management System routes
+router.register(r'fee-structures', FeeStructureViewSet, basename='fee-structure')
+router.register(r'student-fees', StudentFeeViewSet, basename='student-fees')
+router.register(r'fee-payments', FeePaymentViewSet, basename='fee-payment')
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -50,4 +59,9 @@ urlpatterns = [
     path('project-submissions/mark-submitted/', ProjectSubmissionViewSet.as_view({'post': 'mark_submitted'}), name='mark-project-submitted'),
     # Add the new endpoint for assigning students to batches
     path('batches/<int:pk>/assign-students/', BatchViewSet.as_view({'post': 'assign_students'}), name='assign_students_to_batch'),
+    
+    # Fee Management System endpoints
+    path('fee-reports/', AdminFeeReportView.as_view(), name='fee-reports'),
+    path('student-fee-details/', StudentFeeDetailView.as_view(), name='student-fee-details'),
+    path('faculty-student-fees/', FacultyStudentFeeView.as_view(), name='faculty-student-fees'),
 ]

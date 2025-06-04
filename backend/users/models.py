@@ -2,6 +2,8 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
 from datetime import date
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
@@ -163,3 +165,263 @@ class StudentAchievement(models.Model):
     
     def __str__(self):
         return f"{self.student.enrollment_id} - {self.name}"
+
+# Fee Management System Models
+class FeeStructure(models.Model):
+    name = models.CharField(max_length=100)
+    course = models.ForeignKey('courses.Course', on_delete=models.CASCADE, related_name='fee_structures')
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    installments = models.IntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='created_fee_structures')
+
+    def __str__(self):
+        return f"{self.name} - {self.course.title}"
+
+class FeeInstallment(models.Model):
+    fee_structure = models.ForeignKey(FeeStructure, on_delete=models.CASCADE, related_name='installments_list')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    due_date = models.DateField()
+    sequence = models.IntegerField(default=1)
+    
+    def __str__(self):
+        return f"{self.fee_structure.name} - Installment {self.sequence}"
+    
+    class Meta:
+        ordering = ['sequence']
+
+class StudentFee(models.Model):
+    STATUS_CHOICES = (
+        ('paid', 'Paid'),
+        ('unpaid', 'Unpaid'),
+        ('partially_paid', 'Partially Paid'),
+    )
+    
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='fees')
+    fee_structure = models.ForeignKey(FeeStructure, on_delete=models.CASCADE, related_name='student_fees')
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='unpaid')
+    assigned_date = models.DateTimeField(auto_now_add=True)
+    assigned_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='assigned_fees')
+    
+    def __str__(self):
+        return f"{self.student.user.username} - {self.fee_structure.name}"
+    
+    def save(self, *args, **kwargs):
+        if self.amount_paid >= self.total_amount:
+            self.status = 'paid'
+        elif self.amount_paid > 0:
+            self.status = 'partially_paid'
+        else:
+            self.status = 'unpaid'
+        super().save(*args, **kwargs)
+
+class FeePayment(models.Model):
+    PAYMENT_MODE_CHOICES = (
+        ('cash', 'Cash'),
+        ('bank_transfer', 'Bank Transfer'),
+        ('online', 'Online Payment'),
+        ('check', 'Check'),
+    )
+    
+    PAYMENT_STATUS_CHOICES = (
+        ('success', 'Success'),
+        ('pending', 'Pending'),
+        ('failed', 'Failed'),
+    )
+    
+    student_fee = models.ForeignKey(StudentFee, on_delete=models.CASCADE, related_name='payments')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_date = models.DateTimeField(default=timezone.now)
+    payment_mode = models.CharField(max_length=20, choices=PAYMENT_MODE_CHOICES)
+    transaction_id = models.CharField(max_length=100, blank=True, null=True)
+    receipt_number = models.CharField(max_length=50, unique=True)
+    status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='success')
+    remarks = models.TextField(blank=True, null=True)
+    recorded_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='recorded_payments')
+    
+    def __str__(self):
+        return f"{self.receipt_number} - {self.student_fee.student.user.username}"
+
+class FeeDiscount(models.Model):
+    DISCOUNT_TYPE_CHOICES = (
+        ('percentage', 'Percentage'),
+        ('fixed', 'Fixed Amount'),
+    )
+    
+    student_fee = models.ForeignKey(StudentFee, on_delete=models.CASCADE, related_name='discounts')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPE_CHOICES)
+    reason = models.CharField(max_length=200)
+    applied_date = models.DateTimeField(auto_now_add=True)
+    applied_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='applied_discounts')
+    
+    def __str__(self):
+        return f"{self.student_fee.student.user.username} - {self.amount} {self.get_discount_type_display()}"
+
+class FeeFine(models.Model):
+    student_fee = models.ForeignKey(StudentFee, on_delete=models.CASCADE, related_name='fines')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    reason = models.CharField(max_length=200)
+    due_date = models.DateField()
+    is_paid = models.BooleanField(default=False)
+    applied_date = models.DateTimeField(auto_now_add=True)
+    applied_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='applied_fines')
+    
+    def __str__(self):
+        return f"{self.student_fee.student.user.username} - {self.amount}"
+
+@receiver(post_save, sender=FeePayment)
+def update_student_fee_after_payment(sender, instance, created, **kwargs):
+    if created and instance.status == 'success':
+        student_fee = instance.student_fee
+        student_fee.amount_paid += instance.amount
+        student_fee.save()   
+    def __str__(self):
+        return f"{self.student.user.username} - {self.fee_structure.name}"
+    
+    def save(self, *args, **kwargs):
+        if self.amount_paid >= self.total_amount:
+            self.status = 'paid'
+        elif self.amount_paid > 0:
+            self.status = 'partially_paid'
+        else:
+            self.status = 'unpaid'
+        super().save(*args, **kwargs)
+
+class FeePayment(models.Model):
+    PAYMENT_MODE_CHOICES = (
+        ('cash', 'Cash'),
+        ('bank_transfer', 'Bank Transfer'),
+        ('online', 'Online Payment'),
+        ('check', 'Check'),
+    )
+    
+    PAYMENT_STATUS_CHOICES = (
+        ('success', 'Success'),
+        ('pending', 'Pending'),
+        ('failed', 'Failed'),
+    )
+    
+    student_fee = models.ForeignKey(StudentFee, on_delete=models.CASCADE, related_name='payments')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_date = models.DateTimeField(default=timezone.now)
+    payment_mode = models.CharField(max_length=20, choices=PAYMENT_MODE_CHOICES)
+    transaction_id = models.CharField(max_length=100, blank=True, null=True)
+    receipt_number = models.CharField(max_length=50, unique=True)
+    status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='success')
+    remarks = models.TextField(blank=True, null=True)
+    recorded_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='recorded_payments')
+    
+    def __str__(self):
+        return f"{self.receipt_number} - {self.student_fee.student.user.username}"
+
+class FeeDiscount(models.Model):
+    DISCOUNT_TYPE_CHOICES = (
+        ('percentage', 'Percentage'),
+        ('fixed', 'Fixed Amount'),
+    )
+    
+    student_fee = models.ForeignKey(StudentFee, on_delete=models.CASCADE, related_name='discounts')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPE_CHOICES)
+    reason = models.CharField(max_length=200)
+    applied_date = models.DateTimeField(auto_now_add=True)
+    applied_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='applied_discounts')
+    
+    def __str__(self):
+        return f"{self.student_fee.student.user.username} - {self.amount} {self.get_discount_type_display()}"
+
+class FeeFine(models.Model):
+    student_fee = models.ForeignKey(StudentFee, on_delete=models.CASCADE, related_name='fines')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    reason = models.CharField(max_length=200)
+    due_date = models.DateField()
+    is_paid = models.BooleanField(default=False)
+    applied_date = models.DateTimeField(auto_now_add=True)
+    applied_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='applied_fines')
+    
+    def __str__(self):
+        return f"{self.student_fee.student.user.username} - {self.amount}"
+
+@receiver(post_save, sender=FeePayment)
+def update_student_fee_after_payment(sender, instance, created, **kwargs):
+    if created and instance.status == 'success':
+        student_fee = instance.student_fee
+        student_fee.amount_paid += instance.amount
+        student_fee.save()   
+    def __str__(self):
+        return f"{self.student.user.username} - {self.fee_structure.name}"
+    
+    def save(self, *args, **kwargs):
+        if self.amount_paid >= self.total_amount:
+            self.status = 'paid'
+        elif self.amount_paid > 0:
+            self.status = 'partially_paid'
+        else:
+            self.status = 'unpaid'
+        super().save(*args, **kwargs)
+
+class FeePayment(models.Model):
+    PAYMENT_MODE_CHOICES = (
+        ('cash', 'Cash'),
+        ('bank_transfer', 'Bank Transfer'),
+        ('online', 'Online Payment'),
+        ('check', 'Check'),
+    )
+    
+    PAYMENT_STATUS_CHOICES = (
+        ('success', 'Success'),
+        ('pending', 'Pending'),
+        ('failed', 'Failed'),
+    )
+    
+    student_fee = models.ForeignKey(StudentFee, on_delete=models.CASCADE, related_name='payments')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_date = models.DateTimeField(default=timezone.now)
+    payment_mode = models.CharField(max_length=20, choices=PAYMENT_MODE_CHOICES)
+    transaction_id = models.CharField(max_length=100, blank=True, null=True)
+    receipt_number = models.CharField(max_length=50, unique=True)
+    status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='success')
+    remarks = models.TextField(blank=True, null=True)
+    recorded_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='recorded_payments')
+    
+    def __str__(self):
+        return f"{self.receipt_number} - {self.student_fee.student.user.username}"
+
+class FeeDiscount(models.Model):
+    DISCOUNT_TYPE_CHOICES = (
+        ('percentage', 'Percentage'),
+        ('fixed', 'Fixed Amount'),
+    )
+    
+    student_fee = models.ForeignKey(StudentFee, on_delete=models.CASCADE, related_name='discounts')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPE_CHOICES)
+    reason = models.CharField(max_length=200)
+    applied_date = models.DateTimeField(auto_now_add=True)
+    applied_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='applied_discounts')
+    
+    def __str__(self):
+        return f"{self.student_fee.student.user.username} - {self.amount} {self.get_discount_type_display()}"
+
+class FeeFine(models.Model):
+    student_fee = models.ForeignKey(StudentFee, on_delete=models.CASCADE, related_name='fines')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    reason = models.CharField(max_length=200)
+    due_date = models.DateField()
+    is_paid = models.BooleanField(default=False)
+    applied_date = models.DateTimeField(auto_now_add=True)
+    applied_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='applied_fines')
+    
+    def __str__(self):
+        return f"{self.student_fee.student.user.username} - {self.amount}"
+
+@receiver(post_save, sender=FeePayment)
+def update_student_fee_after_payment(sender, instance, created, **kwargs):
+    if created and instance.status == 'success':
+        student_fee = instance.student_fee
+        student_fee.amount_paid += instance.amount
+        student_fee.save()
