@@ -17,13 +17,13 @@ const Sidebar = () => {
         <h3>Admin Dashboard</h3>
       </div>
       <ul className="sidebar-menu">
-        <li className={isActive('/admin') ? 'active' : ''}>
+        <li className={isActive('/admin') && location.pathname === '/admin' ? 'active' : ''}>
           <Link to="/admin">
             <FaHome className="icon" /> Dashboard
           </Link>
         </li>
-        <li className={isActive('/admin/courses') ? 'active' : ''}>
-          <Link to="/admin/courses">
+        <li className={isActive('/admin/manage-courses') ? 'active' : ''}>
+          <Link to="/admin/manage-courses">
             <FaBook className="icon" /> Courses
           </Link>
         </li>
@@ -42,8 +42,8 @@ const Sidebar = () => {
             <FaUsers className="icon" /> Workshop Registrations
           </Link>
         </li>
-        <li className={isActive('/admin/users') ? 'active' : ''}>
-          <Link to="/admin/users">
+        <li className={isActive('/admin/user-management') ? 'active' : ''}>
+          <Link to="/admin/user-management">
             <FaUsers className="icon" /> User Management
           </Link>
         </li>
@@ -52,13 +52,13 @@ const Sidebar = () => {
             <FaUserCircle className="icon" /> Registered Users
           </Link>
         </li>
-        <li className={isActive('/admin/attendance') ? 'active' : ''}>
-          <Link to="/admin/attendance">
+        <li className={isActive('/admin/attendance-logs') ? 'active' : ''}>
+          <Link to="/admin/attendance-logs">
             <FaCalendarAlt className="icon" /> Attendance Logs
           </Link>
         </li>
-        <li className={isActive('/admin/fees') ? 'active' : ''}>
-          <Link to="/admin/fees">
+        <li className={isActive('/admin/fee-tracking') ? 'active' : ''}>
+          <Link to="/admin/fee-tracking">
             <FaMoneyBillWave className="icon" /> Fee Tracking
           </Link>
         </li>
@@ -67,8 +67,8 @@ const Sidebar = () => {
             <FaCertificate className="icon" /> Certificates
           </Link>
         </li>
-        <li className={isActive('/admin/settings') ? 'active' : ''}>
-          <Link to="/admin/settings">
+        <li className={isActive('/admin/system-settings') ? 'active' : ''}>
+          <Link to="/admin/system-settings">
             <FaCog className="icon" /> System Settings
           </Link>
         </li>

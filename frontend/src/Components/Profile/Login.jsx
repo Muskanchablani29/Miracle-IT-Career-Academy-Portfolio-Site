@@ -83,7 +83,8 @@ const Login = () => {
         const timestamp = new Date().getTime();
         res = await userAxiosInstance.post(`token/`, {
           username: credentials.username,
-          password: credentials.password
+          password: credentials.password,
+          role: selectedRole // Send the selected role to the backend for validation
         });
       }
       
@@ -98,6 +99,12 @@ const Login = () => {
       if (!userRole) {
         console.error('No role found in response data');
         throw new Error('Invalid response: No role information');
+      }
+      
+      // Verify that the user's actual role matches their selected role
+      if (userRole !== selectedRole) {
+        console.error(`Role mismatch: Selected ${selectedRole} but user is ${userRole}`);
+        throw new Error(`You don't have ${selectedRole} privileges. Please select the correct role.`);
       }
       
       localStorage.setItem('role', userRole);

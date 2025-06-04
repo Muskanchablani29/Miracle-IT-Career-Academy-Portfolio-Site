@@ -34,7 +34,7 @@ import AttendanceLogs from './Components/Admin/AttendanceLogs';
 import SyllabusEditor from './Components/Admin/SyllabusEditor';
 import SystemSettings from './Components/Admin/SystemSettings';
 import Certificates from './Components/Admin/Certificates';
-import FeeTracking from './Components/Admin/FeeTracking';
+import FeeTracking from './Components/Admin/FeeManagement';
 import FeeManagement from './Components/Admin/FeeManagement';
 import CreateFeeStructure from './Components/Admin/CreateFeeStructure';
 import AssignFeeToStudent from './Components/Admin/AssignFeeToStudent';

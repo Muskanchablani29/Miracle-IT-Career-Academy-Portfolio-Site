@@ -22,13 +22,13 @@ const Sidebar = () => {
       case 'admin':
         return [
           { to: '/admin', label: 'Dashboard', icon: <FaHome /> },
-          { to: '/admin/users', label: 'User Management', icon: <FaUsers /> },
+          { to: '/admin/user-management', label: 'User Management', icon: <FaUsers /> },
           { to: '/admin/registered-users', label: 'Registered Users', icon: <FaUserCircle /> },
-          { to: '/admin/courses', label: 'Course Management', icon: <FaBook /> },
-          { to: '/admin/attendance', label: 'Attendance Logs', icon: <FaCalendarAlt /> },
-          { to: '/admin/fees', label: 'Fee Tracking', icon: <FaMoneyBillWave /> },
+          { to: '/admin/manage-courses', label: 'Course Management', icon: <FaBook /> },
+          { to: '/admin/attendance-logs', label: 'Attendance Logs', icon: <FaCalendarAlt /> },
+          { to: '/admin/fee-tracking', label: 'Fee Tracking', icon: <FaMoneyBillWave /> },
           { to: '/admin/certificates', label: 'Certificates', icon: <FaCertificate /> },
-          { to: '/admin/settings', label: 'System Settings', icon: <FaCog /> },
+          { to: '/admin/system-settings', label: 'System Settings', icon: <FaCog /> },
         ];
       case 'faculty':
         return [
