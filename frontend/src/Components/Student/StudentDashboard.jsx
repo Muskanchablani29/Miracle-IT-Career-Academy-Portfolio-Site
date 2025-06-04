@@ -91,6 +91,12 @@ export default function StudentDashboard() {
             {attendanceStatus && attendanceStatus.is_present ? 'Present Today' : 'Not Marked'}
           </p>
         </div>
+        <div className="stat-card">
+          <h3>Fee Status</h3>
+          <Link to="/student/fee-management" className="stat-number fee-status-link">
+            View Details
+          </Link>
+        </div>
       </div>
       
       {/* Course Update Notifications */}

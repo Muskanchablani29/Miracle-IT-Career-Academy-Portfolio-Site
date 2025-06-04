@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import React from 'react';
 import Homeone from './Homeone.jsx';
 // import Hometwo from './Hometwo.jsx';
 import Homethree from './Homethree.jsx';
@@ -9,26 +8,7 @@ import AdminSetup from './AdminSetup.jsx';
 import Homesix from './Homesix.jsx';
 
 export default function Home() {
-  const [redirectPath, setRedirectPath] = useState(null);
-
-  useEffect(() => {
-    const access = localStorage.getItem('access');
-    const role = localStorage.getItem('role');
-
-    if (access && role) {
-      if (role === 'student') {
-        setRedirectPath('/student');
-      } else if (role === 'faculty') {
-        setRedirectPath('/faculty');
-      } else if (role === 'admin') {
-        setRedirectPath('/admin');
-      }
-    }
-  }, []);
-
-  if (redirectPath) {
-    return <Navigate to={redirectPath} replace />;
-  }
+  // Removed the redirect logic since it's already handled in PublicLayout
 
   return (
     <>

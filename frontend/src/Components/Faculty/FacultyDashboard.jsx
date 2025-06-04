@@ -212,6 +212,10 @@ const FacultyDashboard = () => {
               <HiAcademicCap className="action-icon" />
               <span>Update Grades</span>
             </Link>
+            <Link to="/faculty/fee-status" className="quick-action-card">
+              <HiOutlineSparkles className="action-icon" />
+              <span>Student Fee Status</span>
+            </Link>
             <Link to="/faculty/announcements" className="quick-action-card">
               <HiLightningBolt className="action-icon" />
               <span>Post Announcement</span>

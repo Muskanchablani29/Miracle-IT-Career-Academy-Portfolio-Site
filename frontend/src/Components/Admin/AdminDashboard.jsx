@@ -16,6 +16,10 @@ const AdminDashboard = () => {
           <span className="action-icon">🔧</span>
           <span>Add New Workshop</span>
         </Link>
+        <Link to="/admin/fee-management" className="action-button">
+          <span className="action-icon">💰</span>
+          <span>Fee Management</span>
+        </Link>
       </div>
       
       <div className="stats-container">
@@ -35,9 +39,10 @@ const AdminDashboard = () => {
           <p className="stat-change neutral">No change</p>
         </div>
         <div className="stat-card">
-          <h3>Revenue</h3>
+          <h3>Fee Collection</h3>
           <p className="stat-number">₹24.5L</p>
           <p className="stat-change positive">+8% from last month</p>
+          <Link to="/admin/fee-management" className="view-details">View Details</Link>
         </div>
       </div>
       

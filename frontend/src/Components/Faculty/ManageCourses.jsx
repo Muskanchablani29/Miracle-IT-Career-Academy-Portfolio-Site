@@ -5,6 +5,7 @@ import './ManageCourses.css';
 import { FaEdit, FaBook, FaPlus, FaUsers, FaEye, FaArrowLeft, FaLayerGroup } from 'react-icons/fa';
 import CourseBatchCreation from './CourseBatchCreation';
 import ViewBatches from './ViewBatches';
+import AddCourse from '../Admin/AddCourse';
 
 const FacultyManageCourses = () => {
   const [courses, setCourses] = useState([]);
@@ -27,6 +28,7 @@ const FacultyManageCourses = () => {
   const [activeTab, setActiveTab] = useState('courses');
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [showViewBatches, setShowViewBatches] = useState(false);
+  const [showAddCourseModal, setShowAddCourseModal] = useState(false);
   const [selectedCourseForBatch, setSelectedCourseForBatch] = useState(null);
 
   useEffect(() => {
@@ -186,14 +188,23 @@ const FacultyManageCourses = () => {
           courseName={selectedCourseForBatch?.title}
         />
       )}
+      
+      {showAddCourseModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <button className="close-modal" onClick={() => setShowAddCourseModal(false)}>×</button>
+            <AddCourse />
+          </div>
+        </div>
+      )}
 
       {!selectedCourse ? (
         <div className="courses-list">
           <div className="courses-header">
             <h2>Available Courses</h2>
-            <Link to="/faculty/add-course" className="add-course-btn">
+            <button onClick={() => setShowAddCourseModal(true)} className="add-course-btn">
               <FaPlus /> Add New Course
-            </Link>
+            </button>
           </div>
           <table className="courses-table">
             <thead>

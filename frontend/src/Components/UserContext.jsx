@@ -4,70 +4,65 @@ import { userAxiosInstance, adminAxiosInstance } from '../api';
 export const UserContext = createContext(null);
 
 export const UserProvider = ({ children }) => {
+  // Initialize user as null instead of with hardcoded values
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false); // Initialize loading as false to remove loading animation
+  const [loading, setLoading] = useState(false);
   const effectRan = useRef(false);
 
   useEffect(() => {
-    if (effectRan.current) return; // Prevent double invocation in Strict Mode
+    // Don't use effectRan for this effect - we want it to run on every mount
+    // to restore the user session properly
     let isMounted = true;
     
     const restoreUser = async () => {
       const access = localStorage.getItem('access');
       const role = localStorage.getItem('role');
+      const username = localStorage.getItem('username');
       console.log('Restoring user session, access token:', access);
+      
+      // Immediately set user from localStorage to prevent flashing of login page
+      if (access && role && username) {
+        setUser({ role, username });
+      }
       
       if (access) {
         try {
-          // Set user immediately from localStorage to avoid loading state
-          if (role) {
-            const username = localStorage.getItem('username') || 'User';
-            setUser({ role, username });
-            console.log('User set from localStorage immediately:', { role, username });
-          }
-          
-          // Fetch profile in background to verify token and update user info
-          const profilePromise = userAxiosInstance.get('profile/', { timeout: 3000 });
+          // Fetch profile from API with increased timeout
+          const profilePromise = userAxiosInstance.get('profile/', { timeout: 8000 });
           const profile = await profilePromise;
           
           console.log('Profile fetched:', profile.data);
-          const username = profile.data.username || null;
-          const fetchedRole = profile.data.role;
+          const fetchedUsername = profile.data.username || username;
+          const fetchedRole = profile.data.role || role;
           
-          // Update role in localStorage if it's different
-          if (fetchedRole && fetchedRole !== role) {
-            localStorage.setItem('role', fetchedRole);
-          }
+          // Store in localStorage for future use
+          localStorage.setItem('role', fetchedRole);
+          localStorage.setItem('username', fetchedUsername);
           
           // Update adminAxiosInstance with the token
           adminAxiosInstance.defaults.headers.common['Authorization'] = `Bearer ${access}`;
           
           if (isMounted) {
-            setUser({ role: fetchedRole || role, username });
-            console.log('User updated in context:', { role: fetchedRole || role, username });
+            setUser({ role: fetchedRole, username: fetchedUsername });
+            console.log('User updated in context:', { role: fetchedRole, username: fetchedUsername });
           }
         } catch (error) {
           console.error('Error restoring user session:', error);
-          // Handle both authentication errors and timeouts
-          if (error.response?.status === 401 || error.code === 'ECONNABORTED') {
-            console.log('Authentication error or timeout, logging out');
-            if (isMounted) {
-              setUser(null);
-              console.log('User cleared in context due to auth error or timeout');
-            }
+          // Only clear tokens if it's an authentication error (401), not for network issues
+          if (error.response?.status === 401) {
+            console.log('Authentication error, clearing tokens');
             localStorage.removeItem('access');
-            localStorage.removeItem('refresh');
             localStorage.removeItem('role');
+            setUser(null);
           } else {
-            // For other errors, keep the user logged in with minimal data from localStorage
-            // We already set this at the beginning, so no need to set again
+            // For network errors or timeouts, keep the user logged in with stored role
+            console.log('Network error or timeout, using stored credentials');
+            // We already set the user from localStorage above, so no need to do it again
           }
         }
       } else {
-        if (isMounted) {
-          setUser(null);
-          console.log('No access token found, user set to null');
-        }
+        console.log('No access token found, user is not logged in');
+        setUser(null);
       }
     };
     
@@ -75,7 +70,6 @@ export const UserProvider = ({ children }) => {
     
     return () => {
       isMounted = false;
-      effectRan.current = true;
     };
   }, []);
 

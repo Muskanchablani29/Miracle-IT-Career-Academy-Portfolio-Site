@@ -11,7 +11,8 @@ export const PublicLayout = () => {
   const location = useLocation();
   
   // If user is already logged in, redirect to their dashboard
-  if (user) {
+  // Only redirect if we're not already on the home page
+  if (user && location.pathname !== '/') {
     console.log('PublicLayout redirecting to /' + user.role);
     return <Navigate to={`/${user.role}`} replace />;
   }
