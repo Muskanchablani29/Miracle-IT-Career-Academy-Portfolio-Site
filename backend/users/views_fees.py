@@ -29,7 +29,7 @@ class IsStudentUser(permissions.BasePermission):
 class FeeStructureViewSet(viewsets.ModelViewSet):
     queryset = FeeStructure.objects.all()
     serializer_class = FeeStructureSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated]
     
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)

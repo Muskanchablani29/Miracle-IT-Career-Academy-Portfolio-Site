@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate, Batch, Attendance, Holiday, Project, ProjectSubmission
+from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate, Batch, Attendance, Holiday, Project, ProjectSubmission, FeeStructure
 
 @admin.register(CustomUser)
 class CustomUserAdmin(admin.ModelAdmin):
@@ -59,3 +59,8 @@ class HolidayAdmin(admin.ModelAdmin):
 #     search_fields = ('title', 'description', 'student__user__username', 'faculty__user__username')
 #     raw_id_fields = ('student', 'faculty')
 #     list_filter = ('status',)
+
+@admin.register(FeeStructure)
+class FeeStructureAdmin(admin.ModelAdmin):
+    list_display = ('name', 'course', 'total_amount', 'installments')
+    search_fields = ('name', 'course__title')

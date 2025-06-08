@@ -16,6 +16,7 @@ from .views_fees import (
     FeeStructureViewSet, StudentFeeViewSet, FeePaymentViewSet,
     AdminFeeReportView, StudentFeeDetailView, FacultyStudentFeeView
 )
+from rest_framework_simplejwt.views import TokenRefreshView
 
 router = DefaultRouter()
 router.register(r'batches', BatchViewSet, basename='batch')
@@ -46,6 +47,7 @@ urlpatterns = [
     path('students/', ListStudentView.as_view(), name='list_students'),
     path('dashboard/', IntegratedDashboardView.as_view(), name='dashboard'),
     path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('enrollments/', get_user_enrollments, name='user-enrollments'),
     path('attendance-status/', AttendanceAPIView.as_view(), name='attendance-status'),
     # Faculty attendance management endpoints
