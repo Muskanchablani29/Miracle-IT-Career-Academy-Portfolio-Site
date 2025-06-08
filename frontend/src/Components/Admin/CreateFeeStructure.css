@@ -1,0 +1,131 @@
+/* Fee Structure Styling */
+.installments-section {
+  margin-top: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  background-color: #f9f9f9;
+}
+
+.installments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.add-installment-btn {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.add-installment-btn:hover {
+  background-color: #388e3c;
+}
+
+.installments-table {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.installments-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.installments-table th {
+  background-color: #f0f0f0;
+  padding: 10px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid #ddd;
+}
+
+.installments-table td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.installment-row input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.remove-installment-btn {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s;
+}
+
+.remove-installment-btn:hover {
+  background-color: #d32f2f;
+}
+
+.highlighted-input {
+  background-color: #e8f5e9;
+  font-weight: bold;
+  color: #2e7d32;
+}
+
+.registration-badge {
+  background-color: #ff5722;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  display: inline-block;
+  text-align: center;
+}
+
+.admission-date-note {
+  display: block;
+  font-size: 11px;
+  color: #ff5722;
+  margin-top: 2px;
+  font-style: italic;
+}
+
+/* First installment row styling */
+.installment-row:first-child {
+  background-color: #e3f2fd;
+}
+
+.installment-row:first-child td {
+  border-bottom: 2px solid #bbdefb;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .installments-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .installments-table {
+    font-size: 14px;
+  }
+  
+  .installment-row input {
+    padding: 6px;
+  }
+}

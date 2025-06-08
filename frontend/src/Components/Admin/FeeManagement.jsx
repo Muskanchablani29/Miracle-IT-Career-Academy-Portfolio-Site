@@ -50,16 +50,19 @@ const FeeManagement = () => {
         
         // Try to fetch real data
         try {
+          // Import the API functions
+          const { fetchFeeStructures, adminAxiosInstance } = await import('../../api');
+          
           // Fetch fee structures
-          const structuresResponse = await axios.get('/api/fee-structures/');
-          setFeeStructures(structuresResponse.data);
+          const structuresData = await fetchFeeStructures();
+          setFeeStructures(structuresData);
           
           // Fetch student fees
-          const feesResponse = await axios.get('/api/student-fees/');
+          const feesResponse = await adminAxiosInstance.get('student-fees/');
           setStudentFees(feesResponse.data);
           
           // Fetch courses for filtering
-          const coursesResponse = await axios.get('/api/courses/');
+          const coursesResponse = await adminAxiosInstance.get('courses/courses/');
           setCourses(coursesResponse.data);
           
           // Calculate summary data
@@ -110,7 +113,8 @@ const FeeManagement = () => {
   const handleDeleteFeeStructure = async (id) => {
     if (window.confirm('Are you sure you want to delete this fee structure?')) {
       try {
-        await axios.delete(`/api/fee-structures/${id}/`);
+        const { adminAxiosInstance } = await import('../../api');
+        await adminAxiosInstance.delete(`fee-structures/${id}/`);
         setFeeStructures(feeStructures.filter(structure => structure.id !== id));
       } catch (err) {
         console.error('Error deleting fee structure:', err);
@@ -123,7 +127,8 @@ const FeeManagement = () => {
 
   const handleGenerateInvoice = async (feeId) => {
     try {
-      const response = await axios.get(`/api/student-fees/${feeId}/generate-invoice/`, {
+      const { adminAxiosInstance } = await import('../../api');
+      const response = await adminAxiosInstance.get(`student-fees/${feeId}/generate-invoice/`, {
         responseType: 'blob'
       });
       

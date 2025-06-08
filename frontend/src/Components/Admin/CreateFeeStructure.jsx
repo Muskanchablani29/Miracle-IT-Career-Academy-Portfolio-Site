@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
-import { FaMoneyBillWave, FaSave, FaTimes } from 'react-icons/fa';
-import './AdminDashboard.css';
+import { FaMoneyBillWave, FaSave, FaTimes, FaPlus, FaTrash } from 'react-icons/fa';
+import './CreateFeeStructure.css';
+import { adminAxiosInstance, createFeeStructure, updateFeeStructure, addFeeInstallment, fetchFeeStructureById, fetchFeeInstallments } from '../../api';
 
 const CreateFeeStructure = () => {
   const { id } = useParams();
@@ -15,26 +16,31 @@ const CreateFeeStructure = () => {
     registration_fee: 0,
     tuition_fee: 0,
     total_amount: 0,
-    installments: 1
+    installments: 5 // Default to 5 installments
   });
-  const [installments, setInstallments] = useState([{ amount: 0, due_date: '' }]);
+  // Get current date in YYYY-MM-DD format for registration fee
+  const currentDate = new Date().toISOString().split('T')[0];
   
-  // Mock data for development
-  const mockCourses = [
-    { id: 1, title: 'Full Stack Web Development' },
-    { id: 2, title: 'Data Science' },
-    { id: 3, title: 'Python Programming' }
-  ];
+  const [installments, setInstallments] = useState([
+    { amount: 0, due_date: currentDate, description: 'Registration Fee (At Admission)', isRegistrationFee: true, isPaid: false },
+    { amount: 0, due_date: '', description: 'Second Installment' },
+    { amount: 0, due_date: '', description: 'Third Installment' },
+    { amount: 0, due_date: '', description: 'Fourth Installment' },
+    { amount: 0, due_date: '', description: 'Fifth Installment' }
+  ]);
+  
+  // We'll fetch real data from API
 
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await axios.get('/api/courses/');
+        // Use adminAxiosInstance to fetch real course data
+        const response = await adminAxiosInstance.get('courses/courses/');
         setCourses(response.data);
       } catch (err) {
         console.error('Error fetching courses:', err);
-        // Use mock data if API call fails
-        setCourses(mockCourses);
+        setCourses([]);
+        alert('Failed to fetch courses. Please check your connection and try again.');
       }
     };
 
@@ -44,8 +50,7 @@ const CreateFeeStructure = () => {
     if (id) {
       const fetchFeeStructure = async () => {
         try {
-          const response = await axios.get(`/api/fee-structures/${id}/`);
-          const feeStructure = response.data;
+          const feeStructure = await fetchFeeStructureById(id);
           
           setFormData({
             name: feeStructure.name,
@@ -57,27 +62,29 @@ const CreateFeeStructure = () => {
           });
           
           // Fetch installments
-          const installmentsResponse = await axios.get(`/api/fee-structures/${id}/installments/`);
-          setInstallments(installmentsResponse.data);
+          const fetchedInstallments = await fetchFeeInstallments(id);
+          
+          // Get current date for registration fee if needed
+          const currentDate = new Date().toISOString().split('T')[0];
+          
+          // Ensure first installment is marked as registration fee
+          const processedInstallments = fetchedInstallments.map((inst, index) => {
+            if (index === 0) {
+              return {
+                ...inst,
+                description: inst.description || 'Registration Fee (At Admission)',
+                isRegistrationFee: true,
+                due_date: inst.due_date || currentDate
+              };
+            }
+            return inst;
+          });
+          
+          setInstallments(processedInstallments);
         } catch (err) {
           console.error('Error fetching fee structure:', err);
-          // Use mock data for editing
-          if (id === '1') {
-            setFormData({
-              name: 'Full Stack Web Development - 2023',
-              course: 1,
-              registration_fee: 5000,
-              tuition_fee: 40000,
-              total_amount: 45000,
-              installments: 3
-            });
-            
-            setInstallments([
-              { id: 1, amount: 15000, due_date: '2023-01-15', sequence: 1 },
-              { id: 2, amount: 15000, due_date: '2023-04-15', sequence: 2 },
-              { id: 3, amount: 15000, due_date: '2023-08-15', sequence: 3 }
-            ]);
-          }
+          alert('Failed to fetch fee structure. Please check your connection and try again.');
+          navigate('/admin/fee-management');
         }
       };
       
@@ -90,23 +97,48 @@ const CreateFeeStructure = () => {
     const total = Number(formData.registration_fee) + Number(formData.tuition_fee);
     setFormData(prev => ({ ...prev, total_amount: total }));
     
-    // Update installment amounts
-    if (formData.installments > 0) {
-      const baseAmount = Math.floor(total / formData.installments);
-      const remainder = total % formData.installments;
+    // Update installment amounts based on the number of installments
+    if (installments.length > 0) {
+      // Get current date for registration fee
+      const currentDate = new Date().toISOString().split('T')[0];
       
-      const newInstallments = Array(Number(formData.installments)).fill().map((_, index) => {
-        // Add remainder to first installment
-        const amount = index === 0 ? baseAmount + remainder : baseAmount;
-        return {
-          amount,
-          due_date: installments[index]?.due_date || ''
-        };
-      });
+      // Set first installment as registration fee
+      const firstInstallment = installments[0];
+      firstInstallment.amount = Number(formData.registration_fee);
+      firstInstallment.due_date = currentDate; // Set due date to today (admission date)
       
-      setInstallments(newInstallments);
+      // Calculate remaining amount for other installments
+      const remainingAmount = Number(formData.tuition_fee);
+      const remainingInstallments = installments.length - 1;
+      
+      if (remainingInstallments > 0) {
+        const baseAmount = Math.floor(remainingAmount / remainingInstallments);
+        const remainder = remainingAmount % remainingInstallments;
+        
+        const newInstallments = installments.map((installment, index) => {
+          if (index === 0) {
+            // First installment is registration fee
+            return {
+              ...installment,
+              amount: Number(formData.registration_fee),
+              due_date: currentDate,
+              description: 'Registration Fee (At Admission)',
+              isRegistrationFee: true
+            };
+          } else {
+            // Add remainder to second installment (first tuition installment)
+            const amount = index === 1 ? baseAmount + remainder : baseAmount;
+            return {
+              ...installment,
+              amount
+            };
+          }
+        });
+        
+        setInstallments(newInstallments);
+      }
     }
-  }, [formData.registration_fee, formData.tuition_fee, formData.installments]);
+  }, [formData.registration_fee, formData.tuition_fee]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -117,11 +149,142 @@ const CreateFeeStructure = () => {
     const updatedInstallments = [...installments];
     updatedInstallments[index] = { ...updatedInstallments[index], [field]: value };
     setInstallments(updatedInstallments);
+    
+    // If amount is changed, update total amount
+    if (field === 'amount') {
+      const totalInstallments = updatedInstallments.reduce((sum, inst) => sum + Number(inst.amount), 0);
+      setFormData(prev => ({ 
+        ...prev, 
+        total_amount: Number(formData.registration_fee) + totalInstallments 
+      }));
+    }
+  };
+  
+  const addInstallment = () => {
+    const newInstallmentNumber = installments.length;
+    const descriptions = ['Registration Fee', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth', 'Seventh', 'Eighth', 'Ninth', 'Tenth'];
+    const description = newInstallmentNumber <= descriptions.length 
+      ? `${descriptions[newInstallmentNumber]} Installment` 
+      : `Installment ${newInstallmentNumber}`;
+      
+    setInstallments([
+      ...installments, 
+      { 
+        amount: Math.floor(formData.tuition_fee / installments.length), 
+        due_date: '', 
+        description 
+      }
+    ]);
+    
+    // Update number of installments in formData
+    setFormData(prev => ({ ...prev, installments: installments.length + 1 }));
+    
+    // Recalculate all installment amounts
+    setTimeout(() => {
+      // Keep registration fee as first installment
+      const registrationFee = Number(formData.registration_fee);
+      const tuitionFee = Number(formData.tuition_fee);
+      const remainingInstallments = installments.length; // Not including the new one yet
+      
+      if (remainingInstallments > 0) {
+        const baseAmount = Math.floor(tuitionFee / remainingInstallments);
+        const remainder = tuitionFee % remainingInstallments;
+        
+        const newInstallments = [...installments, { amount: 0, due_date: '', description }].map((inst, idx) => {
+          if (idx === 0) {
+            // First installment is registration fee
+            return {
+              ...inst,
+              amount: registrationFee,
+              isRegistrationFee: true
+            };
+          } else if (idx === 1) {
+            // Add remainder to second installment
+            return {
+              ...inst,
+              amount: baseAmount + remainder
+            };
+          } else {
+            return {
+              ...inst,
+              amount: baseAmount
+            };
+          }
+        });
+        
+        setInstallments(newInstallments);
+      }
+    }, 0);
+  };
+  
+  const removeInstallment = (index) => {
+    if (installments.length <= 1) {
+      alert("You must have at least one installment.");
+      return;
+    }
+    
+    // Cannot remove registration fee (first installment)
+    if (index === 0) {
+      alert("Cannot remove registration fee installment.");
+      return;
+    }
+    
+    const updatedInstallments = installments.filter((_, idx) => idx !== index);
+    setInstallments(updatedInstallments);
+    
+    // Update number of installments in formData
+    setFormData(prev => ({ ...prev, installments: updatedInstallments.length }));
+    
+    // Recalculate all installment amounts
+    setTimeout(() => {
+      // Keep registration fee as first installment
+      const registrationFee = Number(formData.registration_fee);
+      const tuitionFee = Number(formData.tuition_fee);
+      const remainingInstallments = updatedInstallments.length - 1; // Exclude registration fee
+      
+      if (remainingInstallments > 0) {
+        const baseAmount = Math.floor(tuitionFee / remainingInstallments);
+        const remainder = tuitionFee % remainingInstallments;
+        
+        const newInstallments = updatedInstallments.map((inst, idx) => {
+          if (idx === 0) {
+            // First installment is registration fee
+            return {
+              ...inst,
+              amount: registrationFee,
+              isRegistrationFee: true
+            };
+          } else if (idx === 1) {
+            // Add remainder to second installment
+            return {
+              ...inst,
+              amount: baseAmount + remainder
+            };
+          } else {
+            return {
+              ...inst,
+              amount: baseAmount
+            };
+          }
+        });
+        
+        setInstallments(newInstallments);
+      }
+    }, 0);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    // Validate installments due_date before submitting
+    for (const [index, installment] of installments.entries()) {
+      if (!installment.due_date || installment.due_date.trim() === '') {
+        alert(`Please provide a valid due date for installment ${index + 1}.`);
+        setLoading(false);
+        return;
+      }
+    }
 
     try {
       // Create or update fee structure
@@ -129,54 +292,69 @@ const CreateFeeStructure = () => {
       
       if (id) {
         // Update existing fee structure
-        await axios.put(`/api/fee-structures/${id}/`, {
+        await updateFeeStructure(id, {
           name: formData.name,
           course: formData.course,
           registration_fee: Number(formData.registration_fee),
           tuition_fee: Number(formData.tuition_fee),
           total_amount: Number(formData.total_amount),
-          installments: Number(formData.installments)
+          installments: installments.length
         });
         feeStructureId = id;
       } else {
         // Create new fee structure
-        const response = await axios.post('/api/fee-structures/', {
+        const response = await createFeeStructure({
           name: formData.name,
           course: formData.course,
           registration_fee: Number(formData.registration_fee),
           tuition_fee: Number(formData.tuition_fee),
           total_amount: Number(formData.total_amount),
-          installments: Number(formData.installments)
+          installments: installments.length
         });
-        feeStructureId = response.data.id;
+        feeStructureId = response.id;
       }
 
       // Create or update installments
       for (const [index, installment] of installments.entries()) {
         if (installment.id) {
           // Update existing installment
-          await axios.put(`/api/fee-installments/${installment.id}/`, {
+          await adminAxiosInstance.put(`fee-installments/${installment.id}/`, {
             amount: Number(installment.amount),
             due_date: installment.due_date,
-            sequence: index + 1
+            description: installment.description,
+            sequence: index + 1,
+            is_registration_fee: index === 0
           });
         } else {
           // Create new installment
-          await axios.post(`/api/fee-structures/${feeStructureId}/add_installment/`, {
+          await addFeeInstallment(feeStructureId, {
             amount: Number(installment.amount),
             due_date: installment.due_date,
-            sequence: index + 1
+            description: installment.description,
+            sequence: index + 1,
+            is_registration_fee: index === 0
           });
         }
       }
 
       alert(`Fee structure ${id ? 'updated' : 'created'} successfully!`);
-      navigate('/admin/fee-management');
+      navigate('/admin/fee-structure');
     } catch (err) {
       console.error(`Error ${id ? 'updating' : 'creating'} fee structure:`, err);
-      // For demo purposes, show success anyway
-      alert(`Fee structure ${id ? 'updated' : 'created'} successfully! (mock)`);
-      navigate('/admin/fee-management');
+      if (err.response && err.response.data) {
+        const errors = err.response.data;
+        let errorMessages = '';
+        for (const key in errors) {
+          if (Array.isArray(errors[key])) {
+            errorMessages += `${key}: ${errors[key].join(', ')}\n`;
+          } else {
+            errorMessages += `${key}: ${errors[key]}\n`;
+          }
+        }
+        alert(`Error ${id ? 'updating' : 'creating'} fee structure:\n${errorMessages}`);
+      } else {
+        alert(`Error ${id ? 'updating' : 'creating'} fee structure. Please try again.`);
+      }
     } finally {
       setLoading(false);
     }
@@ -230,7 +408,9 @@ const CreateFeeStructure = () => {
                 onChange={handleChange}
                 min="0"
                 required
+                className="highlighted-input"
               />
+              <small>Paid at the time of admission</small>
             </div>
             
             <div className="form-group">
@@ -244,6 +424,7 @@ const CreateFeeStructure = () => {
                 min="0"
                 required
               />
+              <small>This will be divided among remaining installments</small>
             </div>
           </div>
           
@@ -256,49 +437,90 @@ const CreateFeeStructure = () => {
                 name="total_amount"
                 value={formData.total_amount}
                 readOnly
-              />
-            </div>
-            
-            <div className="form-group">
-              <label htmlFor="installments">Number of Installments</label>
-              <input
-                type="number"
-                id="installments"
-                name="installments"
-                value={formData.installments}
-                onChange={handleChange}
-                min="1"
-                max="12"
-                required
+                className="highlighted-input"
               />
             </div>
           </div>
           
-          <h3>Installment Schedule</h3>
-          {installments.map((installment, index) => (
-            <div className="form-row installment-row" key={index}>
-              <div className="form-group">
-                <label>Installment {index + 1} Amount (₹)</label>
-                <input
-                  type="number"
-                  value={installment.amount}
-                  onChange={(e) => handleInstallmentChange(index, 'amount', e.target.value)}
-                  min="0"
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>Due Date</label>
-                <input
-                  type="date"
-                  value={installment.due_date}
-                  onChange={(e) => handleInstallmentChange(index, 'due_date', e.target.value)}
-                  required
-                />
-              </div>
+          <div className="installments-section">
+            <div className="installments-header">
+              <h3>Installment Schedule</h3>
+              <button 
+                type="button" 
+                className="add-installment-btn"
+                onClick={addInstallment}
+              >
+                <FaPlus /> Add Installment
+              </button>
             </div>
-          ))}
+            
+            <div className="installments-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>No.</th>
+                    <th>Description</th>
+                    <th>Amount (₹)</th>
+                    <th>Due Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {installments.map((installment, index) => (
+                    <tr key={index} className="installment-row">
+                      <td>{index + 1}</td>
+                      <td>
+                        <input
+                          type="text"
+                          value={installment.description || `Installment ${index + 1}`}
+                          onChange={(e) => handleInstallmentChange(index, 'description', e.target.value)}
+                          placeholder="Description"
+                          readOnly={index === 0} // Make registration fee description read-only
+                          className={index === 0 ? "highlighted-input" : ""}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          value={installment.amount}
+                          onChange={(e) => handleInstallmentChange(index, 'amount', e.target.value)}
+                          min="0"
+                          required
+                          readOnly={index === 0} // Make registration fee amount read-only
+                          className={index === 0 ? "highlighted-input" : ""}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="date"
+                          value={installment.due_date}
+                          onChange={(e) => handleInstallmentChange(index, 'due_date', e.target.value)}
+                          required
+                          readOnly={index === 0} // Make registration fee date read-only
+                          className={index === 0 ? "highlighted-input" : ""}
+                        />
+                        {index === 0 && <small className="admission-date-note">Admission date</small>}
+                      </td>
+                      <td>
+                        {index === 0 ? (
+                          <span className="registration-badge">At Admission</span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="remove-installment-btn"
+                            onClick={() => removeInstallment(index)}
+                            title="Remove this installment"
+                          >
+                            <FaTrash />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
           
           <div className="form-actions">
             <button type="button" className="btn-secondary" onClick={() => navigate('/admin/fee-management')}>

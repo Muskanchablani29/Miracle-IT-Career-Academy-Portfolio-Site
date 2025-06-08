@@ -17,6 +17,7 @@ import StudentProfile from './Components/Student/StudentProfile';
 import StudentProjects from './Components/Student/StudentProjects';
 import StudentFees from './Components/Student/StudentFees';
 import StudentFeeManagement from './Components/Student/StudentFeeManagement';
+import StudentFeeDetails from './Components/Student/StudentFeeDetails';
 import StudentDocuments from './Components/Student/StudentDocuments';
 import StudentAchievements from './Components/Student/StudentAchievements';
 import Notifications from './Components/Student/Notifications';
@@ -37,6 +38,8 @@ import Certificates from './Components/Admin/Certificates';
 import FeeTracking from './Components/Admin/FeeManagement';
 import FeeManagement from './Components/Admin/FeeManagement';
 import CreateFeeStructure from './Components/Admin/CreateFeeStructure';
+import FeeStructureList from './Components/Admin/FeeStructureList';
+import FeeStructureDetails from './Components/Admin/FeeStructureDetails';
 import AssignFeeToStudent from './Components/Admin/AssignFeeToStudent';
 import RecordPayment from './Components/Admin/RecordPayment';
 import PaymentHistory from './Components/Admin/PaymentHistory';
@@ -164,8 +167,10 @@ function App() {
             <Route path="certificates" element={<Certificates />} />
             <Route path="fee-tracking" element={<FeeTracking />} />
             <Route path="fee-management" element={<FeeManagement />} />
+            <Route path="fee-structure" element={<FeeStructureList />} />
             <Route path="fee-structures/create" element={<CreateFeeStructure />} />
             <Route path="fee-structures/:id" element={<CreateFeeStructure />} />
+            <Route path="fee-structures/:id/details" element={<FeeStructureDetails />} />
             <Route path="student-fees/assign" element={<AssignFeeToStudent />} />
             <Route path="student-fees/:feeId/record-payment" element={<RecordPayment />} />
             <Route path="student-fees/:feeId/payments" element={<PaymentHistory />} />
@@ -199,6 +204,7 @@ function App() {
             <Route path="projects" element={<StudentProjects />} />
             <Route path="fees" element={<StudentFees />} />
             <Route path="fee-management" element={<StudentFeeManagement />} />
+            <Route path="fee-details" element={<StudentFeeDetails />} />
             <Route path="documents" element={<StudentDocuments />} />
             <Route path="achievements" element={<StudentAchievements />} />
             <Route path="notifications" element={<Notifications />} />

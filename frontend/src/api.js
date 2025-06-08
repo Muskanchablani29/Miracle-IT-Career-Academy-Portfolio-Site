@@ -29,6 +29,10 @@ userAxiosInstance.interceptors.request.use(
     const token = localStorage.getItem('access');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
+    } else {
+      // If no access token, redirect to login or handle accordingly
+      console.warn('No access token found, redirecting to login');
+      // window.location.href = '/login'; // Uncomment if redirect desired
     }
     return config;
   },
@@ -592,6 +596,77 @@ export const fetchFacultyWorkshopRegistrations = async () => {
     return response.data;
   } catch (error) {
     console.error('Error fetching faculty workshop registrations:', error);
+    throw error;
+  }
+};
+
+// Fee Structure API
+export const createFeeStructure = async (feeStructureData) => {
+  try {
+    const response = await adminAxiosInstance.post('fee-structures/', feeStructureData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating fee structure:', error);
+    throw error;
+  }
+};
+
+export const updateFeeStructure = async (id, feeStructureData) => {
+  try {
+    const response = await adminAxiosInstance.put(`fee-structures/${id}/`, feeStructureData);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating fee structure ${id}:`, error);
+    throw error;
+  }
+};
+
+export const addFeeInstallment = async (feeStructureId, installmentData) => {
+  try {
+    // Add description field if missing
+    if (!installmentData.description) {
+      installmentData.description = `Installment ${installmentData.sequence}`;
+    }
+    
+    const response = await adminAxiosInstance.post(`fee-structures/${feeStructureId}/add_installment/`, {
+      fee_structure: feeStructureId,
+      amount: installmentData.amount,
+      due_date: installmentData.due_date,
+      sequence: installmentData.sequence
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error adding installment to fee structure ${feeStructureId}:`, error);
+    throw error;
+  }
+};
+
+export const fetchFeeStructures = async () => {
+  try {
+    const response = await adminAxiosInstance.get('fee-structures/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching fee structures:', error);
+    throw error;
+  }
+};
+
+export const fetchFeeStructureById = async (id) => {
+  try {
+    const response = await adminAxiosInstance.get(`fee-structures/${id}/`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching fee structure ${id}:`, error);
+    throw error;
+  }
+};
+
+export const fetchFeeInstallments = async (feeStructureId) => {
+  try {
+    const response = await adminAxiosInstance.get(`fee-structures/${feeStructureId}/installments/`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching installments for fee structure ${feeStructureId}:`, error);
     throw error;
   }
 };
