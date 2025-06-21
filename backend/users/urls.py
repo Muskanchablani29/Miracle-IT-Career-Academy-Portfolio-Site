@@ -14,7 +14,8 @@ from .views_projects import (
 )
 from .views_fees import (
     FeeStructureViewSet, StudentFeeViewSet, FeePaymentViewSet,
-    AdminFeeReportView, StudentFeeDetailView, FacultyStudentFeeView
+    AdminFeeReportView, StudentFeeDetailView, FacultyStudentFeeView, AuthTestView,
+    student_fee_detail_view, download_receipt_view
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -64,6 +65,14 @@ urlpatterns = [
     
     # Fee Management System endpoints
     path('fee-reports/', AdminFeeReportView.as_view(), name='fee-reports'),
-    path('student-fee-details/', StudentFeeDetailView.as_view(), name='student-fee-details'),
+    path('student-fees/details/', student_fee_detail_view, name='student-fee-details'),
+    path('student-fee-details/', StudentFeeDetailView.as_view(), name='student-fee-details-alt'),
     path('faculty-student-fees/', FacultyStudentFeeView.as_view(), name='faculty-student-fees'),
+    # Fee payment specific endpoints
+    path('fee-payments/download-receipt/', download_receipt_view, name='download-receipt'),
+    path('fee-payments/make-payment/', FeePaymentViewSet.as_view({'post': 'make_payment'}), name='make-payment'),
+    path('fee-payments/create-razorpay-order/', FeePaymentViewSet.as_view({'post': 'create_razorpay_order'}), name='create-razorpay-order'),
+    path('fee-payments/verify-razorpay-payment/', FeePaymentViewSet.as_view({'post': 'verify_razorpay_payment'}), name='verify-razorpay-payment'),
+    # Debug endpoint
+    path('auth-test/', AuthTestView.as_view(), name='auth-test'),
 ]

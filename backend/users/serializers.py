@@ -501,7 +501,7 @@ class StudentAchievementSerializer(serializers.ModelSerializer):
 class FeeStructureSerializer(serializers.ModelSerializer):
     class Meta:
         model = FeeStructure
-        fields = ['id', 'name', 'course', 'total_amount', 'installments', 'created_at', 'updated_at', 'created_by']
+        fields = ['id', 'name', 'course', 'registration_fee', 'tuition_fee', 'total_amount', 'installments', 'created_at', 'updated_at', 'created_by']
         read_only_fields = ['created_at', 'updated_at']
 
 class FeeInstallmentSerializer(serializers.ModelSerializer):

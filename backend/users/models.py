@@ -170,6 +170,8 @@ class StudentAchievement(models.Model):
 class FeeStructure(models.Model):
     name = models.CharField(max_length=100)
     course = models.ForeignKey('courses.Course', on_delete=models.CASCADE, related_name='fee_structures')
+    registration_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    tuition_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     installments = models.IntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
