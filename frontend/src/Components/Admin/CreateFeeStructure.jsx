@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
-import { FaMoneyBillWave, FaSave, FaTimes, FaPlus, FaTrash } from 'react-icons/fa';
+import { FaMoneyBillWave, FaSave, FaTimes, FaPlus, FaTrash, FaUserGraduate } from 'react-icons/fa';
 import './CreateFeeStructure.css';
 import { adminAxiosInstance, createFeeStructure, updateFeeStructure, addFeeInstallment, fetchFeeStructureById, fetchFeeInstallments } from '../../api';
 
@@ -28,8 +27,6 @@ const CreateFeeStructure = () => {
     { amount: 0, due_date: '', description: 'Fourth Installment' },
     { amount: 0, due_date: '', description: 'Fifth Installment' }
   ]);
-  
-  // We'll fetch real data from API
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -94,22 +91,26 @@ const CreateFeeStructure = () => {
 
   useEffect(() => {
     // Calculate total amount when registration_fee or tuition_fee changes
-    const total = Number(formData.registration_fee) + Number(formData.tuition_fee);
-    setFormData(prev => ({ ...prev, total_amount: total }));
+    const regFee = parseFloat(formData.registration_fee) || 0;
+    const tuitionFee = parseFloat(formData.tuition_fee) || 0;
+    const total = regFee + tuitionFee;
+    setFormData(prev => ({ ...prev, registration_fee: regFee, tuition_fee: tuitionFee, total_amount: total }));
     
     // Update installment amounts based on the number of installments
     if (installments.length > 0) {
       // Get current date for registration fee
       const currentDate = new Date().toISOString().split('T')[0];
       
-      // Set first installment as registration fee
-      const firstInstallment = installments[0];
-      firstInstallment.amount = Number(formData.registration_fee);
-      firstInstallment.due_date = currentDate; // Set due date to today (admission date)
-      
       // Calculate remaining amount for other installments
+      const registrationFee = Number(formData.registration_fee);
       const remainingAmount = Number(formData.tuition_fee);
       const remainingInstallments = installments.length - 1;
+      
+      // Check if first installment amount is different from registration fee
+      // If they're different, it means user manually edited the first installment
+      const firstInstallmentAmount = Number(installments[0]?.amount || 0);
+      const useFirstInstallmentAmount = firstInstallmentAmount !== 0 && 
+                                       firstInstallmentAmount !== registrationFee;
       
       if (remainingInstallments > 0) {
         const baseAmount = Math.floor(remainingAmount / remainingInstallments);
@@ -118,9 +119,10 @@ const CreateFeeStructure = () => {
         const newInstallments = installments.map((installment, index) => {
           if (index === 0) {
             // First installment is registration fee
+            // If user manually edited it, keep that value
             return {
               ...installment,
-              amount: Number(formData.registration_fee),
+              amount: useFirstInstallmentAmount ? firstInstallmentAmount : registrationFee,
               due_date: currentDate,
               description: 'Registration Fee (At Admission)',
               isRegistrationFee: true
@@ -142,22 +144,53 @@ const CreateFeeStructure = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    // Convert fee values to numbers when updating form data
+    const numericValue = name === 'registration_fee' || name === 'tuition_fee' ? 
+      parseFloat(value) || 0 : value;
+    setFormData(prev => ({ ...prev, [name]: numericValue }));
   };
 
   const handleInstallmentChange = (index, field, value) => {
     const updatedInstallments = [...installments];
     updatedInstallments[index] = { ...updatedInstallments[index], [field]: value };
-    setInstallments(updatedInstallments);
     
-    // If amount is changed, update total amount
+    // If amount is changed, update total amount and recalculate other installments
     if (field === 'amount') {
-      const totalInstallments = updatedInstallments.reduce((sum, inst) => sum + Number(inst.amount), 0);
-      setFormData(prev => ({ 
-        ...prev, 
-        total_amount: Number(formData.registration_fee) + totalInstallments 
-      }));
+      if (index === 0) {
+        // If registration fee is changed, update form data and recalculate other installments
+        const newRegistrationFee = Number(value);
+        setFormData(prev => ({ 
+          ...prev, 
+          registration_fee: newRegistrationFee,
+          total_amount: newRegistrationFee + Number(prev.tuition_fee)
+        }));
+        
+        // Recalculate remaining installments
+        const tuitionFee = Number(formData.tuition_fee);
+        const remainingInstallments = updatedInstallments.length - 1;
+        
+        if (remainingInstallments > 0) {
+          const baseAmount = Math.floor(tuitionFee / remainingInstallments);
+          const remainder = tuitionFee % remainingInstallments;
+          
+          for (let i = 1; i < updatedInstallments.length; i++) {
+            updatedInstallments[i].amount = i === 1 ? baseAmount + remainder : baseAmount;
+          }
+        }
+      } else {
+        // If any other installment is changed, adjust the total and recalculate
+        const totalInstallments = updatedInstallments.reduce((sum, inst, idx) => 
+          idx === 0 ? sum : sum + Number(inst.amount || 0), 0);
+        
+        setFormData(prev => ({ 
+          ...prev, 
+          tuition_fee: totalInstallments,
+          total_amount: Number(prev.registration_fee) + totalInstallments 
+        }));
+      }
     }
+    
+    setInstallments(updatedInstallments);
   };
   
   const addInstallment = () => {
@@ -337,6 +370,26 @@ const CreateFeeStructure = () => {
         }
       }
 
+      // If creating a new fee structure, ask if user wants to assign to existing students
+      if (!id) {
+        const shouldAssign = window.confirm(
+          'Do you want to automatically assign this fee structure to all students enrolled in this course?'
+        );
+        
+        if (shouldAssign) {
+          try {
+            // Call API to assign fee structure to all students in the course
+            await adminAxiosInstance.post(`fee-structures/${feeStructureId}/assign_to_students/`, {
+              course_id: formData.course
+            });
+            alert('Fee structure has been assigned to all enrolled students.');
+          } catch (assignErr) {
+            console.error('Error assigning fee structure to students:', assignErr);
+            alert('Fee structure was created but could not be assigned to all students. You can assign it manually later.');
+          }
+        }
+      }
+      
       alert(`Fee structure ${id ? 'updated' : 'created'} successfully!`);
       navigate('/admin/fee-structure');
     } catch (err) {
@@ -361,43 +414,51 @@ const CreateFeeStructure = () => {
   };
 
   return (
-    <div className="dashboard-container">
-      <h1><FaMoneyBillWave /> {id ? 'Edit' : 'Create'} Fee Structure</h1>
+    <div className="fee-structure-container">
+      <div className="fee-structure-header">
+        <h1><FaMoneyBillWave /> {id ? 'Edit' : 'Create'} Fee Structure</h1>
+      </div>
       
-      <div className="form-container">
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="name">Fee Structure Name</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              placeholder="e.g., Full Stack Web Development - 2023"
-            />
+      <form onSubmit={handleSubmit}>
+        <div className="form-section">
+          <h2>Basic Information</h2>
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="name">Fee Structure Name</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                placeholder="e.g., Full Stack Web Development - 2023"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="course">Course</label>
+              <select
+                id="course"
+                name="course"
+                value={formData.course}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select Course</option>
+                {courses.map(course => (
+                  <option key={course.id} value={course.id}>
+                    {course.title}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          
-          <div className="form-group">
-            <label htmlFor="course">Course</label>
-            <select
-              id="course"
-              name="course"
-              value={formData.course}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select Course</option>
-              {courses.map(course => (
-                <option key={course.id} value={course.id}>
-                  {course.title}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="form-row">
+        </div>
+        
+        <div className="form-section">
+          <h2>Fee Details</h2>
+          <div className="form-grid">
             <div className="form-group">
               <label htmlFor="registration_fee">Registration Fee (₹)</label>
               <input
@@ -428,110 +489,120 @@ const CreateFeeStructure = () => {
             </div>
           </div>
           
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="total_amount">Total Amount (₹)</label>
-              <input
-                type="number"
-                id="total_amount"
-                name="total_amount"
-                value={formData.total_amount}
-                readOnly
-                className="highlighted-input"
-              />
+          <div className="total-amount">
+            Total Amount: ₹{formData.total_amount}
+          </div>
+        </div>
+        
+        <div className="installments-section">
+          <div className="installments-header">
+            <h3>Installment Schedule</h3>
+            <button 
+              type="button" 
+              className="add-installment-btn"
+              onClick={addInstallment}
+            >
+              <FaPlus /> Add Installment
+            </button>
+          </div>
+          
+          <div className="fee-summary">
+            <div className="fee-summary-item">
+              <span className="fee-summary-label">Course:</span>
+              <span className="fee-summary-value">
+                {courses.find(c => c.id === Number(formData.course))?.title || 'Not selected'}
+              </span>
+            </div>
+            <div className="fee-summary-item">
+              <span className="fee-summary-label">Registration Fee:</span>
+              <span className="fee-summary-value">₹{Number(formData.registration_fee).toLocaleString()}</span>
+            </div>
+            <div className="fee-summary-item">
+              <span className="fee-summary-label">Tuition Fee:</span>
+              <span className="fee-summary-value">₹{Number(formData.tuition_fee).toLocaleString()}</span>
+            </div>
+            <div className="fee-summary-item">
+              <span className="fee-summary-label">Total Amount:</span>
+              <span className="fee-summary-value">₹{Number(formData.total_amount).toLocaleString()}</span>
             </div>
           </div>
           
-          <div className="installments-section">
-            <div className="installments-header">
-              <h3>Installment Schedule</h3>
-              <button 
-                type="button" 
-                className="add-installment-btn"
-                onClick={addInstallment}
-              >
-                <FaPlus /> Add Installment
-              </button>
-            </div>
-            
-            <div className="installments-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>No.</th>
-                    <th>Description</th>
-                    <th>Amount (₹)</th>
-                    <th>Due Date</th>
-                    <th>Actions</th>
+          <div className="installments-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Description</th>
+                  <th>Amount (₹)</th>
+                  <th>Due Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {installments.map((installment, index) => (
+                  <tr key={index} className="installment-row">
+                    <td>{index + 1}</td>
+                    <td>
+                      <input
+                        type="text"
+                        value={installment.description || `Installment ${index + 1}`}
+                        onChange={(e) => handleInstallmentChange(index, 'description', e.target.value)}
+                        placeholder="Description"
+                        readOnly={index === 0} // Make registration fee description read-only
+                        className={index === 0 ? "highlighted-input" : ""}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        value={installment.amount}
+                        onChange={(e) => handleInstallmentChange(index, 'amount', e.target.value)}
+                        min="0"
+                        required
+                        className={index === 0 ? "highlighted-input" : ""}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="date"
+                        value={installment.due_date}
+                        onChange={(e) => handleInstallmentChange(index, 'due_date', e.target.value)}
+                        required
+                        readOnly={index === 0} // Make registration fee date read-only
+                        className={index === 0 ? "highlighted-input" : ""}
+                      />
+                      {index === 0 && <small className="admission-date-note">Admission date</small>}
+                    </td>
+                    <td>
+                      {index === 0 ? (
+                        <span className="registration-badge">At Admission</span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="remove-installment-btn"
+                          onClick={() => removeInstallment(index)}
+                          title="Remove this installment"
+                        >
+                          <FaTrash />
+                        </button>
+                      )}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {installments.map((installment, index) => (
-                    <tr key={index} className="installment-row">
-                      <td>{index + 1}</td>
-                      <td>
-                        <input
-                          type="text"
-                          value={installment.description || `Installment ${index + 1}`}
-                          onChange={(e) => handleInstallmentChange(index, 'description', e.target.value)}
-                          placeholder="Description"
-                          readOnly={index === 0} // Make registration fee description read-only
-                          className={index === 0 ? "highlighted-input" : ""}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          value={installment.amount}
-                          onChange={(e) => handleInstallmentChange(index, 'amount', e.target.value)}
-                          min="0"
-                          required
-                          readOnly={index === 0} // Make registration fee amount read-only
-                          className={index === 0 ? "highlighted-input" : ""}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="date"
-                          value={installment.due_date}
-                          onChange={(e) => handleInstallmentChange(index, 'due_date', e.target.value)}
-                          required
-                          readOnly={index === 0} // Make registration fee date read-only
-                          className={index === 0 ? "highlighted-input" : ""}
-                        />
-                        {index === 0 && <small className="admission-date-note">Admission date</small>}
-                      </td>
-                      <td>
-                        {index === 0 ? (
-                          <span className="registration-badge">At Admission</span>
-                        ) : (
-                          <button
-                            type="button"
-                            className="remove-installment-btn"
-                            onClick={() => removeInstallment(index)}
-                            title="Remove this installment"
-                          >
-                            <FaTrash />
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
-          
-          <div className="form-actions">
-            <button type="button" className="btn-secondary" onClick={() => navigate('/admin/fee-management')}>
-              <FaTimes /> Cancel
-            </button>
-            <button type="submit" className="btn-primary" disabled={loading}>
-              <FaSave /> {loading ? (id ? 'Updating...' : 'Creating...') : (id ? 'Update' : 'Create')} Fee Structure
-            </button>
-          </div>
-        </form>
-      </div>
+        </div>
+        
+        <div className="form-actions">
+          <button type="button" className="btn-secondary" onClick={() => navigate('/admin/fee-structure')}>
+            <FaTimes /> Cancel
+          </button>
+          <button type="submit" className="btn-primary" disabled={loading}>
+            <FaSave /> {loading ? (id ? 'Updating...' : 'Creating...') : (id ? 'Update' : 'Create')} Fee Structure
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

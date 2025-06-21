@@ -2,8 +2,8 @@ import React, { useContext, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { UserContext } from '../UserContext'
 import './StudentDashboard.css'
-import { FaSearch, FaBell, FaBook, FaCalendarCheck } from 'react-icons/fa'
-import { fetchCourseUpdateNotifications, getUserEnrollments, checkAttendanceStatus } from '../../api'
+import { FaSearch, FaBell, FaBook, FaCalendarCheck, FaMoneyBillWave } from 'react-icons/fa'
+import { fetchCourseUpdateNotifications, getUserEnrollments, checkAttendanceStatus, getStudentFeeDetails } from '../../api'
 
 export default function StudentDashboard() {
   const { user } = useContext(UserContext);
@@ -12,13 +12,14 @@ export default function StudentDashboard() {
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [attendanceStatus, setAttendanceStatus] = useState({ is_present: false });
+  const [feeStatus, setFeeStatus] = useState(null);
   
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         
-        // Fetch attendance status only (most important)
+        // Fetch attendance status
         try {
           const attendanceData = await checkAttendanceStatus();
           setAttendanceStatus(attendanceData);
@@ -28,9 +29,33 @@ export default function StudentDashboard() {
           setAttendanceStatus({ is_present: false });
         }
         
-        // Set default values for other data
+        // Fetch fee status
+        try {
+          const feeData = await getStudentFeeDetails();
+          console.log('Fee data received:', feeData); // Debug log
+          setFeeStatus({
+            total: feeData.total_amount,
+            paid: feeData.amount_paid,
+            due: feeData.due_amount,
+            status: feeData.fee_details.status
+          });
+        } catch (err) {
+          console.error('Error fetching fee details:', err);
+          // Don't set default values, leave as null to indicate loading/error state
+          setFeeStatus(null);
+        }
+        
+        // Fetch enrollments
+        try {
+          const enrollmentsData = await getUserEnrollments();
+          setEnrollments(enrollmentsData);
+        } catch (err) {
+          console.error('Error fetching enrollments:', err);
+          setEnrollments([]);
+        }
+        
+        // Set default values for notifications
         setNotifications([]);
-        setEnrollments([]);
         
         setLoading(false);
       } catch (err) {
@@ -92,10 +117,25 @@ export default function StudentDashboard() {
           </p>
         </div>
         <div className="stat-card">
-          <h3>Fee Status</h3>
-          <Link to="/student/fee-management" className="stat-number fee-status-link">
-            View Details
-          </Link>
+          <h3><FaMoneyBillWave /> Fee Status</h3>
+          {feeStatus ? (
+            <div>
+              <p className={`stat-number fee-status-${feeStatus.status}`}>
+                {feeStatus.status === 'paid' ? 'Paid' : 
+                 feeStatus.status === 'partially_paid' ? 'Partially Paid' : 'Unpaid'}
+              </p>
+              {feeStatus.due > 0 && (
+                <p className="fee-due">Due: ₹{feeStatus.due.toLocaleString()}</p>
+              )}
+              <Link to="/student/fee-management" className="fee-status-link">
+                View Details
+              </Link>
+            </div>
+          ) : (
+            <Link to="/student/fee-management" className="stat-number fee-status-link">
+              View Details
+            </Link>
+          )}
         </div>
       </div>
       

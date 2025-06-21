@@ -457,3 +457,32 @@
     grid-template-columns: 1fr;
   }
 }
+/* Fee status styles */
+.fee-status-paid {
+  color: #28a745;
+  font-weight: bold;
+}
+
+.fee-status-partially_paid {
+  color: #ffc107;
+  font-weight: bold;
+}
+
+.fee-status-unpaid {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.fee-due {
+  font-size: 0.9rem;
+  margin-top: 5px;
+  color: #dc3545;
+}
+
+.fee-status-link {
+  display: inline-block;
+  margin-top: 8px;
+  color: #007bff;
+  text-decoration: underline;
+  font-size: 0.9rem;
+}

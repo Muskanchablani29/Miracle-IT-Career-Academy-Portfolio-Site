@@ -448,10 +448,81 @@ export const enrollInCourse = async (courseId) => {
   }
 };
 
-// Modified to return empty array to avoid 500 error
+// Get user enrollments
 export const getUserEnrollments = async () => {
-  return [];
+  try {
+    const response = await userAxiosInstance.get('courses/user-enrollments/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user enrollments:', error);
+    return [];
+  }
 };
+
+// Student Fee Management API
+export const getStudentFeeDetails = async () => {
+  try {
+    // Use the dedicated student details endpoint
+    const response = await userAxiosInstance.get('student-fees/details/');
+    
+    if (response.data) {
+      return response.data;
+    }
+    
+    throw new Error('No fee data returned from server');
+  } catch (error) {
+    console.error('Error fetching student fee details:', error);
+    throw error;
+  }
+};
+
+export const makePayment = async (paymentData) => {
+  try {
+    // Use userAxiosInstance which already has authentication headers
+    const response = await userAxiosInstance.post('fee-payments/make-payment/', paymentData);
+    return response.data;
+  } catch (error) {
+    console.error('Error making payment:', error);
+    throw error;
+  }
+};
+
+// Create Razorpay order
+export const createRazorpayOrder = async (amount) => {
+  try {
+    const response = await userAxiosInstance.post('fee-payments/create-razorpay-order/', { amount });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating Razorpay order:', error);
+    throw error;
+  }
+};
+
+// Verify Razorpay payment
+export const verifyRazorpayPayment = async (paymentData) => {
+  try {
+    const response = await userAxiosInstance.post('fee-payments/verify-razorpay-payment/', paymentData);
+    return response.data;
+  } catch (error) {
+    console.error('Error verifying Razorpay payment:', error);
+    throw error;
+  }
+};
+
+// Download receipt
+export const downloadReceipt = async (receiptNumber) => {
+  try {
+    const response = await userAxiosInstance.get(`fee-payments/download-receipt/?receipt_number=${receiptNumber}`, {
+      responseType: 'blob'
+    });
+    return response;
+  } catch (error) {
+    console.error('Error downloading receipt:', error);
+    throw error;
+  }
+};
+
+
 
 // Check enrollment status for a specific course
 export const checkEnrollmentStatus = async (courseId) => {
@@ -644,7 +715,13 @@ export const addFeeInstallment = async (feeStructureId, installmentData) => {
 export const fetchFeeStructures = async () => {
   try {
     const response = await adminAxiosInstance.get('fee-structures/');
-    return response.data;
+    // Ensure numeric values for fee fields
+    return response.data.map(structure => ({
+      ...structure,
+      registration_fee: parseFloat(structure.registration_fee) || 0,
+      tuition_fee: parseFloat(structure.tuition_fee) || 0,
+      total_amount: parseFloat(structure.total_amount) || 0
+    }));
   } catch (error) {
     console.error('Error fetching fee structures:', error);
     throw error;
@@ -682,9 +759,6 @@ export const fetchQuizzes = async () => {
   }
 };
 
-export { userAxiosInstance, adminAxiosInstance };
-
-// Fetch batches for a specific course
 export const fetchCourseSpecificBatches = async (courseId) => {
   try {
     const response = await userAxiosInstance.get(`batches/?course=${courseId}`);
@@ -695,20 +769,6 @@ export const fetchCourseSpecificBatches = async (courseId) => {
   }
 };
 
-// Assign students to a specific batch
-export const assignStudentsToBatch = async (batchId, studentIds) => {
-  try {
-    const response = await userAxiosInstance.post(`batches/${batchId}/assign-students/`, {
-      student_ids: studentIds
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error assigning students to batch ${batchId}:`, error);
-    throw error;
-  }
-};
-
-// Check student attendance status for today
 export const checkAttendanceStatus = async () => {
   try {
     const response = await userAxiosInstance.get('attendance-status/');
@@ -720,21 +780,4 @@ export const checkAttendanceStatus = async () => {
   }
 };
 
-// Fetch student attendance from backend
-export const fetchStudentAttendance = async () => {
-  try {
-    const response = await userAxiosInstance.get('attendance/my_attendance/');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching attendance:', error);
-    // If API fails, return minimal data structure to prevent UI errors
-    return {
-      attendance: [],
-      statistics: {
-        total_days: 0,
-        present_days: 0,
-        attendance_percentage: 0
-      }
-    };
-  }
-};
+export { userAxiosInstance, adminAxiosInstance };

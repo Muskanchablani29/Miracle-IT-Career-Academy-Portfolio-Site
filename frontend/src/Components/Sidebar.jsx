@@ -27,7 +27,6 @@ const Sidebar = () => {
           { to: '/admin/manage-courses', label: 'Course Management', icon: <FaBook /> },
           { to: '/admin/attendance-logs', label: 'Attendance Logs', icon: <FaCalendarAlt /> },
           { to: '/admin/fee-tracking', label: 'Fee Tracking', icon: <FaMoneyBillWave /> },
-          { to: '/admin/fee-structure', label: 'Fee Structure', icon: <FaReceipt /> },
           { to: '/admin/certificates', label: 'Certificates', icon: <FaCertificate /> },
           { to: '/admin/system-settings', label: 'System Settings', icon: <FaCog /> },
         ];

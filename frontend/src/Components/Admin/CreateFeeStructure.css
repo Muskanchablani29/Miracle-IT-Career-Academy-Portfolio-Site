@@ -298,3 +298,30 @@
     justify-content: center;
   }
 }
+/* Fee Summary Styles */
+.fee-summary {
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 15px;
+  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.fee-summary-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.fee-summary-label {
+  font-weight: bold;
+  color: #555;
+  margin-bottom: 5px;
+}
+
+.fee-summary-value {
+  font-size: 1.2rem;
+  color: #0056b3;
+}

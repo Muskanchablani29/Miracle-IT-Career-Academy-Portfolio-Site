@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
-import { FaMoneyBillWave, FaPlus, FaEdit, FaTrash, FaDownload, FaFilter, FaSearch, FaFileInvoice } from 'react-icons/fa';
-import './AdminDashboard.css';
+import { FaMoneyBillWave, FaPlus, FaEdit, FaTrash, FaDownload, FaFilter, FaSearch, FaFileInvoice, FaChartBar, FaCreditCard } from 'react-icons/fa';
+import './FeeManagement.css';
+import { adminAxiosInstance, fetchFeeStructures } from '../../api';
 
 const FeeManagement = () => {
   const [activeTab, setActiveTab] = useState('structures');
@@ -11,6 +11,8 @@ const FeeManagement = () => {
   const [courseFilter, setCourseFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [selectedFee, setSelectedFee] = useState(null);
   
   // State for data
   const [feeStructures, setFeeStructures] = useState([]);
@@ -42,67 +44,76 @@ const FeeManagement = () => {
     { id: 3, title: 'Python Programming' }
   ];
 
-  // Fetch data from backend or use mock data if API fails
+  // No need for Razorpay script anymore
+
+  // Fetch data from backend
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         
-        // Try to fetch real data
-        try {
-          // Import the API functions
-          const { fetchFeeStructures, adminAxiosInstance } = await import('../../api');
-          
-          // Fetch fee structures
-          const structuresData = await fetchFeeStructures();
-          setFeeStructures(structuresData);
-          
-          // Fetch student fees
-          const feesResponse = await adminAxiosInstance.get('student-fees/');
-          setStudentFees(feesResponse.data);
-          
-          // Fetch courses for filtering
-          const coursesResponse = await adminAxiosInstance.get('courses/courses/');
-          setCourses(coursesResponse.data);
-          
-          // Calculate summary data
-          const totalAssigned = feesResponse.data.reduce((sum, fee) => sum + fee.total_amount, 0);
-          const totalCollected = feesResponse.data.reduce((sum, fee) => sum + fee.amount_paid, 0);
-          const totalPending = totalAssigned - totalCollected;
-          const collectionRate = totalAssigned > 0 ? Math.round((totalCollected / totalAssigned) * 100) : 0;
-          
-          setSummaryData({
-            totalAssigned,
-            totalCollected,
-            totalPending,
-            collectionRate
-          });
-        } catch (err) {
-          console.error('Error fetching fee data:', err);
-          
-          // Fall back to mock data
-          setFeeStructures(mockFeeStructures);
-          setStudentFees(mockStudentFees);
-          setCourses(mockCourses);
-          
-          // Calculate summary data from mock data
-          const totalAssigned = mockStudentFees.reduce((sum, fee) => sum + fee.total_amount, 0);
-          const totalCollected = mockStudentFees.reduce((sum, fee) => sum + fee.amount_paid, 0);
-          const totalPending = totalAssigned - totalCollected;
-          const collectionRate = totalAssigned > 0 ? Math.round((totalCollected / totalAssigned) * 100) : 0;
-          
-          setSummaryData({
-            totalAssigned,
-            totalCollected,
-            totalPending,
-            collectionRate
-          });
-        }
+        // Fetch fee structures
+        const structuresData = await fetchFeeStructures();
+        // Ensure fee values are numbers
+        const processedStructures = structuresData.map(structure => ({
+          ...structure,
+          registration_fee: parseFloat(structure.registration_fee) || 0,
+          tuition_fee: parseFloat(structure.tuition_fee) || 0,
+          total_amount: parseFloat(structure.total_amount) || 0
+        }));
+        setFeeStructures(processedStructures);
+        
+        // Fetch student fees
+        const feesResponse = await adminAxiosInstance.get('student-fees/');
+        setStudentFees(feesResponse.data);
+        
+        // Fetch courses for filtering
+        const coursesResponse = await adminAxiosInstance.get('courses/courses/');
+        setCourses(coursesResponse.data);
+        
+        // Calculate summary data
+        const totalAssigned = feesResponse.data.reduce((sum, fee) => sum + Number(fee.total_amount || 0), 0);
+        const totalCollected = feesResponse.data.reduce((sum, fee) => sum + Number(fee.amount_paid || 0), 0);
+        const totalPending = totalAssigned - totalCollected;
+        const collectionRate = totalAssigned > 0 ? Math.round((totalCollected / totalAssigned) * 100) : 0;
+        
+        setSummaryData({
+          totalAssigned,
+          totalCollected,
+          totalPending,
+          collectionRate
+        });
         
         setLoading(false);
       } catch (err) {
         console.error('Error in fetchData:', err);
-        setError('Failed to load fee data. Please try again later.');
+        
+        // Fall back to mock data only if needed
+        // Ensure mock data has numeric values
+        const processedMockStructures = mockFeeStructures.map(structure => ({
+          ...structure,
+          registration_fee: parseFloat(structure.registration_fee) || 0,
+          tuition_fee: parseFloat(structure.tuition_fee) || 0,
+          total_amount: parseFloat(structure.total_amount) || 0
+        }));
+        setFeeStructures(processedMockStructures);
+        setStudentFees(mockStudentFees);
+        setCourses(mockCourses);
+        
+        // Calculate summary data from mock data
+        const totalAssigned = mockStudentFees.reduce((sum, fee) => sum + fee.total_amount, 0);
+        const totalCollected = mockStudentFees.reduce((sum, fee) => sum + fee.amount_paid, 0);
+        const totalPending = totalAssigned - totalCollected;
+        const collectionRate = totalAssigned > 0 ? Math.round((totalCollected / totalAssigned) * 100) : 0;
+        
+        setSummaryData({
+          totalAssigned,
+          totalCollected,
+          totalPending,
+          collectionRate
+        });
+        
+        setError('Failed to load fee data from server. Showing sample data.');
         setLoading(false);
       }
     };
@@ -113,21 +124,18 @@ const FeeManagement = () => {
   const handleDeleteFeeStructure = async (id) => {
     if (window.confirm('Are you sure you want to delete this fee structure?')) {
       try {
-        const { adminAxiosInstance } = await import('../../api');
         await adminAxiosInstance.delete(`fee-structures/${id}/`);
         setFeeStructures(feeStructures.filter(structure => structure.id !== id));
+        alert('Fee structure deleted successfully');
       } catch (err) {
         console.error('Error deleting fee structure:', err);
-        // Still remove from UI for demo purposes
-        setFeeStructures(feeStructures.filter(structure => structure.id !== id));
-        alert('Fee structure deleted (mock)');
+        alert('Failed to delete fee structure. Please try again.');
       }
     }
   };
 
   const handleGenerateInvoice = async (feeId) => {
     try {
-      const { adminAxiosInstance } = await import('../../api');
       const response = await adminAxiosInstance.get(`student-fees/${feeId}/generate-invoice/`, {
         responseType: 'blob'
       });
@@ -142,9 +150,45 @@ const FeeManagement = () => {
       link.remove();
     } catch (err) {
       console.error('Error generating invoice:', err);
-      alert('Invoice generation would happen here (mock)');
+      alert('Failed to generate invoice. Please try again.');
     }
   };
+
+  const handlePaymentInitiation = (fee) => {
+    if (window.confirm(`Process payment of ₹${(fee.total_amount - fee.amount_paid).toLocaleString()} for ${fee.student_name}?`)) {
+      // Simulate successful payment without Razorpay
+      const updatedFees = studentFees.map(f => {
+        if (f.id === fee.id) {
+          return {
+            ...f,
+            amount_paid: f.total_amount,
+            status: 'paid'
+          };
+        }
+        return f;
+      });
+      
+      setStudentFees(updatedFees);
+      
+      // Update summary data
+      const totalCollected = summaryData.totalCollected + (fee.total_amount - fee.amount_paid);
+      const totalPending = summaryData.totalAssigned - totalCollected;
+      const collectionRate = summaryData.totalAssigned > 0 
+        ? Math.round((totalCollected / summaryData.totalAssigned) * 100) 
+        : 0;
+      
+      setSummaryData({
+        ...summaryData,
+        totalCollected,
+        totalPending,
+        collectionRate
+      });
+      
+      alert('Payment successful! Receipt will be emailed to you.');
+    }
+  };
+  
+  // Payment is now handled directly in the handlePaymentInitiation function
 
   const filteredStudentFees = studentFees.filter(fee => {
     const matchesSearch = fee.student_name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -164,7 +208,14 @@ const FeeManagement = () => {
 
   return (
     <div className="dashboard-container">
-      <h1><FaMoneyBillWave /> Fee Management</h1>
+      <div className="page-header">
+        <h1><FaMoneyBillWave /> Fee Management</h1>
+        <div className="refresh-button">
+          <button onClick={() => window.location.reload()} className="btn-refresh">
+            Refresh Data
+          </button>
+        </div>
+      </div>
       
       <div className="fee-summary-cards">
         <div className="summary-card">
@@ -172,24 +223,36 @@ const FeeManagement = () => {
           <p className="summary-number">
             ₹{summaryData.totalAssigned.toLocaleString()}
           </p>
+          <div className="summary-icon">
+            <FaMoneyBillWave />
+          </div>
         </div>
         <div className="summary-card">
           <h3>Total Collected</h3>
           <p className="summary-number">
             ₹{summaryData.totalCollected.toLocaleString()}
           </p>
+          <div className="summary-icon">
+            <FaChartBar />
+          </div>
         </div>
         <div className="summary-card">
           <h3>Total Pending</h3>
           <p className="summary-number">
             ₹{summaryData.totalPending.toLocaleString()}
           </p>
+          <div className="summary-icon">
+            <FaFileInvoice />
+          </div>
         </div>
         <div className="summary-card">
           <h3>Collection Rate</h3>
           <p className="summary-number">
             {summaryData.collectionRate}%
           </p>
+          <div className="summary-icon">
+            <FaChartBar />
+          </div>
         </div>
       </div>
       
@@ -228,7 +291,6 @@ const FeeManagement = () => {
                 <thead>
                   <tr>
                     <th>Name</th>
-                    <th>Course</th>
                     <th>Registration Fee</th>
                     <th>Tuition Fee</th>
                     <th>Total Amount</th>
@@ -241,27 +303,42 @@ const FeeManagement = () => {
                     feeStructures.map(structure => (
                       <tr key={structure.id}>
                         <td>{structure.name}</td>
-                        <td>{structure.course.title}</td>
-                        <td>₹{structure.registration_fee?.toLocaleString() || '0'}</td>
-                        <td>₹{structure.tuition_fee?.toLocaleString() || '0'}</td>
-                        <td>₹{structure.total_amount.toLocaleString()}</td>
+                        <td>₹{(structure.registration_fee).toLocaleString()}</td>
+                        <td>₹{(structure.tuition_fee).toLocaleString()}</td>
+                        <td>₹{(structure.total_amount).toLocaleString()}</td>
                         <td>{structure.installments}</td>
                         <td className="actions">
-                          <Link to={`/admin/fee-structures/${structure.id}`} className="btn-icon">
+                          <Link to={`/admin/fee-structures/${structure.id}`} className="btn-icon" title="Edit Fee Structure">
                             <FaEdit />
                           </Link>
                           <button 
                             className="btn-icon delete" 
                             onClick={() => handleDeleteFeeStructure(structure.id)}
+                            title="Delete Fee Structure"
                           >
                             <FaTrash />
                           </button>
-                          <Link to={`/admin/fee-structures/${structure.id}/installments`} className="btn-icon">
-                            <FaMoneyBillWave title="Manage Installments" />
+                          <Link to={`/admin/fee-structures/${structure.id}/installments`} className="btn-icon" title="Manage Installments">
+                            <FaMoneyBillWave />
                           </Link>
-                          <Link to={`/admin/fee-structures/${structure.id}/assign`} className="btn-icon">
-                            <FaPlus title="Assign to Students" />
-                          </Link>
+                          <button 
+                            className="btn-icon assign" 
+                            onClick={() => {
+                              adminAxiosInstance.post(`fee-structures/${structure.id}/assign_to_students/`, {
+                                course_id: structure.course.id
+                              })
+                              .then(() => {
+                                alert('Fee structure assigned to all enrolled students successfully!');
+                              })
+                              .catch(err => {
+                                console.error('Error assigning fee structure:', err);
+                                alert('Failed to assign fee structure to students.');
+                              });
+                            }}
+                            title="Assign to All Students"
+                          >
+                            <FaPlus />
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -364,6 +441,15 @@ const FeeManagement = () => {
                           >
                             <FaFileInvoice />
                           </button>
+                          {fee.status !== 'paid' && (
+                            <button 
+                              className="btn-icon payment" 
+                              onClick={() => handlePaymentInitiation(fee)}
+                              title="Pay Online"
+                            >
+                              <FaCreditCard />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))

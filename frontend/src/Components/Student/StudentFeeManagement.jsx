@@ -1,7 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { FaMoneyBillWave, FaDownload, FaExclamationTriangle, FaCreditCard } from 'react-icons/fa';
 import './StudentDashboard.css';
+import { userAxiosInstance } from '../../api';
+
+// Load Razorpay script
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 const StudentFeeManagement = () => {
   const [feeData, setFeeData] = useState(null);
@@ -12,54 +23,40 @@ const StudentFeeManagement = () => {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [processingPayment, setProcessingPayment] = useState(false);
 
-  // Mock data for development
-  const mockFeeData = {
-    total_amount: 45000,
-    amount_paid: 30000,
-    due_amount: 15000,
-    next_due_date: '2023-08-15',
-    fee_details: {
-      id: 1,
-      student_name: 'John Smith',
-      fee_structure_name: 'Full Stack Web Development - 2023',
-      status: 'partially_paid',
-      assigned_date: '2023-01-15'
-    },
-    installments: [
-      { id: 1, amount: 15000, due_date: '2023-01-15', is_paid: true },
-      { id: 2, amount: 15000, due_date: '2023-04-15', is_paid: true },
-      { id: 3, amount: 15000, due_date: '2023-08-15', is_paid: false }
-    ],
-    payment_history: [
-      { id: 1, receipt_number: 'REC-001', payment_date: '2023-01-15', amount: 15000, payment_mode: 'online', status: 'success' },
-      { id: 2, receipt_number: 'REC-002', payment_date: '2023-04-15', amount: 15000, payment_mode: 'online', status: 'success' }
-    ]
-  };
-
   useEffect(() => {
     const fetchFeeDetails = async () => {
       try {
         setLoading(true);
         
-        try {
-          const response = await axios.get('/api/student-fee-details/');
-          setFeeData(response.data);
-          
-          // Set default payment amount to due amount
-          if (response.data && response.data.due_amount) {
-            setPaymentAmount(response.data.due_amount);
-          }
-        } catch (err) {
-          console.error('Error fetching fee details:', err);
-          // Use mock data if API call fails
-          setFeeData(mockFeeData);
-          setPaymentAmount(mockFeeData.due_amount);
+        // Load Razorpay script
+        await loadRazorpayScript();
+        
+        // Import the API function instead of using axios directly
+        const { getStudentFeeDetails } = require('../../api');
+        const feeData = await getStudentFeeDetails();
+        
+        console.log('Fee data received:', feeData);
+        setFeeData(feeData);
+        
+        // Set default payment amount to due amount
+        if (feeData && feeData.due_amount) {
+          setPaymentAmount(feeData.due_amount);
         }
         
         setLoading(false);
       } catch (err) {
         console.error('Error in fetchFeeDetails:', err);
-        setError('Failed to load fee details. Please try again later.');
+        if (err.response) {
+          if (err.response.status === 404) {
+            setError('No fee structure assigned to your course. Please contact the admin.');
+          } else if (err.response.status === 401) {
+            setError('Please login to view fee details.');
+          } else {
+            setError(err.response.data?.error || 'Failed to load fee details.');
+          }
+        } else {
+          setError('Failed to load fee details. Please try again later.');
+        }
         setLoading(false);
       }
     };
@@ -69,9 +66,8 @@ const StudentFeeManagement = () => {
 
   const handleDownloadReceipt = async (receiptNumber) => {
     try {
-      const response = await axios.get(`/api/fee-payments/download-receipt/?receipt_number=${receiptNumber}`, {
-        responseType: 'blob'
-      });
+      const { downloadReceipt } = require('../../api');
+      const response = await downloadReceipt(receiptNumber);
       
       // Create a download link for the PDF
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -81,9 +77,10 @@ const StudentFeeManagement = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Error downloading receipt:', err);
-      alert('Receipt download would happen here (mock)');
+      alert('Failed to download receipt. Please try again later.');
     }
   };
 
@@ -96,50 +93,116 @@ const StudentFeeManagement = () => {
     setProcessingPayment(true);
     
     try {
-      // For Razorpay integration (mock for now)
+      // Import the API functions
+      const { makePayment, getStudentFeeDetails, createRazorpayOrder, verifyRazorpayPayment } = require('../../api');
+      
+      // For Razorpay integration
       if (paymentMethod === 'razorpay') {
-        // Simulate payment processing
-        setTimeout(() => {
-          // Update fee data with new payment
-          const updatedFeeData = {
-            ...feeData,
-            amount_paid: feeData.amount_paid + paymentAmount,
-            due_amount: feeData.due_amount - paymentAmount,
-            payment_history: [
-              ...feeData.payment_history,
-              {
-                id: feeData.payment_history.length + 1,
-                receipt_number: `REC-00${feeData.payment_history.length + 1}`,
-                payment_date: new Date().toISOString(),
-                amount: paymentAmount,
-                payment_mode: 'online',
-                status: 'success'
-              }
-            ]
-          };
+        try {
+          // Create Razorpay order
+          const orderData = await createRazorpayOrder(paymentAmount);
           
-          // Update installments if applicable
-          if (updatedFeeData.installments) {
-            for (let i = 0; i < updatedFeeData.installments.length; i++) {
-              if (!updatedFeeData.installments[i].is_paid) {
-                updatedFeeData.installments[i].is_paid = true;
-                break;
+          // Initialize Razorpay
+          const options = {
+            key: orderData.key,
+            amount: orderData.amount,
+            currency: orderData.currency,
+            name: 'ERP Portal',
+            description: 'Fee Payment',
+            order_id: orderData.id,
+            prefill: {
+              name: orderData.student_name,
+              email: orderData.student_email,
+              contact: orderData.contact
+            },
+            theme: {
+              color: '#3399cc'
+            },
+            handler: async function (response) {
+              try {
+                // Verify payment
+                const verificationData = {
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_signature: response.razorpay_signature,
+                  amount: paymentAmount
+                };
+                
+                const verifyResponse = await verifyRazorpayPayment(verificationData);
+                
+                // Refresh fee data
+                const updatedFeeData = await getStudentFeeDetails();
+                setFeeData(updatedFeeData);
+                
+                setShowPaymentModal(false);
+                setProcessingPayment(false);
+                alert(`Payment successful! Receipt Number: ${verifyResponse.receipt_number}`);
+                
+              } catch (verifyError) {
+                console.error('Payment verification error:', verifyError);
+                alert('Payment completed but verification failed. Please contact admin.');
+                setProcessingPayment(false);
+              }
+            },
+            modal: {
+              ondismiss: function() {
+                setProcessingPayment(false);
               }
             }
+          };
+          
+          // Check if Razorpay is loaded
+          if (window.Razorpay) {
+            const rzp = new window.Razorpay(options);
+            rzp.open();
+          } else {
+            // Fallback - simulate payment for demo
+            const paymentData = {
+              student_fee: feeData.fee_details.id,
+              amount: paymentAmount,
+              payment_mode: 'online',
+              transaction_id: `TXN-${Date.now()}`,
+              status: 'success',
+              remarks: 'Payment made through student portal (Demo)'
+            };
+            
+            const paymentResponse = await makePayment(paymentData);
+            const updatedFeeData = await getStudentFeeDetails();
+            setFeeData(updatedFeeData);
+            
+            setShowPaymentModal(false);
+            setProcessingPayment(false);
+            alert('Payment successful! (Demo Mode)');
           }
           
-          setFeeData(updatedFeeData);
-          setShowPaymentModal(false);
+        } catch (orderError) {
+          console.error('Order creation error:', orderError);
+          alert('Failed to create payment order. Please try again.');
           setProcessingPayment(false);
-          alert('Payment successful! (mock)');
-        }, 1500);
-      } else {
-        // For other payment methods (bank transfer, etc.)
-        setTimeout(() => {
-          alert('Payment request submitted successfully! Your payment will be verified by the admin. (mock)');
-          setShowPaymentModal(false);
-          setProcessingPayment(false);
-        }, 1000);
+        }
+        
+      } else if (paymentMethod === 'bank_transfer') {
+        // For bank transfer, record as pending payment
+        const paymentData = {
+          student_fee: feeData.fee_details.id,
+          amount: paymentAmount,
+          payment_mode: 'bank_transfer',
+          transaction_id: '',
+          status: 'pending',
+          remarks: 'Bank transfer initiated through student portal'
+        };
+        
+        // Make API call to record payment
+        const paymentResponse = await makePayment(paymentData);
+        console.log('Payment response:', paymentResponse);
+        
+        // Refresh fee data
+        const updatedFeeData = await getStudentFeeDetails();
+        setFeeData(updatedFeeData);
+        
+        setShowPaymentModal(false);
+        setProcessingPayment(false);
+        alert('Payment request submitted successfully! Your payment will be verified by the admin.');
       }
     } catch (err) {
       console.error('Payment error:', err);
@@ -200,51 +263,59 @@ const StudentFeeManagement = () => {
       <div className="fee-details-section">
         <h2>Fee Structure Details</h2>
         <div className="fee-structure-details">
-          <p><strong>Structure Name:</strong> {feeData.fee_details.fee_structure_name}</p>
+          <p><strong>Structure Name:</strong> {feeData.fee_details?.fee_structure_name || 'N/A'}</p>
           <p><strong>Status:</strong> 
-            <span className={`status-badge ${feeData.fee_details.status}`}>
-              {feeData.fee_details.status.replace('_', ' ')}
+            <span className={`status-badge ${feeData.fee_details?.status || 'unknown'}`}>
+              {(feeData.fee_details?.status || 'unknown').replace('_', ' ')}
             </span>
           </p>
-          <p><strong>Assigned Date:</strong> {new Date(feeData.fee_details.assigned_date).toLocaleDateString()}</p>
+          <p><strong>Assigned Date:</strong> {feeData.fee_details?.assigned_date ? new Date(feeData.fee_details.assigned_date).toLocaleDateString() : 'N/A'}</p>
         </div>
       </div>
       
-      {feeData.installments && (
-        <div className="installments-section">
-          <h2>Installment Schedule</h2>
-          <table className="installments-table">
-            <thead>
-              <tr>
-                <th>Installment</th>
-                <th>Amount</th>
-                <th>Due Date</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {feeData.installments.length > 0 ? (
-                feeData.installments.map((installment, index) => (
+      <div className="installments-section">
+        <h2>Installment Schedule</h2>
+        <table className="installments-table">
+          <thead>
+            <tr>
+              <th>Installment</th>
+              <th>Amount</th>
+              <th>Due Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {feeData.installments && feeData.installments.length > 0 ? (
+              feeData.installments.map((installment, index) => {
+                // Calculate if installment is paid based on amount_paid
+                const isPaid = index === 0 ? 
+                  feeData.amount_paid >= installment.amount : 
+                  feeData.amount_paid >= feeData.installments.slice(0, index + 1).reduce((sum, inst) => sum + inst.amount, 0);
+                
+                // Check if overdue
+                const isOverdue = !isPaid && new Date(installment.due_date) < new Date();
+                
+                return (
                   <tr key={installment.id}>
-                    <td>Installment {index + 1}</td>
+                    <td>Installment {installment.sequence || index + 1}</td>
                     <td>₹{installment.amount.toLocaleString()}</td>
                     <td>{new Date(installment.due_date).toLocaleDateString()}</td>
                     <td>
-                      <span className={`status-badge ${installment.is_paid ? 'paid' : new Date(installment.due_date) < new Date() ? 'overdue' : 'pending'}`}>
-                        {installment.is_paid ? 'Paid' : new Date(installment.due_date) < new Date() ? 'Overdue' : 'Pending'}
+                      <span className={`status-badge ${isPaid ? 'paid' : isOverdue ? 'overdue' : 'pending'}`}>
+                        {isPaid ? 'Paid' : isOverdue ? 'Overdue' : 'Pending'}
                       </span>
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="4" className="no-data">No installment schedule available</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan="4" className="no-data">No installment schedule available</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
       
       <div className="payment-history-section">
         <h2>Payment History</h2>
@@ -276,6 +347,7 @@ const StudentFeeManagement = () => {
                     <button 
                       className="btn-icon" 
                       onClick={() => handleDownloadReceipt(payment.receipt_number)}
+                      title="Download Receipt"
                     >
                       <FaDownload />
                     </button>
@@ -326,19 +398,34 @@ const StudentFeeManagement = () => {
                   required
                 >
                   <option value="">Select Payment Method</option>
-                  <option value="razorpay">Credit/Debit Card/UPI (Razorpay)</option>
-                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="razorpay">💳 Online Payment (Credit/Debit Card/UPI/Net Banking)</option>
+                  <option value="bank_transfer">🏦 Bank Transfer</option>
                 </select>
               </div>
+              
+              {paymentMethod === 'razorpay' && (
+                <div className="payment-info">
+                  <h3>🔒 Secure Online Payment</h3>
+                  <p>You will be redirected to Razorpay's secure payment gateway to complete your transaction.</p>
+                  <ul>
+                    <li>✅ Credit/Debit Cards accepted</li>
+                    <li>✅ UPI payments supported</li>
+                    <li>✅ Net Banking available</li>
+                    <li>✅ Wallets supported</li>
+                  </ul>
+                </div>
+              )}
               
               {paymentMethod === 'bank_transfer' && (
                 <div className="bank-details">
                   <h3>Bank Account Details</h3>
-                  <p><strong>Account Name:</strong> ERP Portal</p>
-                  <p><strong>Account Number:</strong> 1234567890</p>
-                  <p><strong>IFSC Code:</strong> ABCD0001234</p>
-                  <p><strong>Bank:</strong> Example Bank</p>
-                  <p className="note">Note: After making the payment, please submit this form. Your payment will be verified by the admin.</p>
+                  <div className="bank-info">
+                    <p><strong>Account Name:</strong> ERP Portal</p>
+                    <p><strong>Account Number:</strong> 1234567890</p>
+                    <p><strong>IFSC Code:</strong> ABCD0001234</p>
+                    <p><strong>Bank:</strong> Example Bank</p>
+                  </div>
+                  <p className="note">📝 Note: After making the payment, please submit this form. Your payment will be verified by the admin.</p>
                 </div>
               )}
               
@@ -351,7 +438,7 @@ const StudentFeeManagement = () => {
                   className="btn-primary"
                   disabled={processingPayment || !paymentMethod || paymentAmount <= 0 || paymentAmount > feeData.due_amount}
                 >
-                  {processingPayment ? 'Processing...' : 'Proceed to Payment'}
+                  {processingPayment ? 'Processing...' : paymentMethod === 'razorpay' ? 'Pay with Razorpay' : 'Submit Payment Request'}
                 </button>
               </div>
             </form>
