@@ -40,6 +40,7 @@ const CourseDetail = () => {
     message: ''
   });
   const videoRef = useRef(null);
+  const previewTimerRef = useRef(null);
 
   useEffect(() => {
     const getCourseDetails = async () => {
@@ -52,7 +53,9 @@ const CourseDetail = () => {
         setVideos(videosData);
         
         if (videosData.length > 0) {
-          setSelectedVideo(videosData[0]);
+          // Set the first video as selected and ensure it can autoplay
+          const firstVideo = videosData[0];
+          setSelectedVideo(firstVideo);
         }
         
         const syllabusData = await fetchCourseSyllabus(courseId);
@@ -99,10 +102,43 @@ const CourseDetail = () => {
     checkUserEnrollmentStatus();
   }, [courseId, user]);
 
+  // Start preview timer for YouTube videos (only for first video)
+  useEffect(() => {
+    if (selectedVideo && selectedVideo.source_type === 'youtube' && !isEnrolled && selectedVideo.order === 0) {
+      // Clear any existing timer
+      if (previewTimerRef.current) {
+        clearTimeout(previewTimerRef.current);
+      }
+      
+      // Start timer for preview duration
+      previewTimerRef.current = setTimeout(() => {
+        setShowPaymentPrompt(true);
+      }, selectedVideo.preview_duration * 1000); // Convert seconds to milliseconds
+    }
+    
+    // Cleanup timer on component unmount or when video changes
+    return () => {
+      if (previewTimerRef.current) {
+        clearTimeout(previewTimerRef.current);
+      }
+    };
+  }, [selectedVideo, isEnrolled]);
+
   const handleVideoSelect = (video) => {
+    // Clear existing preview timer
+    if (previewTimerRef.current) {
+      clearTimeout(previewTimerRef.current);
+    }
+    
     setSelectedVideo(video);
     setVideoTime(0); // Reset video time when selecting a new video
     setShowPaymentPrompt(false); // Hide payment prompt when changing videos
+    
+    // For non-enrolled users, only allow first video to play as preview
+    // Check if this is not the first video (order 0 or 1)
+    if (!isEnrolled && video.order > 0) {
+      setShowPaymentPrompt(true);
+    }
   };
   
   // Handle video time update to enforce preview limits
@@ -398,19 +434,16 @@ const CourseDetail = () => {
                   {selectedVideo.source_type === 'youtube' ? (
                     <div className="youtube-player-wrapper">
                       <iframe
-                        src={`${selectedVideo.url}`}
+                        src={`${selectedVideo.url}?autoplay=1&start=0&controls=1&modestbranding=1&rel=0`}
                         title={selectedVideo.title}
                         allowFullScreen
                         frameBorder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       ></iframe>
                       {!isEnrolled && (
-                        <div className="preview-overlay" onClick={() => setShowPaymentPrompt(true)}>
-                          <div className="preview-message">
-                            <FaLock size={24} />
-                            <p>Preview limited to {Math.floor(selectedVideo.preview_duration / 60)}:{(selectedVideo.preview_duration % 60).toString().padStart(2, '0')} minutes</p>
-                            <button className="preview-button">Enroll to Watch Full Video</button>
-                          </div>
+                        <div className="preview-info-banner">
+                          <FaLock size={16} />
+                          <span>Preview: {Math.floor(selectedVideo.preview_duration / 60)}:{(selectedVideo.preview_duration % 60).toString().padStart(2, '0')} minutes - Enroll for full access</span>
                         </div>
                       )}
                     </div>
@@ -449,9 +482,10 @@ const CourseDetail = () => {
                   className={`video-item ${selectedVideo && selectedVideo.id === video.id ? 'active' : ''}`}
                   onClick={() => handleVideoSelect(video)}
                 >
-                  <span className="video-order">{video.order}</span>
+                  <span className="video-order">{video.order + 1}</span>
                   <span className="video-title">{video.title}</span>
-                  {!isEnrolled && <FaLock className="lock-icon" />}
+                  {!isEnrolled && video.order === 0 && <span className="preview-badge">Preview</span>}
+                  {!isEnrolled && video.order > 0 && <FaLock className="lock-icon" />}
                 </li>
               ))
             ) : (

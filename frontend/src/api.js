@@ -3,6 +3,12 @@ import axios from 'axios';
 // Base API URL
 const API_URL = 'http://localhost:8000/api/';
 
+// Add request interceptor to log and fix malformed URLs
+const fixMalformedUrl = (url) => {
+  // Fix URLs that end with /:1 or similar patterns
+  return url.replace(/\/:\d+$/, '/');
+};
+
 // Single axios instance for all API calls
 const userAxiosInstance = axios.create({
   baseURL: API_URL,
@@ -26,6 +32,9 @@ const adminAxiosInstance = axios.create({
 // Add a request interceptor to include Authorization header if access token is available
 userAxiosInstance.interceptors.request.use(
   config => {
+    // Fix malformed URLs
+    config.url = fixMalformedUrl(config.url);
+    
     const token = localStorage.getItem('access');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
@@ -44,6 +53,9 @@ userAxiosInstance.interceptors.request.use(
 // Add the same interceptor to the admin instance
 adminAxiosInstance.interceptors.request.use(
   config => {
+    // Fix malformed URLs
+    config.url = fixMalformedUrl(config.url);
+    
     const token = localStorage.getItem('access');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
@@ -304,6 +316,17 @@ export const fetchStudents = async (batchId = null) => {
   }
 };
 
+// Fetch students for a specific batch using the new endpoint
+export const fetchBatchStudents = async (batchId) => {
+  try {
+    const response = await userAxiosInstance.get(`batches/${batchId}/students/`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching students for batch ${batchId}:`, error);
+    throw error;
+  }
+};
+
 export const updateStudent = async (studentId, studentData) => {
   try {
     const response = await userAxiosInstance.put(`students/${studentId}/`, studentData);
@@ -491,6 +514,17 @@ export const makePayment = async (paymentData) => {
 export const createRazorpayOrder = async (amount) => {
   try {
     const response = await userAxiosInstance.post('fee-payments/create-razorpay-order/', { amount });
+    
+    // Check if this is demo mode
+    if (response.data.demo_mode) {
+      console.warn('Demo mode: Razorpay integration disabled');
+      // Return demo data without making actual Razorpay calls
+      return {
+        ...response.data,
+        demo_mode: true
+      };
+    }
+    
     return response.data;
   } catch (error) {
     console.error('Error creating Razorpay order:', error);
@@ -509,10 +543,33 @@ export const verifyRazorpayPayment = async (paymentData) => {
   }
 };
 
+// Demo payment function for testing
+export const simulatePayment = async (amount) => {
+  try {
+    // Simulate payment processing delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Create a mock payment record
+    const mockPaymentData = {
+      amount: amount,
+      payment_mode: 'demo',
+      transaction_id: `demo_${Date.now()}`,
+      status: 'success',
+      remarks: 'Demo payment - no actual transaction'
+    };
+    
+    const response = await userAxiosInstance.post('fee-payments/make-payment/', mockPaymentData);
+    return response.data;
+  } catch (error) {
+    console.error('Error simulating payment:', error);
+    throw error;
+  }
+};
+
 // Download receipt
 export const downloadReceipt = async (receiptNumber) => {
   try {
-    const response = await userAxiosInstance.get(`fee-payments/download-receipt/?receipt_number=${receiptNumber}`, {
+    const response = await userAxiosInstance.get(`receipt/${receiptNumber}/`, {
       responseType: 'blob'
     });
     return response;
@@ -667,7 +724,20 @@ export const fetchFacultyWorkshopRegistrations = async () => {
     return response.data;
   } catch (error) {
     console.error('Error fetching faculty workshop registrations:', error);
-    throw error;
+    // Return empty array to prevent frontend errors
+    return [];
+  }
+};
+
+// Fetch past workshop attendees
+export const fetchPastWorkshopAttendees = async () => {
+  try {
+    const response = await userAxiosInstance.get('faculty/past-workshop-attendees/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching past workshop attendees:', error);
+    // Return empty array to prevent frontend errors
+    return [];
   }
 };
 

@@ -11,9 +11,7 @@ position: relative;
   overflow-y: auto;
   position: relative;
   width: auto;
-
-  padding-top: 60px;
-  margin: 0;
+  margin-top: 40px;
 }
 
 .dashboard-content {

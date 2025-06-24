@@ -69,7 +69,6 @@ const StudentFeeManagement = () => {
       const { downloadReceipt } = require('../../api');
       const response = await downloadReceipt(receiptNumber);
       
-      // Create a download link for the PDF
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;

@@ -34,7 +34,7 @@ color: white;
 
 /* Logged in navbar styles */
 .navbar.logged-in {
-  background: white;
+  background: transparent;
   color: #333;
   box-shadow: none;
   /* padding: 20px; */
