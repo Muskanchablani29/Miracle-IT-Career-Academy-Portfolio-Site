@@ -44,15 +44,18 @@ class AuthTestView(APIView):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
-def download_receipt_view(request):
+def download_receipt_view(request, receipt_number=None):
     try:
-        receipt_number = request.GET.get('receipt_number')
+        if not receipt_number:
+            receipt_number = request.GET.get('receipt_number')
         if not receipt_number:
             return Response({"error": "Receipt number required"}, status=status.HTTP_400_BAD_REQUEST)
         
         payment = FeePayment.objects.filter(receipt_number=receipt_number).first()
         if not payment:
             return Response({"error": "Receipt not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+
         
         if REPORTLAB_AVAILABLE:
             buffer = io.BytesIO()
@@ -465,10 +468,11 @@ class FeePaymentViewSet(viewsets.ModelViewSet):
                 'amount': int(amount * 100),  # Razorpay expects amount in paise
                 'currency': 'INR',
                 'status': 'created',
-                'key': 'rzp_test_demo_key',  # Demo key
+                'key': 'demo_key_only',  # Demo key - not for actual payment
                 'student_name': student.user.username,
                 'student_email': student.user.email,
-                'contact': '9999999999'  # Demo contact
+                'contact': '9999999999',  # Demo contact
+                'demo_mode': True  # Indicate this is demo mode
             }
             
             return Response(order_data)

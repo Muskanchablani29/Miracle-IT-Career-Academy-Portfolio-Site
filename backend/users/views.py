@@ -340,6 +340,18 @@ class BatchViewSet(viewsets.ModelViewSet):
             student.batch = batch
             student.save()
         return Response({"message": f"Assigned {students.count()} students to batch {batch.name}"}, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['get'])
+    def get_students(self, request, pk=None):
+        """Get all students in a specific batch"""
+        try:
+            batch = self.get_object()
+            students = Student.objects.filter(batch=batch)
+            serializer = StudentSerializer(students, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error fetching students for batch {pk}: {str(e)}")
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ListFacultyView(generics.ListAPIView):
     authentication_classes = [JWTAuthentication]
@@ -427,6 +439,21 @@ class WorkshopRegistrationViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
         return super().list(request, *args, **kwargs)
+    
+    @action(detail=False, methods=['get'])
+    def past_attendees(self, request):
+        """Get past workshop attendees"""
+        if not request.user.is_authenticated or (request.user.role != 'admin' and request.user.role != 'faculty'):
+            return Response(
+                {"detail": "You do not have permission to view past workshop attendees."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        from datetime import date
+        past_workshops = Workshop.objects.filter(date__lt=date.today())
+        past_registrations = WorkshopRegistration.objects.filter(workshop__in=past_workshops)
+        serializer = self.get_serializer(past_registrations, many=True)
+        return Response(serializer.data)
 
 class CertificateViewSet(viewsets.ModelViewSet):
     queryset = Certificate.objects.all()

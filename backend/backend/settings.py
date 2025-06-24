@@ -187,6 +187,10 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     'expires',
 ]
 
+# Razorpay Configuration
+RAZORPAY_KEY_ID = 'rzp_test_your_key_id'  # Replace with your actual test key
+RAZORPAY_KEY_SECRET = 'your_secret_key'    # Replace with your actual secret key
+
 # Logging configuration
 LOGGING = {
     'version': 1,

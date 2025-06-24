@@ -62,6 +62,8 @@ urlpatterns = [
     path('project-submissions/mark-submitted/', ProjectSubmissionViewSet.as_view({'post': 'mark_submitted'}), name='mark-project-submitted'),
     # Add the new endpoint for assigning students to batches
     path('batches/<int:pk>/assign-students/', BatchViewSet.as_view({'post': 'assign_students'}), name='assign_students_to_batch'),
+    # Add endpoint for getting students in a batch
+    path('batches/<int:pk>/students/', BatchViewSet.as_view({'get': 'get_students'}), name='batch_students'),
     
     # Fee Management System endpoints
     path('fee-reports/', AdminFeeReportView.as_view(), name='fee-reports'),
@@ -69,10 +71,11 @@ urlpatterns = [
     path('student-fee-details/', StudentFeeDetailView.as_view(), name='student-fee-details-alt'),
     path('faculty-student-fees/', FacultyStudentFeeView.as_view(), name='faculty-student-fees'),
     # Fee payment specific endpoints
-    path('fee-payments/download-receipt/', download_receipt_view, name='download-receipt'),
-    path('fee-payments/make-payment/', FeePaymentViewSet.as_view({'post': 'make_payment'}), name='make-payment'),
-    path('fee-payments/create-razorpay-order/', FeePaymentViewSet.as_view({'post': 'create_razorpay_order'}), name='create-razorpay-order'),
-    path('fee-payments/verify-razorpay-payment/', FeePaymentViewSet.as_view({'post': 'verify_razorpay_payment'}), name='verify-razorpay-payment'),
+    path('receipt/<str:receipt_number>/', download_receipt_view, name='download-receipt'),
+    path('download-receipt/', download_receipt_view, name='download-receipt-alt'),
     # Debug endpoint
     path('auth-test/', AuthTestView.as_view(), name='auth-test'),
+    # Faculty specific endpoints
+    path('faculty/workshop-registrations/', WorkshopRegistrationViewSet.as_view({'get': 'list'}), name='faculty-workshop-registrations'),
+    path('faculty/past-workshop-attendees/', WorkshopRegistrationViewSet.as_view({'get': 'past_attendees'}), name='faculty-past-workshop-attendees'),
 ]
