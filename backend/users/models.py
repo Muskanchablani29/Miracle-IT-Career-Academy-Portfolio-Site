@@ -275,151 +275,27 @@ class FeeFine(models.Model):
     def __str__(self):
         return f"{self.student_fee.student.user.username} - {self.amount}"
 
-@receiver(post_save, sender=FeePayment)
-def update_student_fee_after_payment(sender, instance, created, **kwargs):
-    if created and instance.status == 'success':
-        student_fee = instance.student_fee
-        student_fee.amount_paid += instance.amount
-        student_fee.save()   
-    def __str__(self):
-        return f"{self.student.user.username} - {self.fee_structure.name}"
-    
-    def save(self, *args, **kwargs):
-        if self.amount_paid >= self.total_amount:
-            self.status = 'paid'
-        elif self.amount_paid > 0:
-            self.status = 'partially_paid'
-        else:
-            self.status = 'unpaid'
-        super().save(*args, **kwargs)
-
-class FeePayment(models.Model):
-    PAYMENT_MODE_CHOICES = (
-        ('cash', 'Cash'),
-        ('bank_transfer', 'Bank Transfer'),
-        ('online', 'Online Payment'),
-        ('check', 'Check'),
+class AdminNotification(models.Model):
+    NOTIFICATION_TYPES = (
+        ('payment', 'Payment Received'),
+        ('enrollment', 'New Enrollment'),
+        ('system', 'System Alert'),
+        ('fee_due', 'Fee Due Alert'),
     )
     
-    PAYMENT_STATUS_CHOICES = (
-        ('success', 'Success'),
-        ('pending', 'Pending'),
-        ('failed', 'Failed'),
-    )
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, null=True, blank=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
     
-    student_fee = models.ForeignKey(StudentFee, on_delete=models.CASCADE, related_name='payments')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_date = models.DateTimeField(default=timezone.now)
-    payment_mode = models.CharField(max_length=20, choices=PAYMENT_MODE_CHOICES)
-    transaction_id = models.CharField(max_length=100, blank=True, null=True)
-    receipt_number = models.CharField(max_length=50, unique=True)
-    status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='success')
-    remarks = models.TextField(blank=True, null=True)
-    recorded_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='recorded_payments')
+    class Meta:
+        ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.receipt_number} - {self.student_fee.student.user.username}"
-
-class FeeDiscount(models.Model):
-    DISCOUNT_TYPE_CHOICES = (
-        ('percentage', 'Percentage'),
-        ('fixed', 'Fixed Amount'),
-    )
-    
-    student_fee = models.ForeignKey(StudentFee, on_delete=models.CASCADE, related_name='discounts')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPE_CHOICES)
-    reason = models.CharField(max_length=200)
-    applied_date = models.DateTimeField(auto_now_add=True)
-    applied_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='applied_discounts')
-    
-    def __str__(self):
-        return f"{self.student_fee.student.user.username} - {self.amount} {self.get_discount_type_display()}"
-
-class FeeFine(models.Model):
-    student_fee = models.ForeignKey(StudentFee, on_delete=models.CASCADE, related_name='fines')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    reason = models.CharField(max_length=200)
-    due_date = models.DateField()
-    is_paid = models.BooleanField(default=False)
-    applied_date = models.DateTimeField(auto_now_add=True)
-    applied_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='applied_fines')
-    
-    def __str__(self):
-        return f"{self.student_fee.student.user.username} - {self.amount}"
-
-@receiver(post_save, sender=FeePayment)
-def update_student_fee_after_payment(sender, instance, created, **kwargs):
-    if created and instance.status == 'success':
-        student_fee = instance.student_fee
-        student_fee.amount_paid += instance.amount
-        student_fee.save()   
-    def __str__(self):
-        return f"{self.student.user.username} - {self.fee_structure.name}"
-    
-    def save(self, *args, **kwargs):
-        if self.amount_paid >= self.total_amount:
-            self.status = 'paid'
-        elif self.amount_paid > 0:
-            self.status = 'partially_paid'
-        else:
-            self.status = 'unpaid'
-        super().save(*args, **kwargs)
-
-class FeePayment(models.Model):
-    PAYMENT_MODE_CHOICES = (
-        ('cash', 'Cash'),
-        ('bank_transfer', 'Bank Transfer'),
-        ('online', 'Online Payment'),
-        ('check', 'Check'),
-    )
-    
-    PAYMENT_STATUS_CHOICES = (
-        ('success', 'Success'),
-        ('pending', 'Pending'),
-        ('failed', 'Failed'),
-    )
-    
-    student_fee = models.ForeignKey(StudentFee, on_delete=models.CASCADE, related_name='payments')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_date = models.DateTimeField(default=timezone.now)
-    payment_mode = models.CharField(max_length=20, choices=PAYMENT_MODE_CHOICES)
-    transaction_id = models.CharField(max_length=100, blank=True, null=True)
-    receipt_number = models.CharField(max_length=50, unique=True)
-    status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='success')
-    remarks = models.TextField(blank=True, null=True)
-    recorded_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='recorded_payments')
-    
-    def __str__(self):
-        return f"{self.receipt_number} - {self.student_fee.student.user.username}"
-
-class FeeDiscount(models.Model):
-    DISCOUNT_TYPE_CHOICES = (
-        ('percentage', 'Percentage'),
-        ('fixed', 'Fixed Amount'),
-    )
-    
-    student_fee = models.ForeignKey(StudentFee, on_delete=models.CASCADE, related_name='discounts')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPE_CHOICES)
-    reason = models.CharField(max_length=200)
-    applied_date = models.DateTimeField(auto_now_add=True)
-    applied_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='applied_discounts')
-    
-    def __str__(self):
-        return f"{self.student_fee.student.user.username} - {self.amount} {self.get_discount_type_display()}"
-
-class FeeFine(models.Model):
-    student_fee = models.ForeignKey(StudentFee, on_delete=models.CASCADE, related_name='fines')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    reason = models.CharField(max_length=200)
-    due_date = models.DateField()
-    is_paid = models.BooleanField(default=False)
-    applied_date = models.DateTimeField(auto_now_add=True)
-    applied_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='applied_fines')
-    
-    def __str__(self):
-        return f"{self.student_fee.student.user.username} - {self.amount}"
+        return f"{self.title} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
 
 @receiver(post_save, sender=FeePayment)
 def update_student_fee_after_payment(sender, instance, created, **kwargs):
@@ -427,3 +303,16 @@ def update_student_fee_after_payment(sender, instance, created, **kwargs):
         student_fee = instance.student_fee
         student_fee.amount_paid += instance.amount
         student_fee.save()
+        
+        # Create admin notification (only if table exists)
+        try:
+            AdminNotification.objects.create(
+                title=f"Payment Received - {instance.student_fee.student.user.username}",
+                message=f"Student {instance.student_fee.student.user.username} (ID: {instance.student_fee.student.enrollment_id}) has paid ₹{instance.amount} on {instance.payment_date.strftime('%d/%m/%Y at %H:%M')}. Receipt: {instance.receipt_number}",
+                notification_type='payment',
+                student=instance.student_fee.student,
+                amount=instance.amount
+            )
+        except Exception as e:
+            # Table doesn't exist yet, skip notification creation
+            pass

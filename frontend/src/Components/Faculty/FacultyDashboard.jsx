@@ -183,7 +183,7 @@ const FacultyDashboard = () => {
               <HiChartBar />
             </div>
             <div className="stat-details">
-              <h3>{String(stats.averageAttendance)}%</h3>
+              <h3>{stats.averageAttendance || 0}%</h3>
               <p>Avg. Attendance</p>
             </div>
           </div>

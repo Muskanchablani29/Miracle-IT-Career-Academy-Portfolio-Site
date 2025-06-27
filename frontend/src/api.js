@@ -390,22 +390,38 @@ export const fetchCourseById = async (id) => {
 // Videos API
 export const fetchVideosByCourseId = async (courseId) => {
   try {
+    // Try with authentication first
     const response = await userAxiosInstance.get(`courses/videos/?course_id=${courseId}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching videos for course ${courseId}:`, error);
-    throw error;
+    // If authentication fails, try without authentication for public preview
+    try {
+      const publicResponse = await axios.get(`${API_URL}courses/videos/?course_id=${courseId}`);
+      return publicResponse.data;
+    } catch (publicError) {
+      console.error(`Error fetching videos publicly for course ${courseId}:`, publicError);
+      throw error; // Throw original error
+    }
   }
 };
 
 // Syllabus API
 export const fetchCourseSyllabus = async (courseId) => {
   try {
+    // Try with authentication first
     const response = await userAxiosInstance.get(`courses/syllabus/?course_id=${courseId}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching syllabus for course ${courseId}:`, error);
-    throw error;
+    // If authentication fails, try without authentication for public preview
+    try {
+      const publicResponse = await axios.get(`${API_URL}courses/syllabus/?course_id=${courseId}`);
+      return publicResponse.data;
+    } catch (publicError) {
+      console.error(`Error fetching syllabus publicly for course ${courseId}:`, publicError);
+      throw error; // Throw original error
+    }
   }
 };
 
@@ -532,6 +548,27 @@ export const createRazorpayOrder = async (amount) => {
   }
 };
 
+// Initialize payment (alias for createRazorpayOrder for backward compatibility)
+export const initializePayment = async (amount) => {
+  try {
+    return await createRazorpayOrder(amount);
+  } catch (error) {
+    console.error('Error initializing payment:', error);
+    throw error;
+  }
+};
+
+// Verify fee payment (alias for verifyRazorpayPayment)
+export const verifyFeePayment = async (paymentData) => {
+  try {
+    const response = await verifyRazorpayPayment(paymentData);
+    return { success: true, ...response };
+  } catch (error) {
+    console.error('Error verifying fee payment:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 // Verify Razorpay payment
 export const verifyRazorpayPayment = async (paymentData) => {
   try {
@@ -562,6 +599,17 @@ export const simulatePayment = async (amount) => {
     return response.data;
   } catch (error) {
     console.error('Error simulating payment:', error);
+    throw error;
+  }
+};
+
+// Simple demo payment endpoint
+export const makeDemoPayment = async (amount) => {
+  try {
+    const response = await userAxiosInstance.post('fee-payments/demo-payment/', { amount });
+    return response.data;
+  } catch (error) {
+    console.error('Error making demo payment:', error);
     throw error;
   }
 };
@@ -847,6 +895,39 @@ export const checkAttendanceStatus = async () => {
     console.error('Error checking attendance status:', error);
     // Return default status to avoid errors
     return { is_present: false };
+  }
+};
+
+// Chatbot API
+export const chatAPI = {
+  sendMessage: async (message) => {
+    try {
+      const response = await userAxiosInstance.post('chatbot/chat/', { message });
+      return response;
+    } catch (error) {
+      console.error('Error sending chat message:', error);
+      throw error;
+    }
+  },
+  
+  sendVoiceMessage: async (text) => {
+    try {
+      const response = await userAxiosInstance.post('chatbot/voice-chat/', { text });
+      return response;
+    } catch (error) {
+      console.error('Error sending voice message:', error);
+      throw error;
+    }
+  },
+  
+  getQuickActions: async () => {
+    try {
+      const response = await userAxiosInstance.get('chatbot/quick-actions/');
+      return response;
+    } catch (error) {
+      console.error('Error fetching quick actions:', error);
+      throw error;
+    }
   }
 };
 

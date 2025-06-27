@@ -4,6 +4,12 @@ from .models import (
     Batch, Attendance, Holiday, Project, ProjectSubmission, StudentAchievement,
     FeeStructure, FeeInstallment, StudentFee, FeePayment, FeeDiscount, FeeFine
 )
+
+# Try to import AdminNotification, handle gracefully if it doesn't exist
+try:
+    from .models import AdminNotification
+except ImportError:
+    AdminNotification = None
 from django.contrib.auth.password_validation import validate_password
 from datetime import datetime, date
 from courses.models import Course, CourseSyllabus, SyllabusItem, Video, Quiz, CourseEnrollment, Notification
@@ -573,3 +579,42 @@ class FeeFineSerializer(serializers.ModelSerializer):
     
     def get_student_name(self, obj):
         return obj.student_fee.student.user.username
+    def get_student_name(self, obj):
+        return obj.student_fee.student.user.username
+
+# Only create AdminNotificationSerializer if AdminNotification model exists
+if AdminNotification:
+    class AdminNotificationSerializer(serializers.ModelSerializer):
+        student_name = serializers.SerializerMethodField()
+        time_ago = serializers.SerializerMethodField()
+        
+        class Meta:
+            model = AdminNotification
+            fields = ['id', 'title', 'message', 'notification_type', 'student', 'student_name', 
+                     'amount', 'is_read', 'created_at', 'time_ago']
+            read_only_fields = ['created_at']
+        
+        def get_student_name(self, obj):
+            return obj.student.user.username if obj.student else None
+        
+        def get_time_ago(self, obj):
+            from django.utils import timezone
+            from datetime import timedelta
+            
+            now = timezone.now()
+            diff = now - obj.created_at
+            
+            if diff.days > 0:
+                return f"{diff.days} day{'s' if diff.days > 1 else ''} ago"
+            elif diff.seconds > 3600:
+                hours = diff.seconds // 3600
+                return f"{hours} hour{'s' if hours > 1 else ''} ago"
+            elif diff.seconds > 60:
+                minutes = diff.seconds // 60
+                return f"{minutes} minute{'s' if minutes > 1 else ''} ago"
+            else:
+                return "Just now"
+else:
+    # Dummy serializer if AdminNotification doesn't exist
+    class AdminNotificationSerializer(serializers.Serializer):
+        pass

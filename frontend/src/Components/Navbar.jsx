@@ -25,7 +25,9 @@ const Navbar = () => {
     localStorage.removeItem('access');
     localStorage.removeItem('refresh');
     setUser(null);
-    navigate('/');
+    setTimeout(() => {
+      navigate('/');
+    }, 0);
   }, [setUser, navigate]);
 
   const toggleUserMenu = useCallback(() => {

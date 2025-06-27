@@ -106,7 +106,7 @@ function App() {
             <Route path="login" element={<Login />} />
             
             {/* Explore Routes */}
-            <Route path="explore" element={<Explore />}>
+            <Route path="explore/*" element={<Explore />}>
               <Route path="certificates" element={<Explore />} />
               <Route path="workshops" element={<Explore />} />
               <Route path="workshops/:id" element={<Explore />} />

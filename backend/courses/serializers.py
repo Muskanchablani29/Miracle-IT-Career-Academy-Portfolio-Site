@@ -37,17 +37,22 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     syllabus_modules = CourseSyllabusSerializer(many=True, read_only=True)
     videos = VideoSerializer(many=True, read_only=True)
     students_count = serializers.SerializerMethodField()
+    preview_video = serializers.SerializerMethodField()
     
     class Meta:
         model = Course
         fields = ['id', 'title', 'description', 'image', 'duration', 'level', 
                  'created_at', 'internship_duration', 'is_certified', 'last_updated',
-                 'syllabus_modules', 'videos', 'price', 'discount_price', 'students_count']
+                 'syllabus_modules', 'videos', 'price', 'discount_price', 'students_count',
+                 'preview_video_url', 'preview_duration', 'preview_video']
                  
     def get_students_count(self, obj):
         # Count students directly from Student model
         from users.models import Student
         return Student.objects.filter(course=obj).count()
+    
+    def get_preview_video(self, obj):
+        return obj.get_first_video_as_preview()
 
 class QuizSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(required=False)

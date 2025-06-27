@@ -10,9 +10,9 @@ const LoadingAnimation = () => {
           <img src={logo} alt="" />
       </div>
       
-      <div className="loading-progress">
-        <div className="progress-bar">
-          <div className="progress-fill"></div>
+      <div className="loading-progress-login">
+        <div className="progress-bar-login">
+          <div className="progress-fill-login"></div>
         </div>
         <div className="progress-text">Loading...</div>
       </div>

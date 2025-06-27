@@ -25,6 +25,7 @@ const CourseDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedVideo, setSelectedVideo] = useState(null);
+  const [previewVideo, setPreviewVideo] = useState(null);
   const [openModules, setOpenModules] = useState({});
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
@@ -39,6 +40,8 @@ const CourseDetail = () => {
     phone: '',
     message: ''
   });
+  const [videoLoading, setVideoLoading] = useState(false);
+  const [videoError, setVideoError] = useState(null);
   const videoRef = useRef(null);
   const previewTimerRef = useRef(null);
 
@@ -49,13 +52,47 @@ const CourseDetail = () => {
         const courseData = await fetchCourseById(courseId);
         setCourse(courseData);
         
-        const videosData = await fetchVideosByCourseId(courseId);
-        setVideos(videosData);
+        // Set preview video - use first video from playlist or explicit preview URL
+        let preview = null;
+        if (courseData.preview_video) {
+          preview = courseData.preview_video;
+        } else if (courseData.preview_video_url) {
+          preview = {
+            id: 'preview',
+            title: `${courseData.title} - Preview`,
+            url: courseData.preview_video_url,
+            source_type: courseData.preview_video_url.includes('youtube') ? 'youtube' : 'direct',
+            order: -1,
+            preview_duration: courseData.preview_duration || 300
+          };
+        }
         
-        if (videosData.length > 0) {
-          // Set the first video as selected and ensure it can autoplay
-          const firstVideo = videosData[0];
-          setSelectedVideo(firstVideo);
+        if (preview) {
+          setPreviewVideo(preview);
+          setSelectedVideo(preview);
+        }
+        
+        try {
+          const videosData = await fetchVideosByCourseId(courseId);
+          setVideos(videosData);
+          
+          // If no explicit preview is set, use first video as preview
+          if (!preview && videosData.length > 0) {
+            const firstVideo = videosData.find(v => v.order === 0) || videosData[0];
+            const firstVideoPreview = {
+              id: 'preview',
+              title: `${courseData.title} - Preview`,
+              url: firstVideo.url,
+              source_type: firstVideo.source_type || (firstVideo.url.includes('youtube') ? 'youtube' : 'direct'),
+              order: -1,
+              preview_duration: courseData.preview_duration || 300
+            };
+            setPreviewVideo(firstVideoPreview);
+            setSelectedVideo(firstVideoPreview);
+          }
+        } catch (videoErr) {
+          console.error('Error loading videos:', videoErr);
+          setVideoError('Failed to load videos');
         }
         
         const syllabusData = await fetchCourseSyllabus(courseId);
@@ -102,21 +139,18 @@ const CourseDetail = () => {
     checkUserEnrollmentStatus();
   }, [courseId, user]);
 
-  // Start preview timer for YouTube videos (only for first video)
+  // Start preview timer for preview video only
   useEffect(() => {
-    if (selectedVideo && selectedVideo.source_type === 'youtube' && !isEnrolled && selectedVideo.order === 0) {
-      // Clear any existing timer
+    if (selectedVideo && !isEnrolled && selectedVideo.id === 'preview' && selectedVideo.preview_duration) {
       if (previewTimerRef.current) {
         clearTimeout(previewTimerRef.current);
       }
       
-      // Start timer for preview duration
       previewTimerRef.current = setTimeout(() => {
         setShowPaymentPrompt(true);
-      }, selectedVideo.preview_duration * 1000); // Convert seconds to milliseconds
+      }, selectedVideo.preview_duration * 1000);
     }
     
-    // Cleanup timer on component unmount or when video changes
     return () => {
       if (previewTimerRef.current) {
         clearTimeout(previewTimerRef.current);
@@ -125,30 +159,53 @@ const CourseDetail = () => {
   }, [selectedVideo, isEnrolled]);
 
   const handleVideoSelect = (video) => {
+    console.log('Video selected:', video);
+    
+    // Validate video before selection
+    if (!video || !video.url) {
+      console.error('Invalid video selected:', video);
+      return;
+    }
+    
+    // For non-enrolled users, allow first video (order 0) as preview, lock others
+    if (!isEnrolled && video.order !== 0) {
+      console.log('Video locked, showing payment prompt');
+      setShowPaymentPrompt(true);
+      return;
+    }
+    
     // Clear existing preview timer
     if (previewTimerRef.current) {
       clearTimeout(previewTimerRef.current);
     }
     
-    setSelectedVideo(video);
-    setVideoTime(0); // Reset video time when selecting a new video
-    setShowPaymentPrompt(false); // Hide payment prompt when changing videos
-    
-    // For non-enrolled users, only allow first video to play as preview
-    // Check if this is not the first video (order 0 or 1)
-    if (!isEnrolled && video.order > 0) {
-      setShowPaymentPrompt(true);
+    // If non-enrolled user selects first video, convert it to preview mode
+    if (!isEnrolled && video.order === 0) {
+      const previewVideo = {
+        ...video,
+        id: 'preview',
+        title: `${course.title} - Preview`,
+        order: -1,
+        preview_duration: course.preview_duration || 300
+      };
+      setSelectedVideo(previewVideo);
+    } else {
+      setSelectedVideo(video);
     }
+    
+    setVideoTime(0);
+    setShowPaymentPrompt(false);
   };
   
   // Handle video time update to enforce preview limits
   const handleTimeUpdate = (e) => {
-    if (!isEnrolled && selectedVideo) {
+    if (!isEnrolled && selectedVideo && (selectedVideo.id === 'preview' || selectedVideo.order === 0)) {
       const currentTime = e.target.currentTime;
       setVideoTime(currentTime);
       
       // Check if preview time limit is reached
-      if (currentTime >= selectedVideo.preview_duration) {
+      const previewDuration = selectedVideo.preview_duration || 300;
+      if (currentTime >= previewDuration) {
         if (videoRef.current) {
           videoRef.current.pause();
           setShowPaymentPrompt(true);
@@ -347,151 +404,174 @@ const CourseDetail = () => {
         </div>
       </div>
 
-      <div className="course-syllabus">
-        <h2><FaBook /> Course Syllabus</h2>
-        
-        {syllabus.length > 0 ? (
-          syllabus.map((module) => (
-            <div className="syllabus-module" key={module.id}>
-              <div 
-                className="module-header" 
-                onClick={() => toggleModule(module.id)}
-              >
-                <h3>
-                  <span>{module.order}</span>
-                  {module.title}
-                </h3>
-                {openModules[module.id] ? <FaChevronUp /> : <FaChevronDown />}
-              </div>
-              <div className={`module-content ${openModules[module.id] ? 'open' : ''}`}>
-                {module.items.map((item) => (
-                  <div className="syllabus-item" key={item.id}>
-                    <h4>{item.title}</h4>
-                    {item.description && <p>{item.description}</p>}
+      {syllabus.length > 0 && (
+        <div className="course-syllabus">
+          <h2><FaBook /> Course Syllabus</h2>
+          <div className="syllabus-grid">
+            {syllabus.map((module) => (
+              <div className="syllabus-card" key={module.id}>
+                <div className="card-header" onClick={() => toggleModule(module.id)}>
+                  <div className="module-info">
+                    <span className="module-number">{module.order}</span>
+                    <h3>{module.title}</h3>
                   </div>
-                ))}
+                  {openModules[module.id] ? <FaChevronUp /> : <FaChevronDown />}
+                </div>
+                {openModules[module.id] && (
+                  <div className="card-content">
+                    {module.items.map((item) => (
+                      <div className="syllabus-item" key={item.id}>
+                        <h4>{item.title}</h4>
+                        {item.description && <p>{item.description}</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
-          ))
-        ) : (
-          <p>No syllabus available for this course yet.</p>
-        )}
-      </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-      <div className="course-content">
-        <div className="video-container">
-          {selectedVideo ? (
-            <div className="video-player">
-              {showPaymentPrompt && !isEnrolled ? (
-                <div className="payment-prompt">
-                  <div className="payment-prompt-content">
-                    <h3>Preview Ended</h3>
-                    <p>To continue watching this course, you need to enroll.</p>
-                    {course.price > 0 ? (
-                      <div className="course-price">
-                        <h4>Course Fee</h4>
-                        <p className="price">
-                          {course.discount_price ? (
-                            <>
-                              <span className="original-price">₹{course.price}</span>
-                              <span className="discount-price">₹{course.discount_price}</span>
-                            </>
-                          ) : (
-                            <span>₹{course.price}</span>
-                          )}
-                        </p>
-                        <button 
-                          className="enroll-button" 
-                          onClick={handleEnroll}
-                          disabled={enrolling || paymentProcessing}
-                        >
-                          {enrolling || paymentProcessing ? 'Processing...' : 'Pay & Enroll Now'}
-                        </button>
-                        {paymentError && <p className="payment-error">{paymentError}</p>}
-                        <div className="enquiry-option">
-                          <p>Need more information?</p>
-                          <button 
-                            className="enquiry-button"
-                            onClick={() => setShowEnquiryForm(true)}
-                          >
-                            Submit an Enquiry
+      <div className="video-section">
+        <div className="video-main">
+          <div className="video-player-container">
+            {videoError ? (
+              <div className="video-error">
+                <p>⚠️ {videoError}</p>
+                <button onClick={() => window.location.reload()}>Retry</button>
+              </div>
+            ) : selectedVideo ? (
+              <div className="video-player">
+                {showPaymentPrompt && !isEnrolled ? (
+                  <div className="payment-overlay">
+                    <div className="payment-content">
+                      <h3>🔒 Enroll to Continue</h3>
+                      <p>Unlock all course content with enrollment</p>
+                      {course.price > 0 ? (
+                        <div className="pricing">
+                          <div className="price">
+                            {course.discount_price ? (
+                              <>
+                                <span className="original">₹{course.price}</span>
+                                <span className="discounted">₹{course.discount_price}</span>
+                              </>
+                            ) : (
+                              <span className="current">₹{course.price}</span>
+                            )}
+                          </div>
+                          <button className="enroll-btn" onClick={handleEnroll} disabled={enrolling}>
+                            {enrolling ? 'Processing...' : 'Enroll Now'}
                           </button>
                         </div>
-                      </div>
-                    ) : (
-                      <button 
-                        className="enroll-button" 
-                        onClick={handleEnroll}
-                        disabled={enrolling}
-                      >
-                        {enrolling ? 'Enrolling...' : 'Enroll for Free'}
-                      </button>
-                    )}
+                      ) : (
+                        <button className="enroll-btn free" onClick={handleEnroll} disabled={enrolling}>
+                          {enrolling ? 'Enrolling...' : 'Enroll for Free'}
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <>
-                  {selectedVideo.source_type === 'youtube' ? (
-                    <div className="youtube-player-wrapper">
+                ) : (
+                  <div className="video-wrapper">
+                    <div className="debug-info" style={{position: 'absolute', top: '10px', left: '10px', background: 'rgba(0,0,0,0.7)', color: 'white', padding: '5px', fontSize: '12px', zIndex: 100}}>
+                      URL: {selectedVideo.url}<br/>
+                      Type: {selectedVideo.source_type}<br/>
+                      Order: {selectedVideo.order}
+                    </div>
+                    {selectedVideo.source_type === 'youtube' ? (
                       <iframe
-                        src={`${selectedVideo.url}?autoplay=1&start=0&controls=1&modestbranding=1&rel=0`}
+                        src={selectedVideo.url}
                         title={selectedVideo.title}
+                        width="100%"
+                        height="100%"
                         allowFullScreen
                         frameBorder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       ></iframe>
-                      {!isEnrolled && (
-                        <div className="preview-info-banner">
-                          <FaLock size={16} />
-                          <span>Preview: {Math.floor(selectedVideo.preview_duration / 60)}:{(selectedVideo.preview_duration % 60).toString().padStart(2, '0')} minutes - Enroll for full access</span>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <video
-                      ref={videoRef}
-                      src={selectedVideo.url}
-                      controls
-                      onTimeUpdate={handleTimeUpdate}
-                      className={!isEnrolled ? "preview-video" : ""}
-                    />
-                  )}
-                  <div className="video-info">
-                    <h3>{selectedVideo.title}</h3>
-                    {!isEnrolled && (
-                      <div className="preview-info">
-                        <FaLock /> Preview: {Math.floor(selectedVideo.preview_duration / 60)}:{(selectedVideo.preview_duration % 60).toString().padStart(2, '0')} minutes
-                      </div>
+                    ) : (
+                      <video
+                        ref={videoRef}
+                        src={selectedVideo.url}
+                        controls
+                        width="100%"
+                        height="100%"
+                        onTimeUpdate={handleTimeUpdate}
+                      />
                     )}
                   </div>
-                </>
-              )}
+                )}
+              </div>
+            ) : (
+              <div className="no-video-selected">
+                <div className="placeholder">
+                  <h3>Select a video to start learning</h3>
+                  <p>Choose from the playlist to begin your course</p>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {selectedVideo && (
+            <div className="video-details">
+              <h2 className="video-title">{selectedVideo.title}</h2>
+              <div className="video-meta">
+                {selectedVideo.id === 'preview' ? (
+                  <span className="preview-tag">🎬 Free Preview</span>
+                ) : (
+                  <span className="lesson-number">Lesson {selectedVideo.order + 1}</span>
+                )}
+              </div>
             </div>
-          ) : (
-            <div className="no-video">No videos available for this course</div>
           )}
         </div>
 
-        <div className="video-playlist">
-          <h3>Course Content</h3>
-          <ul className="video-list">
+        <div className="playlist-sidebar">
+          <div className="playlist-header">
+            <h3>Course Content</h3>
+            <span className="video-count">{videos.length} lessons</span>
+          </div>
+          
+          <div className="playlist-container">
             {videos.length > 0 ? (
-              videos.map((video) => (
-                <li
-                  key={video.id}
-                  className={`video-item ${selectedVideo && selectedVideo.id === video.id ? 'active' : ''}`}
-                  onClick={() => handleVideoSelect(video)}
-                >
-                  <span className="video-order">{video.order + 1}</span>
-                  <span className="video-title">{video.title}</span>
-                  {!isEnrolled && video.order === 0 && <span className="preview-badge">Preview</span>}
-                  {!isEnrolled && video.order > 0 && <FaLock className="lock-icon" />}
-                </li>
-              ))
+              videos.map((video, index) => {
+                const isFirstVideo = video.order === 0;
+                const isLocked = !isEnrolled && !isFirstVideo;
+                const isActive = selectedVideo?.id === video.id || (selectedVideo?.id === 'preview' && isFirstVideo);
+                
+                return (
+                  <div
+                    key={video.id}
+                    className={`playlist-item ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
+                    onClick={() => handleVideoSelect(video)}
+                  >
+                    <div className="thumbnail">
+                      <div className="play-icon">
+                        {isLocked ? <FaLock /> : '▶'}
+                      </div>
+                      <span className="duration">{video.order + 1}</span>
+                    </div>
+                    
+                    <div className="video-info">
+                      <h4 className="title">{video.title}</h4>
+                      <div className="meta">
+                        <span className="lesson">Lesson {video.order + 1}</span>
+                        {isFirstVideo && !isEnrolled && (
+                          <span className="preview">🎬 Preview</span>
+                        )}
+                        {isLocked && (
+                          <span className="locked">🔒 Locked</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
             ) : (
-              <li className="no-videos-message">No videos available</li>
+              <div className="no-content">
+                <p>No videos available</p>
+              </div>
             )}
-          </ul>
+          </div>
         </div>
       </div>
 

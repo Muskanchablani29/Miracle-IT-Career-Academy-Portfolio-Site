@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'courses',
+    'chatbot',
 ]
 
 MIDDLEWARE = [
@@ -188,8 +189,11 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 ]
 
 # Razorpay Configuration
-RAZORPAY_KEY_ID = 'rzp_test_your_key_id'  # Replace with your actual test key
-RAZORPAY_KEY_SECRET = 'your_secret_key'    # Replace with your actual secret key
+RAZORPAY_KEY_ID = 'rzp_test_7oQr2i3UpEf4dT'  
+RAZORPAY_KEY_SECRET = 'jE9e0YINF86l1xwQJBAMuCq7'
+
+# Gemini AI Configuration
+GEMINI_API_KEY = 'AIzaSyADRjkMRA2Ggrli95GLqzvlw81PnD7359c'    
 
 # Logging configuration
 LOGGING = {

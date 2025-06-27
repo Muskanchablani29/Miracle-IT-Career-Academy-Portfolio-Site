@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getStudentFeeDetails, initializePayment, verifyFeePayment } from '../../api';
+import { getStudentFeeDetails, createRazorpayOrder, verifyRazorpayPayment } from '../../api';
 import './StudentFeePayment.css';
 import { FaMoneyBillWave, FaSpinner, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
@@ -8,7 +8,7 @@ const StudentFeePayment = () => {
   const [feeData, setFeeData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedInstallment, setSelectedInstallment] = useState(null);
+
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [paymentError, setPaymentError] = useState(null);
@@ -33,14 +33,36 @@ const StudentFeePayment = () => {
     fetchFeeDetails();
   }, []);
   
-  const handlePayNow = async (installmentId) => {
+  const handlePayNow = async (amount) => {
     try {
       setPaymentProcessing(true);
-      setSelectedInstallment(installmentId);
       setPaymentError(null);
       
-      // Initialize payment
-      const orderData = await initializePayment(installmentId);
+      // Create Razorpay order
+      const orderData = await createRazorpayOrder(amount);
+      
+      // Check if this is demo mode
+      if (orderData.demo_mode || orderData.key_id === 'demo_key_only') {
+        // Demo mode - use simple demo payment
+        setTimeout(async () => {
+          try {
+            const { makeDemoPayment } = require('../../api');
+            const result = await makeDemoPayment(amount);
+            
+            setPaymentSuccess(true);
+            // Refresh fee data after successful payment
+            const updatedFeeData = await getStudentFeeDetails();
+            setFeeData(updatedFeeData);
+            
+          } catch (err) {
+            console.error('Demo payment error:', err);
+            setPaymentError('Demo payment failed. Please try again.');
+          } finally {
+            setPaymentProcessing(false);
+          }
+        }, 2000); // Simulate 2 second processing time
+        return;
+      }
       
       // Load Razorpay script
       const script = document.createElement('script');
@@ -51,10 +73,10 @@ const StudentFeePayment = () => {
       script.onload = () => {
         const options = {
           key: orderData.key_id,
-          amount: orderData.amount * 100, // Amount in paise
-          currency: orderData.currency,
+          amount: orderData.amount, // Amount already in paise from backend
+          currency: orderData.currency || 'INR',
           name: 'Course Fee Payment',
-          description: 'Fee installment payment',
+          description: 'Fee payment',
           order_id: orderData.order_id,
           prefill: {
             name: orderData.student_name,
@@ -68,19 +90,16 @@ const StudentFeePayment = () => {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_signature: response.razorpay_signature,
-                installment_id: installmentId
+                amount: orderData.amount
               };
               
-              const result = await verifyFeePayment(verificationData);
+              const result = await verifyRazorpayPayment(verificationData);
               
-              if (result.success) {
-                setPaymentSuccess(true);
-                // Refresh fee data after successful payment
-                const updatedFeeData = await getStudentFeeDetails();
-                setFeeData(updatedFeeData);
-              } else {
-                setPaymentError('Payment verification failed. Please contact support.');
-              }
+              setPaymentSuccess(true);
+              // Refresh fee data after successful payment
+              const updatedFeeData = await getStudentFeeDetails();
+              setFeeData(updatedFeeData);
+              
             } catch (err) {
               console.error('Payment verification error:', err);
               setPaymentError('Payment verification failed. Please contact support.');
@@ -165,6 +184,22 @@ const StudentFeePayment = () => {
         </div>
       </div>
       
+      {feeData?.due_amount > 0 && (
+        <div className="quick-payment">
+          <button 
+            className="pay-full-btn"
+            onClick={() => handlePayNow(feeData.due_amount)}
+            disabled={paymentProcessing}
+          >
+            {paymentProcessing ? (
+              <>
+                <FaSpinner className="spinner" /> Processing...
+              </>
+            ) : `Pay Full Amount ₹${feeData.due_amount.toLocaleString()}`}
+          </button>
+        </div>
+      )}
+      
       {paymentSuccess && (
         <div className="success-message">
           <FaCheckCircle />
@@ -220,10 +255,10 @@ const StudentFeePayment = () => {
                           {!installment.is_paid ? (
                             <button 
                               className="pay-now-btn"
-                              onClick={() => handlePayNow(installment.id)}
-                              disabled={paymentProcessing && selectedInstallment === installment.id}
+                              onClick={() => handlePayNow(installment.amount)}
+                              disabled={paymentProcessing}
                             >
-                              {paymentProcessing && selectedInstallment === installment.id ? (
+                              {paymentProcessing ? (
                                 <>
                                   <FaSpinner className="spinner" /> Processing...
                                 </>

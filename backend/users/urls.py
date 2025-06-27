@@ -15,7 +15,7 @@ from .views_projects import (
 from .views_fees import (
     FeeStructureViewSet, StudentFeeViewSet, FeePaymentViewSet,
     AdminFeeReportView, StudentFeeDetailView, FacultyStudentFeeView, AuthTestView,
-    student_fee_detail_view, download_receipt_view
+    student_fee_detail_view, download_receipt_view, AdminNotificationViewSet
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -34,6 +34,7 @@ router.register(r'student-achievements', StudentAchievementViewSet, basename='st
 router.register(r'fee-structures', FeeStructureViewSet, basename='fee-structure')
 router.register(r'student-fees', StudentFeeViewSet, basename='student-fees')
 router.register(r'fee-payments', FeePaymentViewSet, basename='fee-payment')
+router.register(r'admin-notifications', AdminNotificationViewSet, basename='admin-notification')
 
 urlpatterns = [
     path('', include(router.urls)),

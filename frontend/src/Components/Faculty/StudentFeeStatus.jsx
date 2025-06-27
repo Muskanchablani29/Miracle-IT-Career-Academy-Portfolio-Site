@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import axios from 'axios';
-import { FaMoneyBillWave, FaExclamationTriangle, FaSearch, FaFilter } from 'react-icons/fa';
-import './FacultyDashboard.css';
+import { useParams, useNavigate } from 'react-router-dom';
+import { userAxiosInstance } from '../../api';
+import { 
+  FaMoneyBillWave, FaExclamationTriangle, FaSearch, FaFilter, 
+  FaUsers, FaCheckCircle, FaExclamationCircle, FaTimesCircle,
+  FaDownload, FaFileExport, FaChartLine
+} from 'react-icons/fa';
+import './StudentFeeStatus.css';
 
 const StudentFeeStatus = () => {
   const { batchId } = useParams();
+  const navigate = useNavigate();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -30,31 +35,66 @@ const StudentFeeStatus = () => {
   ];
 
   useEffect(() => {
+    // Check if user is authenticated
+    const token = localStorage.getItem('access');
+    if (!token) {
+      console.warn('No access token found, redirecting to login');
+      navigate('/login');
+      return;
+    }
+
     const fetchBatches = async () => {
       try {
-        const response = await axios.get('/api/batches/');
+        const response = await userAxiosInstance.get('batches/');
         setBatches(response.data);
       } catch (err) {
         console.error('Error fetching batches:', err);
+        if (err.response?.status === 401) {
+          // Redirect to login if unauthorized
+          navigate('/login');
+          return;
+        }
         // Use mock data if API call fails
         setBatches(mockBatches);
       }
     };
 
     fetchBatches();
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     const fetchStudentFees = async () => {
+      // Check if user is authenticated
+      const token = localStorage.getItem('access');
+      if (!token) {
+        console.warn('No access token found, redirecting to login');
+        navigate('/login');
+        return;
+      }
+
       try {
         setLoading(true);
         
         try {
-          const response = await axios.get(`/api/faculty-student-fees/?batch_id=${selectedBatch || ''}`);
-          setStudents(response.data);
+          const response = await userAxiosInstance.get(`faculty-student-fees/?batch_id=${selectedBatch || ''}`);
+          console.log('API Response:', response.data);
+          if (Array.isArray(response.data)) {
+            setStudents(response.data);
+            console.log(`Loaded ${response.data.length} students from API`);
+          } else {
+            console.warn('API returned non-array data:', response.data);
+            setStudents([]);
+          }
         } catch (err) {
           console.error('Error fetching student fee data:', err);
+          console.error('Error details:', err.response?.data);
+          if (err.response?.status === 401) {
+            // Redirect to login if unauthorized
+            navigate('/login');
+            return;
+          }
           // Use mock data if API call fails
+          console.log('Using mock data due to API error');
           setStudents(mockStudents);
         }
         
@@ -71,9 +111,9 @@ const StudentFeeStatus = () => {
     } else if (batches.length > 0) {
       setSelectedBatch(batches[0].id);
     }
-  }, [selectedBatch, batchId, batches]);
+  }, [selectedBatch, batchId, batches, navigate]);
 
-  const filteredStudents = students.filter(student => {
+  const filteredStudents = Array.isArray(students) ? students.filter(student => {
     const matchesSearch = 
       student.student_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
       student.enrollment_id.toLowerCase().includes(searchTerm.toLowerCase());
@@ -81,133 +121,197 @@ const StudentFeeStatus = () => {
     const matchesStatus = statusFilter === 'all' || student.status === statusFilter;
     
     return matchesSearch && matchesStatus;
-  });
+  }) : [];
 
   const handleBatchChange = (e) => {
     setSelectedBatch(e.target.value);
   };
 
   if (loading) {
-    return <div className="loading">Loading student fee data...</div>;
+    return (
+      <div className="fee-management-container">
+        <div className="fee-content-wrapper">
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <div className="loading-text">Loading student fee data...</div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="error-message">
-        <FaExclamationTriangle />
-        <p>{error}</p>
+      <div className="fee-management-container">
+        <div className="fee-content-wrapper">
+          <div className="error-container">
+            <FaExclamationTriangle className="error-icon" />
+            <div className="error-text">{error}</div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="dashboard-container">
-      <h1><FaMoneyBillWave /> Student Fee Status</h1>
-      
-      <div className="filters-container">
-        <div className="batch-selector">
-          <label>Select Batch:</label>
-          <select 
-            value={selectedBatch} 
-            onChange={handleBatchChange}
-          >
-            {batches.map(batch => (
-              <option key={batch.id} value={batch.id}>
-                {batch.name}
-              </option>
-            ))}
-          </select>
+    <div className="fee-management-container">
+      <div className="fee-content-wrapper">
+        <div className="fee-header">
+          <h1><FaMoneyBillWave /> Student Fee Management</h1>
+          <p>Monitor and track student fee payments across all batches</p>
+        </div>
+
+        {students === mockStudents && (
+          <div className="mock-data-warning">
+            <FaExclamationTriangle />
+            <span>Using demo data - API connection failed</span>
+          </div>
+        )}
+        
+        <div className="fee-controls">
+          <div className="controls-grid">
+            <div className="control-group">
+              <label className="control-label">Select Batch</label>
+              <select 
+                className="control-select"
+                value={selectedBatch} 
+                onChange={handleBatchChange}
+              >
+                <option value="">All Batches</option>
+                {batches.map(batch => (
+                  <option key={batch.id} value={batch.id}>
+                    {batch.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="control-group">
+              <label className="control-label">Search Students</label>
+              <div className="control-input-wrapper">
+                <FaSearch className="control-icon" />
+                <input 
+                  className="control-input with-icon"
+                  type="text" 
+                  placeholder="Search by name or enrollment ID" 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+            
+            <div className="control-group">
+              <label className="control-label">Filter by Status</label>
+              <select 
+                className="control-select"
+                value={statusFilter} 
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="all">All Status</option>
+                <option value="paid">Fully Paid</option>
+                <option value="partially_paid">Partially Paid</option>
+                <option value="unpaid">Unpaid</option>
+              </select>
+            </div>
+          </div>
         </div>
         
-        <div className="search-box">
-          <FaSearch className="search-icon" />
-          <input 
-            type="text" 
-            placeholder="Search by name or enrollment ID" 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="fee-stats">
+          <div className="stats-grid">
+            <div className="stat-card">
+              <h3>Total Students</h3>
+              <div className="stat-number">{Array.isArray(students) ? students.length : 0}</div>
+            </div>
+            <div className="stat-card">
+              <h3>Fully Paid</h3>
+              <div className="stat-number">
+                {Array.isArray(students) ? students.filter(student => student.status === 'paid').length : 0}
+              </div>
+            </div>
+            <div className="stat-card">
+              <h3>Partially Paid</h3>
+              <div className="stat-number">
+                {Array.isArray(students) ? students.filter(student => student.status === 'partially_paid').length : 0}
+              </div>
+            </div>
+            <div className="stat-card">
+              <h3>Unpaid</h3>
+              <div className="stat-number">
+                {Array.isArray(students) ? students.filter(student => student.status === 'unpaid').length : 0}
+              </div>
+            </div>
+          </div>
         </div>
         
-        <div className="filter-box">
-          <FaFilter className="filter-icon" />
-          <select 
-            value={statusFilter} 
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="all">All Status</option>
-            <option value="paid">Paid</option>
-            <option value="partially_paid">Partially Paid</option>
-            <option value="unpaid">Unpaid</option>
-          </select>
-        </div>
-      </div>
-      
-      <div className="fee-summary-cards">
-        <div className="summary-card">
-          <h3>Total Students</h3>
-          <p className="summary-number">{students.length}</p>
-        </div>
-        <div className="summary-card">
-          <h3>Fully Paid</h3>
-          <p className="summary-number">
-            {students.filter(student => student.status === 'paid').length}
-          </p>
-        </div>
-        <div className="summary-card">
-          <h3>Partially Paid</h3>
-          <p className="summary-number">
-            {students.filter(student => student.status === 'partially_paid').length}
-          </p>
-        </div>
-        <div className="summary-card">
-          <h3>Unpaid</h3>
-          <p className="summary-number">
-            {students.filter(student => student.status === 'unpaid').length}
-          </p>
-        </div>
-      </div>
-      
-      <div className="fee-table-container">
-        <table className="fee-table">
-          <thead>
-            <tr>
-              <th>Enrollment ID</th>
-              <th>Student Name</th>
-              <th>Total Amount</th>
-              <th>Amount Paid</th>
-              <th>Balance</th>
-              <th>Status</th>
-              <th>Last Payment</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredStudents.length > 0 ? (
-              filteredStudents.map((student) => (
-                <tr key={student.student_id}>
-                  <td>{student.enrollment_id}</td>
-                  <td>{student.student_name}</td>
-                  <td>₹{student.total_amount.toLocaleString()}</td>
-                  <td>₹{student.amount_paid.toLocaleString()}</td>
-                  <td>₹{(student.total_amount - student.amount_paid).toLocaleString()}</td>
-                  <td>
-                    <span className={`status-badge ${student.status}`}>
-                      {student.status.replace('_', ' ')}
-                    </span>
-                  </td>
-                  <td>{student.last_payment_date ? new Date(student.last_payment_date).toLocaleDateString() : 'No payment'}</td>
+        <div className="fee-table-section">
+          <div className="table-header">
+            <h2 className="table-title">Student Fee Details</h2>
+            <div className="table-actions">
+              <button className="action-btn btn-secondary">
+                <FaFileExport /> Export
+              </button>
+              <button className="action-btn btn-primary">
+                <FaChartLine /> Analytics
+              </button>
+            </div>
+          </div>
+          
+          <div className="modern-table-container">
+            <table className="modern-table">
+              <thead>
+                <tr>
+                  <th>Student Details</th>
+                  <th>Total Amount</th>
+                  <th>Amount Paid</th>
+                  <th>Balance Due</th>
+                  <th>Payment Status</th>
+                  <th>Last Payment</th>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="7" className="no-data">
-                  <FaExclamationTriangle />
-                  <p>No students found matching the filters</p>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {filteredStudents.length > 0 ? (
+                  filteredStudents.map((student) => (
+                    <tr key={student.student_id}>
+                      <td>
+                        <div className="student-info">
+                          <div className="student-name">{student.student_name}</div>
+                          <div className="enrollment-id">{student.enrollment_id}</div>
+                        </div>
+                      </td>
+                      <td className="amount-cell">₹{student.total_amount.toLocaleString()}</td>
+                      <td className="amount-cell amount-positive">₹{student.amount_paid.toLocaleString()}</td>
+                      <td className="amount-cell amount-negative">₹{(student.total_amount - student.amount_paid).toLocaleString()}</td>
+                      <td>
+                        <span className={`status-badge ${student.status}`}>
+                          {student.status === 'paid' && <FaCheckCircle />}
+                          {student.status === 'partially_paid' && <FaExclamationCircle />}
+                          {student.status === 'unpaid' && <FaTimesCircle />}
+                          {student.status.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="payment-date">
+                        {student.last_payment_date ? new Date(student.last_payment_date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        }) : 'No payment yet'}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="no-data-row">
+                      <div className="no-data-content">
+                        <FaUsers className="no-data-icon" />
+                        <div className="no-data-text">No students found matching the current filters</div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );

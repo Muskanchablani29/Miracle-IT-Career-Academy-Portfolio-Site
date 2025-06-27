@@ -18,9 +18,25 @@ class Course(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     youtube_playlist_id = models.CharField(max_length=100, blank=True, null=True, help_text="YouTube playlist ID")
+    preview_video_url = models.URLField(blank=True, null=True, help_text="URL for the preview video (first video of playlist)")
+    preview_duration = models.IntegerField(default=300, help_text="Preview duration in seconds (default: 5 minutes)")
     
     def __str__(self):
         return self.title
+    
+    def get_first_video_as_preview(self):
+        """Get the first video of the course as preview"""
+        first_video = self.videos.filter(order=0).first()
+        if first_video:
+            return {
+                'id': 'preview',
+                'title': f'{self.title} - Preview',
+                'url': first_video.url,
+                'source_type': first_video.source_type,
+                'order': -1,
+                'preview_duration': self.preview_duration
+            }
+        return None
 
 class CourseSyllabus(models.Model):
     course = models.ForeignKey(Course, related_name='syllabus_modules', on_delete=models.CASCADE)

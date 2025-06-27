@@ -18,7 +18,7 @@ export const UserProvider = ({ children }) => {
       const access = localStorage.getItem('access');
       const role = localStorage.getItem('role');
       const username = localStorage.getItem('username');
-      console.log('Restoring user session, access token:', access);
+      // console.log('Restoring user session, access token:', access);
       
       // Immediately set user from localStorage to prevent flashing of login page
       if (access && role && username) {
@@ -61,7 +61,7 @@ export const UserProvider = ({ children }) => {
           }
         }
       } else {
-        console.log('No access token found, user is not logged in');
+        // No access token found - user is not logged in (normal for public pages)
         setUser(null);
       }
     };

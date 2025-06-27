@@ -4,6 +4,7 @@ import { UserContext } from '../UserContext'
 import './StudentDashboard.css'
 import { FaSearch, FaBell, FaBook, FaCalendarCheck, FaMoneyBillWave } from 'react-icons/fa'
 import { fetchCourseUpdateNotifications, getUserEnrollments, checkAttendanceStatus, getStudentFeeDetails } from '../../api'
+import ChatWidget from '../Chatbot/ChatWidget'
 
 export default function StudentDashboard() {
   const { user } = useContext(UserContext);
@@ -191,6 +192,8 @@ export default function StudentDashboard() {
           )}
         </div>
       </div>
+      
+      <ChatWidget />
     </div>
   )
 }
