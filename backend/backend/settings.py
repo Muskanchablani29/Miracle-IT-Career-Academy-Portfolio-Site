@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-3pgh()(0xf=n+4v&rx_jb8f)b=wmf)shf0kra71+8+_@1$oap!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['miracle-it-career-academy-portfolio-site.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
