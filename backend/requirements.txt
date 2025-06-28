@@ -6,5 +6,5 @@ requests==2.28.1
 razorpay==1.4.2
 djangorestframework-simplejwt==5.2.2
 PyMySQL==1.0.2
-reportlab==3.6.0 --only-binary :all:
+reportlab==4.4.2
 google-generativeai==0.3.2
