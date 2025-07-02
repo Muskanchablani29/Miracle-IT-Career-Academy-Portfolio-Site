@@ -1,4 +1,4 @@
-from users.models import Student, Attendance, StudentFee, Project, ProjectSubmission
+from users.models import Student, Attendance, StudentFee, Project, ProjectSubmission, FeeInstallment, StudentInstallmentPayment
 from courses.models import Course
 from datetime import date, datetime, timedelta
 import random
@@ -52,16 +52,64 @@ class IntentProcessor:
     
     def get_fee_data(self):
         try:
+            from users.models import StudentFee, FeeInstallment, StudentInstallmentPayment
+            from datetime import date, timedelta
+            
             student_fee = StudentFee.objects.get(student=self.student)
+            
+            # Get installments with payment status
+            installments = FeeInstallment.objects.filter(
+                fee_structure=student_fee.fee_structure
+            ).order_by('sequence')
+            
+            installment_payments = StudentInstallmentPayment.objects.filter(
+                student_fee=student_fee
+            )
+            installment_payment_dict = {ip.installment_id: ip for ip in installment_payments}
+            
+            # Check for upcoming due dates
+            upcoming_due = None
+            overdue_count = 0
+            
+            for installment in installments:
+                payment_info = installment_payment_dict.get(installment.id)
+                is_paid = payment_info.is_paid if payment_info else False
+                
+                if not is_paid:
+                    days_until_due = (installment.due_date - date.today()).days
+                    if days_until_due < 0:
+                        overdue_count += 1
+                    elif days_until_due <= 7 and not upcoming_due:
+                        upcoming_due = {
+                            'sequence': installment.sequence,
+                            'amount': float(installment.amount),
+                            'due_date': installment.due_date,
+                            'days_left': days_until_due
+                        }
+            
+            message = f"Fee Status: {student_fee.status.title()} - Paid: ₹{student_fee.amount_paid}/₹{student_fee.total_amount}"
+            
+            if overdue_count > 0:
+                message += f"\n⚠️ You have {overdue_count} overdue installment(s)!"
+            elif upcoming_due:
+                if upcoming_due['days_left'] == 0:
+                    message += f"\n🔔 Installment {upcoming_due['sequence']} (₹{upcoming_due['amount']}) is due TODAY!"
+                elif upcoming_due['days_left'] > 0:
+                    message += f"\n🔔 Installment {upcoming_due['sequence']} (₹{upcoming_due['amount']}) is due in {upcoming_due['days_left']} day(s)!"
+            
             return {
                 'type': 'fees',
                 'total_amount': float(student_fee.total_amount),
                 'paid_amount': float(student_fee.amount_paid),
                 'status': student_fee.status,
-                'message': f"Fee Status: {student_fee.status.title()} - Paid: ₹{student_fee.amount_paid}/₹{student_fee.total_amount}"
+                'upcoming_due': upcoming_due,
+                'overdue_count': overdue_count,
+                'message': message
             }
         except StudentFee.DoesNotExist:
             return {'type': 'fees', 'message': 'No fee information available'}
+        except Exception as e:
+            return {'type': 'fees', 'message': f'Error retrieving fee information: {str(e)}'}
     
     def get_schedule_data(self):
         return {

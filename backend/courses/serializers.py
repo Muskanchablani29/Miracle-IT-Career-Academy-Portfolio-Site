@@ -62,6 +62,7 @@ class QuizSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'description', 'image', 'questions', 'time', 'difficulty']
 
 class CourseEnrollmentSerializer(serializers.ModelSerializer):
+    course = CourseSerializer(read_only=True)
     course_title = serializers.ReadOnlyField(source='course.title')
     
     class Meta:

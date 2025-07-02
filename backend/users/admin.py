@@ -1,5 +1,9 @@
 from django.contrib import admin
-from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate, Batch, Attendance, Holiday, Project, ProjectSubmission, FeeStructure
+from .models import (
+    CustomUser, Student, Faculty, Admin, Workshop, Certificate, Batch, Attendance, Holiday, 
+    Project, ProjectSubmission, FeeStructure, StudentFee, FeePayment, FeeInstallment,
+    AdminNotification, StudentNotification
+)
 
 @admin.register(CustomUser)
 class CustomUserAdmin(admin.ModelAdmin):
@@ -64,3 +68,43 @@ class HolidayAdmin(admin.ModelAdmin):
 class FeeStructureAdmin(admin.ModelAdmin):
     list_display = ('name', 'course', 'total_amount', 'installments')
     search_fields = ('name', 'course__title')
+
+@admin.register(StudentFee)
+class StudentFeeAdmin(admin.ModelAdmin):
+    list_display = ('student', 'fee_structure', 'total_amount', 'amount_paid', 'due_amount', 'status')
+    list_filter = ('status', 'assigned_date')
+    search_fields = ('student__user__username', 'student__enrollment_id')
+    readonly_fields = ('due_amount',)
+    
+    def due_amount(self, obj):
+        return obj.total_amount - obj.amount_paid
+    due_amount.short_description = 'Due Amount'
+
+@admin.register(FeePayment)
+class FeePaymentAdmin(admin.ModelAdmin):
+    list_display = ('receipt_number', 'get_student_name', 'amount', 'payment_mode', 'status', 'payment_date')
+    list_filter = ('payment_mode', 'status', 'payment_date')
+    search_fields = ('receipt_number', 'student_fee__student__user__username', 'transaction_id')
+    readonly_fields = ('receipt_number', 'payment_date')
+    
+    def get_student_name(self, obj):
+        return obj.student_fee.student.user.username
+    get_student_name.short_description = 'Student Name'
+
+@admin.register(FeeInstallment)
+class FeeInstallmentAdmin(admin.ModelAdmin):
+    list_display = ('fee_structure', 'sequence', 'amount', 'due_date')
+    list_filter = ('due_date',)
+    ordering = ('fee_structure', 'sequence')
+
+@admin.register(AdminNotification)
+class AdminNotificationAdmin(admin.ModelAdmin):
+    list_display = ('title', 'notification_type', 'student', 'amount', 'is_read', 'created_at')
+    list_filter = ('notification_type', 'is_read', 'created_at')
+    search_fields = ('title', 'student__user__username')
+
+@admin.register(StudentNotification)
+class StudentNotificationAdmin(admin.ModelAdmin):
+    list_display = ('student', 'title', 'notification_type', 'is_read', 'created_at')
+    list_filter = ('notification_type', 'is_read', 'created_at')
+    search_fields = ('title', 'student__user__username')

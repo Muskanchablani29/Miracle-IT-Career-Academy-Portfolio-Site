@@ -591,7 +591,7 @@ if AdminNotification:
         class Meta:
             model = AdminNotification
             fields = ['id', 'title', 'message', 'notification_type', 'student', 'student_name', 
-                     'amount', 'is_read', 'created_at', 'time_ago']
+                     'amount', 'installment_number', 'is_read', 'created_at', 'time_ago']
             read_only_fields = ['created_at']
         
         def get_student_name(self, obj):
@@ -617,4 +617,36 @@ if AdminNotification:
 else:
     # Dummy serializer if AdminNotification doesn't exist
     class AdminNotificationSerializer(serializers.Serializer):
+        pass
+
+# Try to import StudentNotification
+try:
+    from .models import StudentNotification
+    
+    class StudentNotificationSerializer(serializers.ModelSerializer):
+        time_ago = serializers.SerializerMethodField()
+        
+        class Meta:
+            model = StudentNotification
+            fields = ['id', 'title', 'message', 'notification_type', 'is_read', 'is_popup', 'created_at', 'time_ago']
+            read_only_fields = ['created_at']
+        
+        def get_time_ago(self, obj):
+            from django.utils import timezone
+            
+            now = timezone.now()
+            diff = now - obj.created_at
+            
+            if diff.days > 0:
+                return f"{diff.days} day{'s' if diff.days > 1 else ''} ago"
+            elif diff.seconds > 3600:
+                hours = diff.seconds // 3600
+                return f"{hours} hour{'s' if hours > 1 else ''} ago"
+            elif diff.seconds > 60:
+                minutes = diff.seconds // 60
+                return f"{minutes} minute{'s' if minutes > 1 else ''} ago"
+            else:
+                return "Just now"
+except ImportError:
+    class StudentNotificationSerializer(serializers.Serializer):
         pass

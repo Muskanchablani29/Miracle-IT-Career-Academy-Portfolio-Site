@@ -8,7 +8,8 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.utils import timezone
 from django.db import models
 from .models import (
-    Student, FeeStructure, StudentFee, FeePayment, FeeInstallment
+    Student, FeeStructure, StudentFee, FeePayment, FeeInstallment, 
+    StudentInstallmentPayment, StudentNotification
 )
 
 # Try to import AdminNotification, handle gracefully if it doesn't exist
@@ -18,7 +19,7 @@ except ImportError:
     AdminNotification = None
 from .serializers import (
     StudentFeeSerializer, FeePaymentSerializer, FeeInstallmentSerializer, 
-    FeeStructureSerializer, AdminNotificationSerializer
+    FeeStructureSerializer, AdminNotificationSerializer, StudentNotificationSerializer
 )
 from django.http import HttpResponse, FileResponse
 import uuid
@@ -63,6 +64,15 @@ def download_receipt_view(request, receipt_number=None):
         payment = FeePayment.objects.filter(receipt_number=receipt_number).first()
         if not payment:
             return Response({"error": "Receipt not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Check if receipt file exists and return it
+        if payment.receipt_file and payment.receipt_file.name:
+            try:
+                response = FileResponse(payment.receipt_file.open('rb'), content_type='application/pdf')
+                response['Content-Disposition'] = f'attachment; filename="receipt-{receipt_number}.pdf"'
+                return response
+            except FileNotFoundError:
+                pass  # Fall back to generating new receipt
         
         if REPORTLAB_AVAILABLE:
             buffer = io.BytesIO()
@@ -147,6 +157,12 @@ def download_receipt_view(request, receipt_number=None):
             doc.build(story)
             buffer.seek(0)
             
+            # Save receipt file to payment record
+            from django.core.files.base import ContentFile
+            if not payment.receipt_file:
+                receipt_content = ContentFile(buffer.getvalue())
+                payment.receipt_file.save(f'receipt-{receipt_number}.pdf', receipt_content, save=True)
+            
             response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
             response['Content-Disposition'] = f'attachment; filename="receipt-{receipt_number}.pdf"'
             return response
@@ -201,10 +217,16 @@ def student_fee_detail_view(request):
                     "error": "No course assigned. Please contact admin."
                 }, status=status.HTTP_404_NOT_FOUND)
         
-        # Get installments
+        # Get installments with payment status
         installments = FeeInstallment.objects.filter(
             fee_structure=student_fee.fee_structure
         ).order_by('sequence')
+        
+        # Get installment payment status
+        installment_payments = StudentInstallmentPayment.objects.filter(
+            student_fee=student_fee
+        )
+        installment_payment_dict = {ip.installment_id: ip for ip in installment_payments}
         
         # Get payment history
         payments = FeePayment.objects.filter(
@@ -239,7 +261,10 @@ def student_fee_detail_view(request):
                 'id': inst.id,
                 'amount': float(inst.amount),
                 'due_date': inst.due_date.isoformat(),
-                'sequence': inst.sequence
+                'sequence': inst.sequence,
+                'is_paid': installment_payment_dict.get(inst.id).is_paid if installment_payment_dict.get(inst.id) else False,
+                'amount_paid': float(installment_payment_dict.get(inst.id).amount_paid) if installment_payment_dict.get(inst.id) else 0,
+                'payment_date': installment_payment_dict.get(inst.id).payment_date.isoformat() if installment_payment_dict.get(inst.id) and installment_payment_dict.get(inst.id).payment_date else None
             } for inst in installments],
             'payment_history': [{
                 'id': payment.id,
@@ -369,24 +394,33 @@ class AdminNotificationViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         try:
-            return AdminNotification.objects.all()
+            # Filter out expired notifications
+            return AdminNotification.objects.filter(
+                models.Q(expires_at__isnull=True) | models.Q(expires_at__gt=timezone.now())
+            )
         except:
-            # If table doesn't exist yet, return empty list
             return []
     
     def list(self, request):
         try:
-            notifications = AdminNotification.objects.all()
+            # Filter out expired notifications
+            notifications = AdminNotification.objects.filter(
+                models.Q(expires_at__isnull=True) | models.Q(expires_at__gt=timezone.now())
+            )
             serializer = self.get_serializer(notifications, many=True)
             return Response(serializer.data)
         except Exception as e:
-            # Return empty list if table doesn't exist
             return Response([])
     
     @action(detail=False, methods=['get'])
     def unread(self, request):
         try:
-            unread_notifications = AdminNotification.objects.filter(is_read=False)
+            # Filter out expired notifications and get only unread ones
+            unread_notifications = AdminNotification.objects.filter(
+                is_read=False
+            ).filter(
+                models.Q(expires_at__isnull=True) | models.Q(expires_at__gt=timezone.now())
+            )
             serializer = self.get_serializer(unread_notifications, many=True)
             return Response(serializer.data)
         except:
@@ -405,10 +439,31 @@ class AdminNotificationViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def mark_all_read(self, request):
         try:
-            AdminNotification.objects.filter(is_read=False).update(is_read=True)
+            # Filter out expired notifications and mark remaining as read
+            AdminNotification.objects.filter(
+                is_read=False
+            ).filter(
+                models.Q(expires_at__isnull=True) | models.Q(expires_at__gt=timezone.now())
+            ).update(is_read=True)
             return Response({'status': 'all notifications marked as read'})
         except:
             return Response({'status': 'error'})
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def student_notifications(request):
+    try:
+        return Response([])
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def mark_notification_read(request, notification_id):
+    try:
+        return Response({'status': 'marked as read'})
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class FeeStructureViewSet(viewsets.ModelViewSet):
     queryset = FeeStructure.objects.all()
@@ -457,10 +512,16 @@ class StudentFeeViewSet(viewsets.ModelViewSet):
                         "error": "No course assigned. Please contact admin."
                     }, status=status.HTTP_404_NOT_FOUND)
             
-            # Get installments
+            # Get installments with payment status
             installments = FeeInstallment.objects.filter(
                 fee_structure=student_fee.fee_structure
             ).order_by('sequence')
+            
+            # Get installment payment status
+            installment_payments = StudentInstallmentPayment.objects.filter(
+                student_fee=student_fee
+            )
+            installment_payment_dict = {ip.installment_id: ip for ip in installment_payments}
             
             # Get payment history
             payments = FeePayment.objects.filter(
@@ -495,7 +556,10 @@ class StudentFeeViewSet(viewsets.ModelViewSet):
                     'id': inst.id,
                     'amount': float(inst.amount),
                     'due_date': inst.due_date.isoformat(),
-                    'sequence': inst.sequence
+                    'sequence': inst.sequence,
+                    'is_paid': installment_payment_dict.get(inst.id).is_paid if installment_payment_dict.get(inst.id) else False,
+                    'amount_paid': float(installment_payment_dict.get(inst.id).amount_paid) if installment_payment_dict.get(inst.id) else 0,
+                    'payment_date': installment_payment_dict.get(inst.id).payment_date.isoformat() if installment_payment_dict.get(inst.id) and installment_payment_dict.get(inst.id).payment_date else None
                 } for inst in installments],
                 'payment_history': [{
                     'id': payment.id,
@@ -531,9 +595,19 @@ class FeePaymentViewSet(viewsets.ModelViewSet):
             if not student_fee:
                 return Response({"error": "No fee record found"}, status=status.HTTP_404_NOT_FOUND)
             
+            # Get installment if specified
+            installment_id = request.data.get('installment_id')
+            installment = None
+            if installment_id:
+                try:
+                    installment = FeeInstallment.objects.get(id=installment_id, fee_structure=student_fee.fee_structure)
+                except FeeInstallment.DoesNotExist:
+                    return Response({"error": "Invalid installment selected"}, status=status.HTTP_400_BAD_REQUEST)
+            
             # Create payment record
             payment_data = {
                 'student_fee': student_fee.id,
+                'installment': installment.id if installment else None,
                 'amount': request.data.get('amount'),
                 'payment_mode': request.data.get('payment_mode', 'online'),
                 'transaction_id': request.data.get('transaction_id', ''),
@@ -555,7 +629,12 @@ class FeePaymentViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    @action(detail=False, methods=['get'], url_path='download-receipt')
+class FeePaymentViewSet(viewsets.ModelViewSet):
+    queryset = FeePayment.objects.all()
+    serializer_class = FeePaymentSerializer
+    permission_classes = [AllowAny]
+    
+    @action(detail=False, methods=['get'], url_path='download-receipt', permission_classes=[AllowAny])
     def download_receipt(self, request):
         try:
             receipt_number = request.GET.get('receipt_number')
@@ -763,16 +842,34 @@ class FeePaymentViewSet(viewsets.ModelViewSet):
                 return Response({"error": "No fee record found"}, status=status.HTTP_404_NOT_FOUND)
             
             amount = float(request.data.get('amount', 100))
+            installment_id = request.data.get('installment_id')
+            
+            # Get installment if specified
+            installment = None
+            if installment_id:
+                try:
+                    installment = FeeInstallment.objects.get(id=installment_id, fee_structure=student_fee.fee_structure)
+                    # Check if installment is already paid
+                    existing_payment = StudentInstallmentPayment.objects.filter(
+                        student_fee=student_fee,
+                        installment=installment,
+                        is_paid=True
+                    ).first()
+                    if existing_payment:
+                        return Response({"error": "This installment has already been paid"}, status=status.HTTP_400_BAD_REQUEST)
+                except FeeInstallment.DoesNotExist:
+                    return Response({"error": "Invalid installment selected"}, status=status.HTTP_400_BAD_REQUEST)
             
             # Create demo payment record
             payment = FeePayment.objects.create(
                 student_fee=student_fee,
+                installment=installment,
                 amount=amount,
                 payment_mode='online',
                 transaction_id=f'DEMO_{uuid.uuid4().hex[:8].upper()}',
                 receipt_number=f"REC-{uuid.uuid4().hex[:8].upper()}",
                 status='success',
-                remarks='Demo payment for testing',
+                remarks=f'Demo payment for testing' + (f' - Installment {installment.sequence}' if installment else ''),
                 recorded_by=user
             )
             
@@ -813,30 +910,35 @@ class FeePaymentViewSet(viewsets.ModelViewSet):
             razorpay_order_id = request.data.get('razorpay_order_id')
             razorpay_signature = request.data.get('razorpay_signature')
             amount_data = request.data.get('amount', 0)
+            installment_id = request.data.get('installment_id')
             
-            logger.info(f"Payment details - ID: {razorpay_payment_id}, Order: {razorpay_order_id}, Amount: {amount_data}")
+            logger.info(f"Payment details - ID: {razorpay_payment_id}, Order: {razorpay_order_id}, Amount: {amount_data}, Installment: {installment_id}")
+            
+            # Get installment if specified
+            installment = None
+            if installment_id:
+                try:
+                    installment = FeeInstallment.objects.get(id=installment_id, fee_structure=student_fee.fee_structure)
+                except FeeInstallment.DoesNotExist:
+                    return Response({"error": "Invalid installment selected"}, status=status.HTTP_400_BAD_REQUEST)
             
             # Handle amount conversion properly
             try:
                 if isinstance(amount_data, str) and amount_data.startswith('demo_'):
-                    # Demo payment, use a default amount
-                    amount = 100.0  # Default demo amount
+                    amount = 100.0
                 else:
-                    amount = float(amount_data) / 100  # Convert from paise to rupees
+                    amount = float(amount_data) / 100
             except (ValueError, TypeError) as e:
                 logger.error(f"Amount conversion error: {e}")
-                amount = 100.0  # Fallback amount
+                amount = 100.0
             
             if not all([razorpay_payment_id, razorpay_order_id]):
                 return Response({"error": "Missing payment details"}, status=status.HTTP_400_BAD_REQUEST)
             
             try:
                 import razorpay
-                
-                # Initialize Razorpay client
                 client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
                 
-                # Verify payment signature if provided and not demo
                 if razorpay_signature and razorpay_signature != 'demo_signature':
                     try:
                         client.utility.verify_payment_signature({
@@ -852,22 +954,43 @@ class FeePaymentViewSet(viewsets.ModelViewSet):
                     logger.info("Skipping signature verification (demo mode)")
                 
             except ImportError:
-                # Razorpay not installed, skip verification for demo mode
                 logger.info("Razorpay not available, using demo mode")
                 pass
+            
+            # Check if installment already paid
+            if installment:
+                existing_payment = StudentInstallmentPayment.objects.filter(
+                    student_fee=student_fee, installment=installment, is_paid=True
+                ).first()
+                if existing_payment:
+                    return Response({"error": "Installment already paid"}, status=status.HTTP_400_BAD_REQUEST)
             
             # Create payment record
             try:
                 payment = FeePayment.objects.create(
                     student_fee=student_fee,
+                    installment=installment,
                     amount=amount,
                     payment_mode='online',
                     transaction_id=razorpay_payment_id,
                     receipt_number=f"REC-{uuid.uuid4().hex[:8].upper()}",
                     status='success',
-                    remarks=f'Online payment via Razorpay - Order: {razorpay_order_id}',
+                    remarks=f'Online payment via Razorpay - Order: {razorpay_order_id}' + (f' - Installment {installment.sequence}' if installment else ''),
                     recorded_by=user
                 )
+                
+                # Payment record creation will trigger signals to update amounts
+                
+                # Create admin notification
+                if AdminNotification:
+                    AdminNotification.objects.create(
+                        title=f'Payment Received - {student.user.username}',
+                        message=f'Student {student.user.username} paid ₹{amount} for {"Installment " + str(installment.sequence) if installment else "fees"}',
+                        notification_type='payment',
+                        student=student,
+                        amount=amount,
+                        expires_at=timezone.now() + timezone.timedelta(hours=48)
+                    )
                 
                 logger.info(f"Payment record created successfully: {payment.receipt_number}")
                 

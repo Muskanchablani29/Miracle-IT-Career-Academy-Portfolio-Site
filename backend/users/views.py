@@ -1,5 +1,6 @@
 from rest_framework import generics, permissions, status, viewsets
 from .views_projects import ProjectViewSet, ProjectSubmissionViewSet, StudentAchievementViewSet, current_user_view, project_technologies
+from .models import StudentAchievement, ProjectSubmission, StudentFee
 from rest_framework.decorators import action, api_view, permission_classes
 from django.db.models import Q
 from .models import CustomUser, Student, Faculty, Admin, Workshop, Certificate, WorkshopRegistration, Batch, Attendance, Holiday
@@ -1009,5 +1010,148 @@ def get_student_attendance_stats(request, student_id):
     except Exception as e:
         return Response(
             {"detail": f"Error retrieving attendance statistics: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def student_profile(request):
+    """Get student profile with enrolled course"""
+    if request.user.role != 'student':
+        return Response(
+            {"detail": "Only students can access profile data."},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    try:
+        student = Student.objects.get(user=request.user)
+        serializer = StudentSerializer(student)
+        return Response(serializer.data)
+    except Student.DoesNotExist:
+        return Response(
+            {"detail": "Student profile not found."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def student_dashboard_data(request):
+    """Comprehensive API endpoint for student dashboard data"""
+    if request.user.role != 'student':
+        return Response(
+            {"detail": "Only students can access dashboard data."},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    try:
+        student = Student.objects.get(user=request.user)
+        
+        # Get enrollments
+        enrollments = CourseEnrollment.objects.filter(user=request.user)
+        enrollment_data = []
+        for enrollment in enrollments:
+            try:
+                enrollment_data.append({
+                    'id': enrollment.id,
+                    'course': enrollment.course.id,
+                    'course_title': enrollment.course.title,
+                    'enrolled_date': enrollment.enrolled_date,
+                    'progress_percentage': 65  # Mock progress
+                })
+            except Exception:
+                continue
+        
+        # Get attendance statistics
+        today = date.today()
+        admission_date = student.admission_date
+        
+        holidays = Holiday.objects.filter(date__gte=admission_date, date__lte=today)
+        holiday_dates = [h.date for h in holidays]
+        
+        working_days = []
+        current_date = admission_date
+        while current_date <= today:
+            if current_date.weekday() != 6 and current_date not in holiday_dates:
+                working_days.append(current_date)
+            current_date += timedelta(days=1)
+        
+        attendance_records = Attendance.objects.filter(
+            student=student,
+            date__gte=admission_date,
+            date__lte=today
+        )
+        
+        present_days = sum(1 for work_day in working_days 
+                          if attendance_records.filter(date=work_day, is_present=True).exists())
+        
+        attendance_percentage = (present_days / len(working_days) * 100) if working_days else 0
+        
+        today_attendance = attendance_records.filter(date=today).first()
+        is_present_today = today_attendance.is_present if today_attendance else False
+        
+        # Get achievements and projects
+        achievements = StudentAchievement.objects.filter(student=student)
+        project_submissions = ProjectSubmission.objects.filter(student=student)
+        completed_projects = project_submissions.filter(status='approved').count()
+        
+        # Get fee status
+        try:
+            student_fee = StudentFee.objects.filter(student=student).first()
+            if student_fee:
+                fee_status = {
+                    'total_amount': float(student_fee.total_amount),
+                    'amount_paid': float(student_fee.amount_paid),
+                    'due_amount': float(student_fee.total_amount - student_fee.amount_paid),
+                    'status': student_fee.status
+                }
+            else:
+                fee_status = None
+        except Exception:
+            fee_status = None
+        
+        # Get notifications
+        notifications = Notification.objects.filter(user=request.user).order_by('-created_at')[:5]
+        notification_data = []
+        for notif in notifications:
+            notification_data.append({
+                'id': notif.id,
+                'title': notif.title,
+                'message': notif.message,
+                'created_at': notif.created_at,
+                'is_read': notif.is_read
+            })
+        
+        dashboard_data = {
+            'student_info': {
+                'id': student.id,
+                'enrollment_id': student.enrollment_id,
+                'username': student.user.username,
+                'email': student.user.email,
+                'admission_date': student.admission_date
+            },
+            'stats': {
+                'total_courses': len(enrollment_data),
+                'completed_assignments': completed_projects,
+                'attendance_percentage': round(attendance_percentage, 2),
+                'achievements_count': achievements.count(),
+                'projects_submitted': project_submissions.count(),
+                'is_present_today': is_present_today
+            },
+            'enrollments': enrollment_data,
+            'fee_status': fee_status,
+            'notifications': notification_data
+        }
+        
+        return Response(dashboard_data)
+        
+    except Student.DoesNotExist:
+        return Response(
+            {"detail": "Student profile not found."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        logger.error(f"Error in student_dashboard_data: {str(e)}")
+        return Response(
+            {"detail": f"Error retrieving dashboard data: {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

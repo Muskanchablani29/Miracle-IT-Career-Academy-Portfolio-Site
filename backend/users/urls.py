@@ -6,7 +6,8 @@ from .views import (
     ListStudentView, BatchViewSet, WorkshopViewSet, StudentViewSet,
     WorkshopRegistrationViewSet, CertificateViewSet, IntegratedDashboardView,
     AttendanceViewSet, get_user_enrollments, AttendanceAPIView,
-    mark_attendance, get_student_attendance_dates, get_student_attendance_stats
+    mark_attendance, get_student_attendance_dates, get_student_attendance_stats,
+    student_dashboard_data, student_profile
 )
 from .views_projects import (
     ProjectViewSet, ProjectSubmissionViewSet, StudentAchievementViewSet,
@@ -15,7 +16,8 @@ from .views_projects import (
 from .views_fees import (
     FeeStructureViewSet, StudentFeeViewSet, FeePaymentViewSet,
     AdminFeeReportView, StudentFeeDetailView, FacultyStudentFeeView, AuthTestView,
-    student_fee_detail_view, download_receipt_view, AdminNotificationViewSet
+    student_fee_detail_view, download_receipt_view, AdminNotificationViewSet,
+    student_notifications, mark_notification_read
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -79,4 +81,13 @@ urlpatterns = [
     # Faculty specific endpoints
     path('faculty/workshop-registrations/', WorkshopRegistrationViewSet.as_view({'get': 'list'}), name='faculty-workshop-registrations'),
     path('faculty/past-workshop-attendees/', WorkshopRegistrationViewSet.as_view({'get': 'past_attendees'}), name='faculty-past-workshop-attendees'),
+    # Student dashboard endpoint
+    path('student-dashboard/', student_dashboard_data, name='student-dashboard'),
+    # Student profile endpoint
+    path('student-profile/', student_profile, name='student-profile'),
+    # Student notification endpoints
+    path('student-notifications/', student_notifications, name='student-notifications'),
+    path('student-notifications/<int:notification_id>/mark-read/', mark_notification_read, name='mark-notification-read'),
+    # Fee payment receipt download
+    path('fee-payments/download-receipt/', download_receipt_view, name='fee-payment-download-receipt'),
 ]

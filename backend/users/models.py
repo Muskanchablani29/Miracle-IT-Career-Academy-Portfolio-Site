@@ -4,6 +4,8 @@ from django.utils import timezone
 from datetime import date
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils import timezone
+from datetime import timedelta
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
@@ -193,6 +195,8 @@ class FeeInstallment(models.Model):
     class Meta:
         ordering = ['sequence']
 
+
+
 class StudentFee(models.Model):
     STATUS_CHOICES = (
         ('paid', 'Paid'),
@@ -220,6 +224,19 @@ class StudentFee(models.Model):
             self.status = 'unpaid'
         super().save(*args, **kwargs)
 
+class StudentInstallmentPayment(models.Model):
+    student_fee = models.ForeignKey(StudentFee, on_delete=models.CASCADE, related_name='installment_payments')
+    installment = models.ForeignKey(FeeInstallment, on_delete=models.CASCADE, related_name='student_payments')
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    is_paid = models.BooleanField(default=False)
+    payment_date = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        unique_together = ['student_fee', 'installment']
+    
+    def __str__(self):
+        return f"{self.student_fee.student.user.username} - Installment {self.installment.sequence}"
+
 class FeePayment(models.Model):
     PAYMENT_MODE_CHOICES = (
         ('cash', 'Cash'),
@@ -235,17 +252,56 @@ class FeePayment(models.Model):
     )
     
     student_fee = models.ForeignKey(StudentFee, on_delete=models.CASCADE, related_name='payments')
+    installment = models.ForeignKey(FeeInstallment, on_delete=models.SET_NULL, null=True, blank=True, related_name='payments')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment_date = models.DateTimeField(default=timezone.now)
     payment_mode = models.CharField(max_length=20, choices=PAYMENT_MODE_CHOICES)
     transaction_id = models.CharField(max_length=100, blank=True, null=True)
     receipt_number = models.CharField(max_length=50, unique=True)
+    receipt_file = models.FileField(upload_to='receipts/', null=True, blank=True)
     status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='success')
     remarks = models.TextField(blank=True, null=True)
     recorded_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='recorded_payments')
     
     def __str__(self):
         return f"{self.receipt_number} - {self.student_fee.student.user.username}"
+    
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        if is_new and not self.receipt_file:
+            self.generate_receipt_file()
+    
+    def generate_receipt_file(self):
+        try:
+            from django.core.files.base import ContentFile
+            import io
+            
+            try:
+                from reportlab.pdfgen import canvas
+                from reportlab.lib.pagesizes import A4
+                
+                buffer = io.BytesIO()
+                p = canvas.Canvas(buffer, pagesize=A4)
+                
+                # Simple receipt generation
+                p.drawString(100, 750, f"Receipt: {self.receipt_number}")
+                p.drawString(100, 730, f"Student: {self.student_fee.student.user.username}")
+                p.drawString(100, 710, f"Amount: Rs.{self.amount}")
+                p.drawString(100, 690, f"Date: {self.payment_date.strftime('%d/%m/%Y')}")
+                p.drawString(100, 670, f"Status: {self.status}")
+                
+                p.save()
+                buffer.seek(0)
+                
+                receipt_content = ContentFile(buffer.getvalue())
+                self.receipt_file.save(f'receipt-{self.receipt_number}.pdf', receipt_content, save=False)
+                super().save(update_fields=['receipt_file'])
+            except ImportError:
+                # Fallback without reportlab
+                pass
+        except Exception as e:
+            print(f"Error generating receipt: {e}")
 
 class FeeDiscount(models.Model):
     DISCOUNT_TYPE_CHOICES = (
@@ -281,6 +337,7 @@ class AdminNotification(models.Model):
         ('enrollment', 'New Enrollment'),
         ('system', 'System Alert'),
         ('fee_due', 'Fee Due Alert'),
+        ('installment_payment', 'Installment Payment'),
     )
     
     title = models.CharField(max_length=200)
@@ -288,31 +345,124 @@ class AdminNotification(models.Model):
     notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
     student = models.ForeignKey(Student, on_delete=models.CASCADE, null=True, blank=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    installment_number = models.IntegerField(null=True, blank=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
     
     class Meta:
         ordering = ['-created_at']
     
     def __str__(self):
         return f"{self.title} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+    
+    def is_expired(self):
+        if self.expires_at:
+            return timezone.now() > self.expires_at
+        return False
+    
+    def save(self, *args, **kwargs):
+        if not self.expires_at and self.notification_type in ['payment', 'installment_payment']:
+            self.expires_at = self.created_at + timedelta(hours=48) if self.created_at else timezone.now() + timedelta(hours=48)
+        super().save(*args, **kwargs)
+
+class StudentNotification(models.Model):
+    NOTIFICATION_TYPES = (
+        ('fee_reminder', 'Fee Reminder'),
+        ('installment_due', 'Installment Due'),
+        ('payment_success', 'Payment Success'),
+        ('general', 'General'),
+    )
+    
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='notifications')
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
+    is_read = models.BooleanField(default=False)
+    is_popup = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.student.user.username} - {self.title}"
 
 @receiver(post_save, sender=FeePayment)
 def update_student_fee_after_payment(sender, instance, created, **kwargs):
     if created and instance.status == 'success':
         student_fee = instance.student_fee
-        student_fee.amount_paid += instance.amount
-        student_fee.save()
+        # Update the amount_paid using F expression
+        StudentFee.objects.filter(id=student_fee.id).update(
+            amount_paid=models.F('amount_paid') + instance.amount
+        )
+        # Refresh from database to get updated values
+        student_fee.refresh_from_db()
         
-        # Create admin notification (only if table exists)
+        # Update installment payment status if specific installment
+        if instance.installment:
+            StudentInstallmentPayment.objects.update_or_create(
+                student_fee=student_fee,
+                installment=instance.installment,
+                defaults={
+                    'amount_paid': instance.amount,
+                    'is_paid': True,
+                    'payment_date': instance.payment_date
+                }
+            )
+        else:
+            # Mark all installments as paid if full payment
+            installments = FeeInstallment.objects.filter(fee_structure=student_fee.fee_structure).order_by('sequence')
+            remaining_amount = float(instance.amount)
+            for installment in installments:
+                if remaining_amount <= 0:
+                    break
+                installment_payment, created = StudentInstallmentPayment.objects.get_or_create(
+                    student_fee=student_fee,
+                    installment=installment,
+                    defaults={'amount_paid': 0, 'is_paid': False, 'payment_date': None}
+                )
+                if not installment_payment.is_paid:
+                    installment_amount = float(installment.amount)
+                    if remaining_amount >= installment_amount:
+                        installment_payment.amount_paid = installment_amount
+                        installment_payment.is_paid = True
+                        installment_payment.payment_date = instance.payment_date
+                        remaining_amount -= installment_amount
+                    else:
+                        installment_payment.amount_paid += remaining_amount
+                        if installment_payment.amount_paid >= installment_amount:
+                            installment_payment.is_paid = True
+                            installment_payment.payment_date = instance.payment_date
+                        remaining_amount = 0
+                    installment_payment.save()
+        
+        # Create admin notification
         try:
+            notification_title = f"Installment Payment - {instance.student_fee.student.user.username}" if instance.installment else f"Payment Received - {instance.student_fee.student.user.username}"
+            notification_message = f"Student {instance.student_fee.student.user.username} (ID: {instance.student_fee.student.enrollment_id}) has paid ₹{instance.amount}"
+            if instance.installment:
+                notification_message += f" for Installment {instance.installment.sequence}"
+            notification_message += f" on {instance.payment_date.strftime('%d/%m/%Y at %H:%M')}. Receipt: {instance.receipt_number}"
+            
             AdminNotification.objects.create(
-                title=f"Payment Received - {instance.student_fee.student.user.username}",
-                message=f"Student {instance.student_fee.student.user.username} (ID: {instance.student_fee.student.enrollment_id}) has paid ₹{instance.amount} on {instance.payment_date.strftime('%d/%m/%Y at %H:%M')}. Receipt: {instance.receipt_number}",
-                notification_type='payment',
+                title=notification_title,
+                message=notification_message,
+                notification_type='installment_payment' if instance.installment else 'payment',
                 student=instance.student_fee.student,
-                amount=instance.amount
+                amount=instance.amount,
+                installment_number=instance.installment.sequence if instance.installment else None
             )
         except Exception as e:
-            # Table doesn't exist yet, skip notification creation
+            pass
+        
+        # Create student notification
+        try:
+            StudentNotification.objects.create(
+                student=instance.student_fee.student,
+                title="Payment Successful",
+                message=f"Your payment of ₹{instance.amount} has been processed successfully. Receipt: {instance.receipt_number}",
+                notification_type='payment_success'
+            )
+        except Exception as e:
             pass
