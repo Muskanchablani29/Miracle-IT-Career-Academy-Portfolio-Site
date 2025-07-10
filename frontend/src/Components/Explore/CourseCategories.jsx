@@ -73,15 +73,21 @@ const CourseCategories = ({ courses }) => {
             </div>
           </div>
           
-          <div className="category-slider-container">
+          <div className="category-slider-container-explore">
             <div className="category-courses" ref={categoryRefs[category]}>
               {groupedCourses[category].map(course => (
-                <div className="course-card" key={course.id}>
-                  <div className="course-image">
-                    <img src={course.image || '/placeholder-course.jpg'} alt={course.title} />
+                <div className="course-card-explore" key={course.id}>
+                  <div className="course-image-explore">
+                    <img 
+                      src={course.image ? `http://localhost:8000${course.image}` : '/placeholder-course.jpg'} 
+                      alt={course.title} 
+                      onError={(e) => {
+                        e.target.src = '/placeholder-course.jpg';
+                      }}
+                    />
                     <div className="course-badge">{course.level}</div>
                   </div>
-                  <div className="course-details">
+                  <div className="course-details-explore">
                     <h4>{course.title}</h4>
                     <p>{course.description?.substring(0, 80)}...</p>
                     <div className="course-meta">

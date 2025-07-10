@@ -736,6 +736,84 @@
   }
 }
 
+/* Fee Alert Styles */
+.fee-alert {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 0.5rem 0;
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+}
+
+.fee-alert-header {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.fee-alert-content {
+  margin: 0.5rem 0;
+}
+
+.fee-alert-content p {
+  margin: 0.25rem 0;
+  font-size: 0.85rem;
+}
+
+.fee-pay-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.fee-pay-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.chat-tooltip {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  background: #1e293b;
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+  pointer-events: none;
+  margin-bottom: 0.5rem;
+}
+
+.chat-toggle:hover .chat-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.chat-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  right: 1rem;
+  border: 5px solid transparent;
+  border-top-color: #1e293b;
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 480px) {
   .chat-container {
@@ -752,5 +830,9 @@
   .chat-toggle {
     width: 60px;
     height: 60px;
+  }
+  
+  .chat-tooltip {
+    display: none;
   }
 }

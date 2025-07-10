@@ -3,6 +3,7 @@ import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { UserContext } from './UserContext';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
+import Footer from './Footer';
 import './Layout.css';
 
 // Layout for public pages - no special styling
@@ -24,6 +25,7 @@ export const PublicLayout = () => {
     <div className="public-layout">
       {!isLoginPage && <Navbar />}
       <Outlet />
+      {!isLoginPage && <Footer className={location.pathname.includes('/explore') ? 'footer-with-sidebar' : ''} />}
     </div>
   );
 };

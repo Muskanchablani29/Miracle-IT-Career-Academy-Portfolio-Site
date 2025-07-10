@@ -348,7 +348,7 @@ const FacultyDashboard = () => {
             </div>
           </div>
           
-          <div className="dashboard-section">
+          {/* <div className="dashboard-section">
             <div className="section-header">
               <h2><FaChartLine /> Recent Student Activities</h2>
               <Link to="/faculty/students" className="view-all">
@@ -376,7 +376,7 @@ const FacultyDashboard = () => {
                 </div>
               )}
             </div>
-          </div>
+          </div> */}
         </div>
     </div>
   );

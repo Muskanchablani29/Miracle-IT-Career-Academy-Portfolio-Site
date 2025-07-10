@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Base API URL
-const API_URL = 'http://localhost:8000/api/';
+const API_URL = 'http://localhost:8000/api';
 
 // Add request interceptor to log and fix malformed URLs
 const fixMalformedUrl = (url) => {
@@ -316,7 +316,7 @@ export const fetchStudents = async (batchId = null) => {
   }
 };
 
-// Fetch students for a specific batch using the new endpoint
+// Fetch students for a specific batch using the new endpoint (keeping original)
 export const fetchBatchStudents = async (batchId) => {
   try {
     const response = await userAxiosInstance.get(`batches/${batchId}/students/`);
@@ -341,7 +341,7 @@ export const updateStudent = async (studentId, studentData) => {
 export const fetchCourses = async () => {
   try {
     // Use axios directly to avoid authentication requirements
-    const response = await axios.get(`${API_URL}courses/courses/`);
+    const response = await axios.get(`${API_URL}/courses/courses/`);
     return response.data;
   } catch (error) {
     console.error('Error fetching courses:', error);
@@ -379,7 +379,7 @@ export const fetchLatestCourses = async () => {
 export const fetchCourseById = async (id) => {
   try {
     // Use axios directly to avoid authentication requirements
-    const response = await axios.get(`${API_URL}courses/course/${id}/`);
+    const response = await axios.get(`${API_URL}/courses/course/${id}/`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching course with id ${id}:`, error);
@@ -569,13 +569,197 @@ export const verifyFeePayment = async (paymentData) => {
   }
 };
 
-// Verify Razorpay payment
+// Verify Razorpay payment with installment support
 export const verifyRazorpayPayment = async (paymentData) => {
   try {
     const response = await userAxiosInstance.post('fee-payments/verify-razorpay-payment/', paymentData);
     return response.data;
   } catch (error) {
     console.error('Error verifying Razorpay payment:', error);
+    throw error;
+  }
+};
+
+// Make installment payment
+export const makeInstallmentPayment = async (paymentData) => {
+  try {
+    const response = await userAxiosInstance.post('fee-payments/make-payment/', {
+      ...paymentData,
+      installment_id: paymentData.installment_id
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error making installment payment:', error);
+    throw error;
+  }
+};
+
+// Project Management APIs
+export const fetchProjects = async (params = {}) => {
+  try {
+    const queryParams = new URLSearchParams(params).toString();
+    const response = await userAxiosInstance.get(`projects/${queryParams ? '?' + queryParams : ''}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching projects:', error);
+    throw error;
+  }
+};
+
+export const fetchProjectById = async (projectId) => {
+  try {
+    const response = await userAxiosInstance.get(`projects/${projectId}/`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching project ${projectId}:`, error);
+    throw error;
+  }
+};
+
+export const createProject = async (projectData) => {
+  try {
+    const response = await adminAxiosInstance.post('projects/', projectData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating project:', error);
+    throw error;
+  }
+};
+
+export const updateProject = async (projectId, projectData) => {
+  try {
+    const response = await adminAxiosInstance.put(`projects/${projectId}/`, projectData);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating project ${projectId}:`, error);
+    throw error;
+  }
+};
+
+export const deleteProject = async (projectId) => {
+  try {
+    const response = await adminAxiosInstance.delete(`projects/${projectId}/`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error deleting project ${projectId}:`, error);
+    throw error;
+  }
+};
+
+// Project Submission APIs
+export const fetchProjectSubmissions = async (params = {}) => {
+  try {
+    const queryParams = new URLSearchParams(params).toString();
+    const response = await userAxiosInstance.get(`project-submissions/${queryParams ? '?' + queryParams : ''}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching project submissions:', error);
+    throw error;
+  }
+};
+
+export const submitProject = async (submissionData) => {
+  try {
+    const response = await userAxiosInstance.post('project-submissions/', submissionData);
+    return response.data;
+  } catch (error) {
+    console.error('Error submitting project:', error);
+    throw error;
+  }
+};
+
+export const updateProjectSubmission = async (submissionId, submissionData) => {
+  try {
+    const response = await userAxiosInstance.put(`project-submissions/${submissionId}/`, submissionData);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating project submission ${submissionId}:`, error);
+    throw error;
+  }
+};
+
+export const reviewProjectSubmission = async (submissionId, reviewData) => {
+  try {
+    const response = await adminAxiosInstance.post(`project-submissions/${submissionId}/review/`, reviewData);
+    return response.data;
+  } catch (error) {
+    console.error(`Error reviewing project submission ${submissionId}:`, error);
+    throw error;
+  }
+};
+
+// Project Technologies API
+export const fetchProjectTechnologies = async () => {
+  try {
+    const response = await axios.get(`${API_URL}projects/technologies/`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching project technologies:', error);
+    return ['React', 'Node.js', 'Python', 'Java', 'JavaScript', 'HTML/CSS'];
+  }
+};
+
+// Project Leaderboard API
+export const fetchProjectLeaderboard = async (batchId = null) => {
+  try {
+    const params = batchId ? { batch_id: batchId } : {};
+    const queryParams = new URLSearchParams(params).toString();
+    const response = await userAxiosInstance.get(`projects/leaderboard/${queryParams ? '?' + queryParams : ''}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching project leaderboard:', error);
+    throw error;
+  }
+};
+
+// Student Achievements API
+export const fetchStudentAchievements = async (studentId = null) => {
+  try {
+    const params = studentId ? { student_id: studentId } : {};
+    const queryParams = new URLSearchParams(params).toString();
+    const response = await userAxiosInstance.get(`student-achievements/${queryParams ? '?' + queryParams : ''}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching student achievements:', error);
+    throw error;
+  }
+};
+
+// Additional Batch Management APIs
+export const fetchBatchById = async (batchId) => {
+  try {
+    const response = await userAxiosInstance.get(`batches/${batchId}/`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching batch ${batchId}:`, error);
+    throw error;
+  }
+};
+
+// Create Razorpay order for installment
+export const createInstallmentRazorpayOrder = async (amount, installmentId) => {
+  try {
+    const response = await userAxiosInstance.post('fee-payments/create-razorpay-order/', { 
+      amount,
+      installment_id: installmentId
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating installment Razorpay order:', error);
+    throw error;
+  }
+};
+
+// Verify installment payment
+export const verifyInstallmentPayment = async (paymentData) => {
+  try {
+    const response = await userAxiosInstance.post('fee-payments/verify-razorpay-payment/', {
+      ...paymentData,
+      installment_id: paymentData.installment_id
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error verifying installment payment:', error);
     throw error;
   }
 };
@@ -603,10 +787,13 @@ export const simulatePayment = async (amount) => {
   }
 };
 
-// Simple demo payment endpoint
-export const makeDemoPayment = async (amount) => {
+// Simple demo payment endpoint with installment support
+export const makeDemoPayment = async (amount, installmentId = null) => {
   try {
-    const response = await userAxiosInstance.post('fee-payments/demo-payment/', { amount });
+    const response = await userAxiosInstance.post('fee-payments/demo-payment/', { 
+      amount,
+      installment_id: installmentId
+    });
     return response.data;
   } catch (error) {
     console.error('Error making demo payment:', error);
@@ -664,7 +851,7 @@ export const verifyPayment = async (paymentData) => {
 // Course Enquiry API
 export const submitCourseEnquiry = async (enquiryData) => {
   try {
-    const response = await axios.post(`${API_URL}courses/submit-enquiry/`, enquiryData);
+    const response = await axios.post(`${API_URL}/courses/submit-enquiry/`, enquiryData);
     return response.data;
   } catch (error) {
     console.error('Error submitting course enquiry:', error);
@@ -720,7 +907,7 @@ export const fetchCertificates = async () => {
 export const fetchWorkshops = async () => {
   try {
     // Use axios directly to avoid authentication requirements
-    const response = await axios.get(`${API_URL}workshops/`);
+    const response = await axios.get(`${API_URL}/workshops/`);
     return response.data;
   } catch (error) {
     console.error('Error fetching workshops:', error);
@@ -746,7 +933,7 @@ export const createWorkshop = async (workshopData) => {
 // Workshop Registration API
 export const registerForWorkshop = async (registrationData) => {
   try {
-    const response = await axios.post(`${API_URL}workshop-registrations/`, registrationData);
+    const response = await axios.post(`${API_URL}/workshop-registrations/`, registrationData);
     return response.data;
   } catch (error) {
     console.error('Error registering for workshop:', error);
@@ -877,6 +1064,90 @@ export const fetchQuizzes = async () => {
   }
 };
 
+// New Quiz API functions
+export const fetchCoursesWithQuizzes = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/quizzes/courses-with-quizzes/`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching courses with quizzes:', error);
+    throw error;
+  }
+};
+
+export const fetchCourseQuizzes = async (courseId) => {
+  try {
+    const response = await axios.get(`${API_URL}/quizzes/course/${courseId}/quizzes/`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching course quizzes:', error);
+    throw error;
+  }
+};
+
+export const fetchQuizByCourseLanguage = async (courseId, language) => {
+  try {
+    const response = await axios.get(`${API_URL}/quizzes/course/${courseId}/language/${language}/`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching quiz by course and language:', error);
+    throw error;
+  }
+};
+
+export const startQuiz = async (quizId) => {
+  try {
+    const response = await userAxiosInstance.get(`quizzes/start/${quizId}/`);
+    return response.data;
+  } catch (error) {
+    console.error('Error starting quiz:', error);
+    throw error;
+  }
+};
+
+export const submitQuiz = async (attemptId, answers, timeTaken) => {
+  try {
+    const response = await userAxiosInstance.post(`quizzes/submit/${attemptId}/`, {
+      answers,
+      time_taken: timeTaken
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error submitting quiz:', error);
+    throw error;
+  }
+};
+
+export const fetchUserQuizAttempts = async () => {
+  try {
+    const response = await userAxiosInstance.get('quizzes/my-attempts/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user quiz attempts:', error);
+    throw error;
+  }
+};
+
+export const fetchUserQuizAchievements = async () => {
+  try {
+    const response = await userAxiosInstance.get('quizzes/my-achievements/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user quiz achievements:', error);
+    throw error;
+  }
+};
+
+export const fetchEnrolledCourseQuizzes = async () => {
+  try {
+    const response = await userAxiosInstance.get('quizzes/enrolled-quizzes/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching enrolled course quizzes:', error);
+    throw error;
+  }
+};
+
 export const fetchCourseSpecificBatches = async (courseId) => {
   try {
     const response = await userAxiosInstance.get(`batches/?course=${courseId}`);
@@ -928,6 +1199,129 @@ export const chatAPI = {
       console.error('Error fetching quick actions:', error);
       throw error;
     }
+  }
+};
+
+// Student Dashboard API endpoints
+export const getStudentDashboardData = async () => {
+  try {
+    const response = await userAxiosInstance.get('student-dashboard/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching student dashboard data:', error);
+    throw error;
+  }
+};
+
+export const getComprehensiveDashboardData = async () => {
+  try {
+    const response = await userAxiosInstance.get('student-dashboard/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching comprehensive dashboard data:', error);
+    throw error;
+  }
+};
+
+export const getStudentAchievements = async () => {
+  try {
+    const response = await userAxiosInstance.get('achievements/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching student achievements:', error);
+    return [];
+  }
+};
+
+export const getStudentProjects = async () => {
+  try {
+    const response = await userAxiosInstance.get('project-submissions/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching student projects:', error);
+    return [];
+  }
+};
+
+export const getStudentAttendanceStats = async () => {
+  try {
+    const response = await userAxiosInstance.get('attendance/my_attendance/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching attendance stats:', error);
+    return { statistics: { attendance_percentage: 0 } };
+  }
+};
+
+export const getStudentNotifications = async () => {
+  try {
+    const response = await userAxiosInstance.get('notifications/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    return [];
+  }
+};
+
+export const markNotificationRead = async (notificationId) => {
+  try {
+    const response = await userAxiosInstance.post(`notifications/${notificationId}/read/`);
+    return response.data;
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+    throw error;
+  }
+};
+
+export const getUpcomingDeadlines = async () => {
+  try {
+    const response = await userAxiosInstance.get('upcoming-deadlines/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching upcoming deadlines:', error);
+    return [];
+  }
+};
+
+export const getCourseProgress = async (courseId) => {
+  try {
+    const response = await userAxiosInstance.get(`courses/${courseId}/progress/`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching progress for course ${courseId}:`, error);
+    return { progress_percentage: 0 };
+  }
+};
+
+// Student Performance Analytics API
+export const getStudentPerformanceAnalytics = async () => {
+  try {
+    const response = await userAxiosInstance.get('student-performance-analytics/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching student performance analytics:', error);
+    throw error;
+  }
+};
+
+// Student Profile API
+export const getStudentProfile = async () => {
+  try {
+    const response = await userAxiosInstance.get('profile/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching student profile:', error);
+    throw error;
+  }
+};
+
+export const updateStudentProfile = async (profileData) => {
+  try {
+    const response = await userAxiosInstance.put('profile/', profileData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating student profile:', error);
+    throw error;
   }
 };
 

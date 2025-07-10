@@ -39,6 +39,12 @@ const StudentSidebar = () => {
             <span>Projects</span>
           </Link>
         </li>
+        <li className={isActive('/student/assignments')}>
+          <Link to="/student/assignments">
+            <i className="fas fa-tasks"></i>
+            <span>Assignments</span>
+          </Link>
+        </li>
         <li className={isActive('/student/achievements')}>
           <Link to="/student/achievements">
             <i className="fas fa-trophy"></i>

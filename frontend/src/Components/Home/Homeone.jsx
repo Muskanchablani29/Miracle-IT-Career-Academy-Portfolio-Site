@@ -139,19 +139,19 @@ const LandingPage = () => {
         
         {/* Additional small cards with improved positioning */}
         <div className="small-card card1" ref={addToRefs}>
-          <span className="card-icon">🚀</span>
+          
           <span className="card-text">Fast Learning</span>
         </div>
         <div className="small-card card2" ref={addToRefs}>
-          <span className="card-icon">🏆</span>
+          
           <span className="card-text">Top Rated</span>
         </div>
         <div className="small-card card3" ref={addToRefs}>
-          <span className="card-icon">💻</span>
+          
           <span className="card-text">Hands-on</span>
         </div>
         <div className="small-card card4" ref={addToRefs}>
-          <span className="card-icon">🔄</span>
+          
           <span className="card-text">Updated</span>
         </div>
       </div>

@@ -15,6 +15,7 @@ import {
 } from 'react-icons/fa';
 import './StudentFeeManagement.css';
 import { userAxiosInstance } from '../../api';
+import ReceiptModal from '../Common/ReceiptModal';
 
 // Load Razorpay script
 const loadRazorpayScript = () => {
@@ -35,6 +36,27 @@ const StudentFeeManagement = () => {
   const [paymentAmount, setPaymentAmount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [selectedInstallment, setSelectedInstallment] = useState(null);
+  const [availableInstallments, setAvailableInstallments] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotificationPopup, setShowNotificationPopup] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [currentReceipt, setCurrentReceipt] = useState(null);
+  
+  const refreshFeeData = async () => {
+    try {
+      const response = await userAxiosInstance.get('student-fees/details/', {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      setFeeData(response.data);
+      console.log('Fee data refreshed:', response.data.installments);
+    } catch (error) {
+      console.error('Error refreshing fee data:', error);
+    }
+  };
 
   const fetchFeeDetails = async () => {
     try {
@@ -46,6 +68,7 @@ const StudentFeeManagement = () => {
       // Import the API function instead of using axios directly
       const { getStudentFeeDetails } = require('../../api');
       const feeData = await getStudentFeeDetails();
+      console.log('Fetched installments:', feeData.installments);
       
       console.log('Fee data received:', feeData);
       setFeeData(feeData);
@@ -54,6 +77,9 @@ const StudentFeeManagement = () => {
       if (feeData && feeData.due_amount) {
         setPaymentAmount(feeData.due_amount);
       }
+      
+      // Fetch notifications - temporarily disabled
+      // await fetchNotifications();
       
       setError(null);
     } catch (err) {
@@ -88,7 +114,7 @@ const StudentFeeManagement = () => {
   const handleDownloadReceipt = async (receiptNumber) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:8000/api/users/fee-payments/download-receipt/?receipt_number=${receiptNumber}`, {
+      const response = await fetch(`http://localhost:8000/api/fee-payments/download-receipt/?receipt_number=${receiptNumber}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -128,8 +154,54 @@ const StudentFeeManagement = () => {
     }
   };
 
-  const handlePayNow = () => {
+  const handlePayNow = (installment = null) => {
+    if (installment && installment.is_paid) {
+      alert('This installment has already been paid!');
+      return;
+    }
+    
+    // Get unpaid installments
+    const unpaidInstallments = feeData.installments ? 
+      feeData.installments.filter(inst => !inst.is_paid) : [];
+    
+    setAvailableInstallments(unpaidInstallments);
+    setSelectedInstallment(installment);
+    
+    if (installment) {
+      setPaymentAmount(installment.amount);
+    } else if (unpaidInstallments.length > 0) {
+      // Default to first unpaid installment
+      setSelectedInstallment(unpaidInstallments[0]);
+      setPaymentAmount(unpaidInstallments[0].amount);
+    } else {
+      setPaymentAmount(feeData.due_amount);
+    }
+    
     setShowPaymentModal(true);
+  };
+  
+  const fetchNotifications = async () => {
+    // Temporarily disabled to prevent 401 errors
+    setNotifications([]);
+  };
+  
+  const markNotificationRead = async (notificationId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`http://localhost:8000/api/student-notifications/${notificationId}/mark-read/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      // Update local state
+      setNotifications(prev => 
+        prev.map(n => n.id === notificationId ? {...n, is_read: true} : n)
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
   const handlePaymentSubmit = async (e) => {
@@ -149,20 +221,20 @@ const StudentFeeManagement = () => {
           // Check if this is demo mode
           if (orderData.demo_mode || orderData.key_id === 'demo_key_only') {
             // Demo mode - simulate payment
-            const paymentData = {
-              student_fee: feeData.fee_details.id,
-              amount: paymentAmount,
-              payment_mode: 'online',
-              transaction_id: `DEMO-${Date.now()}`,
-              status: 'success',
-              remarks: 'Demo payment - no actual transaction'
-            };
-            
-            const paymentResponse = await makePayment(paymentData);
-            await fetchFeeDetails();
+            const { makeDemoPayment } = require('../../api');
+            const paymentResponse = await makeDemoPayment(
+              paymentAmount, 
+              selectedInstallment ? selectedInstallment.id : null
+            );
             
             setShowPaymentModal(false);
             setProcessingPayment(false);
+            
+            // Refresh fee data after demo payment
+            await refreshFeeData();
+            setTimeout(async () => {
+              await fetchFeeDetails();
+            }, 500);
             
             const downloadReceipt = window.confirm(
               `Payment successful! Receipt: ${paymentResponse.payment.receipt_number}\n\n(Demo Mode - No actual payment processed)\n\nWould you like to download the receipt now?`
@@ -188,7 +260,7 @@ const StudentFeeManagement = () => {
               contact: orderData.student_contact
             },
             theme: {
-              color: '#3399cc'
+              color: '#FF4500'
             },
             handler: async function (response) {
               try {
@@ -197,13 +269,12 @@ const StudentFeeManagement = () => {
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_signature: response.razorpay_signature,
-                  amount: orderData.amount
+                  amount: orderData.amount,
+                  installment_id: selectedInstallment ? selectedInstallment.id : null
                 };
                 
-                const verifyResponse = await verifyRazorpayPayment(verificationData);
-                
-                // Refresh fee data
-                await fetchFeeDetails();
+                const { verifyInstallmentPayment } = require('../../api');
+                const verifyResponse = await verifyInstallmentPayment(verificationData);
                 
                 setShowPaymentModal(false);
                 setProcessingPayment(false);
@@ -213,8 +284,27 @@ const StudentFeeManagement = () => {
                   `Payment successful! Receipt: ${verifyResponse.receipt_number}\n\nWould you like to download the receipt now?`
                 );
                 
+                // Refresh fee data after payment
+                await refreshFeeData();
+                
+                // Show updated data with delay
+                setTimeout(async () => {
+                  await fetchFeeDetails();
+                }, 2000);
+                
                 if (downloadReceipt) {
-                  await handleDownloadReceipt(verifyResponse.receipt_number);
+                  setCurrentReceipt({
+                    receipt_number: verifyResponse.receipt_number,
+                    payment_date: new Date().toISOString(),
+                    student_name: feeData.fee_details?.student_name || 'Student',
+                    enrollment_id: feeData.fee_details?.enrollment_id || 'N/A',
+                    course: feeData.fee_details?.course || 'N/A',
+                    amount: paymentAmount,
+                    payment_mode: 'online',
+                    transaction_id: response.razorpay_payment_id,
+                    status: 'success'
+                  });
+                  setShowReceiptModal(true);
                 }
                 
               } catch (verifyError) {
@@ -249,6 +339,7 @@ const StudentFeeManagement = () => {
         // For bank transfer, record as pending payment
         const paymentData = {
           student_fee: feeData.fee_details.id,
+          installment_id: selectedInstallment ? selectedInstallment.id : null,
           amount: paymentAmount,
           payment_mode: 'bank_transfer',
           transaction_id: '',
@@ -260,11 +351,14 @@ const StudentFeeManagement = () => {
         const paymentResponse = await makePayment(paymentData);
         console.log('Payment response:', paymentResponse);
         
-        // Refresh fee data
-        await fetchFeeDetails();
-        
         setShowPaymentModal(false);
         setProcessingPayment(false);
+        
+        // Refresh fee data after bank transfer
+        await refreshFeeData();
+        setTimeout(async () => {
+          await fetchFeeDetails();
+        }, 500);
         
         const receiptNumber = paymentResponse.payment.receipt_number;
         alert(`Payment request submitted successfully!\nReference: ${receiptNumber}\n\nYour payment will be verified by the admin.`);
@@ -299,10 +393,12 @@ const StudentFeeManagement = () => {
   }
 
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-container-fee">
       <div className="page-header">
-        <h1><FaMoneyBillWave /> Fee Management</h1>
-        <p className="page-subtitle">Manage your fee payments and track your financial progress</p>
+        <div>
+          <h1><FaMoneyBillWave /> Fee Management</h1>
+          <p className="page-subtitle">Manage your fee payments and track your financial progress</p>
+        </div>
         <button onClick={fetchFeeDetails} className="refresh-btn" title="Refresh Data">
           🔄 Refresh
         </button>
@@ -402,92 +498,124 @@ const StudentFeeManagement = () => {
       
       <div className="installments-section">
         <h2><FaClock /> Installment Schedule</h2>
-        <table className="installments-table">
-          <thead>
-            <tr>
-              <th>Installment</th>
-              <th>Amount</th>
-              <th>Due Date</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {feeData.installments && feeData.installments.length > 0 ? (
-              feeData.installments.map((installment, index) => {
-                // Calculate if installment is paid based on amount_paid
-                const isPaid = index === 0 ? 
-                  feeData.amount_paid >= installment.amount : 
-                  feeData.amount_paid >= feeData.installments.slice(0, index + 1).reduce((sum, inst) => sum + inst.amount, 0);
-                
-                // Check if overdue
-                const isOverdue = !isPaid && new Date(installment.due_date) < new Date();
-                
-                return (
-                  <tr key={installment.id}>
-                    <td>Installment {installment.sequence || index + 1}</td>
-                    <td>₹{installment.amount.toLocaleString()}</td>
-                    <td>{new Date(installment.due_date).toLocaleDateString()}</td>
-                    <td>
-                      <span className={`status-badge ${isPaid ? 'paid' : isOverdue ? 'overdue' : 'pending'}`}>
-                        {isPaid ? 'Paid' : isOverdue ? 'Overdue' : 'Pending'}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
+        <div className="table-container">
+          <table className="installments-table">
+            <thead>
               <tr>
-                <td colSpan="4" className="no-data">No installment schedule available</td>
+                <th>Installment</th>
+                <th>Amount</th>
+                <th>Due Date</th>
+                <th>Status</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {feeData.installments && feeData.installments.length > 0 ? (
+                feeData.installments.map((installment, index) => {
+                  const isPaid = installment.is_paid || false;
+                  const isOverdue = !isPaid && new Date(installment.due_date) < new Date();
+                  
+                  return (
+                    <tr key={installment.id}>
+                      <td>Installment {installment.sequence || index + 1}</td>
+                      <td>₹{installment.amount.toLocaleString()}</td>
+                      <td>{new Date(installment.due_date).toLocaleDateString()}</td>
+                      <td>
+                        {isPaid ? (
+                          <div>
+                            <span className="status-badge paid">✅ Paid</span>
+                            {installment.payment_date && (
+                              <small style={{display: 'block', color: '#28a745', fontSize: '11px', marginTop: '2px'}}>
+                                Paid on: {new Date(installment.payment_date).toLocaleDateString()}
+                              </small>
+                            )}
+                          </div>
+                        ) : (
+                          <div>
+                            <span className={`status-badge ${isOverdue ? 'overdue' : 'pending'}`}>
+                              {isOverdue ? '⚠️ Overdue' : '⏳ Pending'}
+                            </span>
+                            <button 
+                              className="btn-small btn-primary" 
+                              onClick={() => handlePayNow(installment)}
+                              style={{marginLeft: '10px', padding: '4px 8px', fontSize: '12px'}}
+                            >
+                              Pay Now
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan="4" className="no-data">No installment schedule available</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
       
       <div className="payment-history-section">
         <h2><FaReceipt /> Payment History</h2>
-        <table className="payment-history-table">
-          <thead>
-            <tr>
-              <th>Receipt No.</th>
-              <th>Date</th>
-              <th>Amount</th>
-              <th>Mode</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {feeData.payment_history && feeData.payment_history.length > 0 ? (
-              feeData.payment_history.map(payment => (
-                <tr key={payment.id}>
-                  <td>{payment.receipt_number}</td>
-                  <td>{new Date(payment.payment_date).toLocaleDateString()}</td>
-                  <td>₹{payment.amount.toLocaleString()}</td>
-                  <td>{payment.payment_mode.replace('_', ' ')}</td>
-                  <td>
-                    <span className={`status-badge ${payment.status}`}>
-                      {payment.status}
-                    </span>
-                  </td>
-                  <td>
-                    <button 
-                      className="btn-icon" 
-                      onClick={() => handleDownloadReceipt(payment.receipt_number)}
-                      title="Download Receipt"
-                    >
-                      <FaDownload />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
+        <div className="table-container">
+          <table className="payment-history-table">
+            <thead>
               <tr>
-                <td colSpan="6" className="no-data">No payment records found</td>
+                <th>Receipt No.</th>
+                <th>Date</th>
+                <th>Amount</th>
+                <th>Mode</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {feeData.payment_history && feeData.payment_history.length > 0 ? (
+                feeData.payment_history.map(payment => (
+                  <tr key={payment.id}>
+                    <td>{payment.receipt_number}</td>
+                    <td>{new Date(payment.payment_date).toLocaleDateString()}</td>
+                    <td>₹{payment.amount.toLocaleString()}</td>
+                    <td>{payment.payment_mode.replace('_', ' ')}</td>
+                    <td>
+                      <span className={`status-badge ${payment.status}`}>
+                        {payment.status}
+                      </span>
+                    </td>
+                    <td>
+                      <button 
+                        className="btn-icon" 
+                        onClick={() => {
+                          setCurrentReceipt({
+                            receipt_number: payment.receipt_number,
+                            payment_date: payment.payment_date,
+                            student_name: feeData.fee_details?.student_name || 'Student',
+                            enrollment_id: feeData.fee_details?.enrollment_id || 'N/A',
+                            course: feeData.fee_details?.course || 'N/A',
+                            amount: payment.amount,
+                            payment_mode: payment.payment_mode,
+                            transaction_id: payment.transaction_id || 'N/A',
+                            status: payment.status
+                          });
+                          setShowReceiptModal(true);
+                        }}
+                        title="View Receipt"
+                      >
+                        <FaDownload />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="no-data">No payment records found</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
       
       {feeData.due_amount > 0 && (
@@ -521,17 +649,50 @@ const StudentFeeManagement = () => {
           <div className="payment-modal">
             <h2>Make Payment</h2>
             <form onSubmit={handlePaymentSubmit}>
+              {availableInstallments.length > 0 && (
+                <div className="form-group">
+                  <label>Select Installment to Pay</label>
+                  <select 
+                    value={selectedInstallment ? selectedInstallment.id : ''}
+                    onChange={(e) => {
+                      const selected = availableInstallments.find(inst => inst.id === parseInt(e.target.value));
+                      setSelectedInstallment(selected);
+                      setPaymentAmount(selected ? selected.amount : 0);
+                    }}
+                    required
+                  >
+                    <option value="">Choose an installment</option>
+                    {availableInstallments.map((installment, index) => {
+                      const isOverdue = new Date(installment.due_date) < new Date();
+                      return (
+                        <option key={installment.id} value={installment.id}>
+                          Installment {installment.sequence || index + 1} - ₹{installment.amount.toLocaleString()} 
+                          (Due: {new Date(installment.due_date).toLocaleDateString()}) 
+                          {isOverdue ? ' - OVERDUE' : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <p className="helper-text">
+                    {availableInstallments.length} unpaid installment(s) available
+                  </p>
+                </div>
+              )}
+              
               <div className="form-group">
                 <label>Amount to Pay (₹)</label>
                 <input 
                   type="number" 
                   value={paymentAmount}
-                  onChange={(e) => setPaymentAmount(Number(e.target.value))}
-                  min="1"
-                  max={feeData.due_amount} 
-                  required 
+                  readOnly
+                  style={{backgroundColor: '#f8f9fa', fontWeight: '600', fontSize: '18px'}}
                 />
-                <p className="helper-text">Maximum amount: ₹{feeData.due_amount.toLocaleString()}</p>
+                {selectedInstallment && (
+                  <p className="helper-text">
+                    Paying for Installment {selectedInstallment.sequence} 
+                    (Due: {new Date(selectedInstallment.due_date).toLocaleDateString()})
+                  </p>
+                )}
               </div>
               
               <div className="form-group">
@@ -617,6 +778,56 @@ const StudentFeeManagement = () => {
             </form>
           </div>
         </div>
+      )}
+      
+      {/* Notification Popup */}
+      {showNotificationPopup && (
+        <div className="notification-popup-overlay">
+          <div className="notification-popup">
+            <div className="notification-popup-header">
+              <h3>📢 Important Notifications</h3>
+              <button 
+                className="close-btn" 
+                onClick={() => setShowNotificationPopup(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="notification-popup-content">
+              {notifications.filter(n => n.is_popup && !n.is_read).map(notification => (
+                <div key={notification.id} className="notification-item">
+                  <div className="notification-icon">
+                    {notification.type === 'installment_due' ? '🔔' : '💰'}
+                  </div>
+                  <div className="notification-content">
+                    <h4>{notification.title}</h4>
+                    <p>{notification.message}</p>
+                    <small>{new Date(notification.created_at).toLocaleDateString()}</small>
+                  </div>
+                  <button 
+                    className="btn-small btn-secondary"
+                    onClick={() => {
+                      markNotificationRead(notification.id);
+                      if (notifications.filter(n => n.is_popup && !n.is_read).length === 1) {
+                        setShowNotificationPopup(false);
+                      }
+                    }}
+                  >
+                    Got it
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {showReceiptModal && (
+        <ReceiptModal 
+          payment={currentReceipt}
+          onClose={() => setShowReceiptModal(false)}
+          canDownload={true}
+        />
       )}
     </div>
   );

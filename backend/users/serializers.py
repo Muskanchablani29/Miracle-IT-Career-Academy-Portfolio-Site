@@ -55,6 +55,8 @@ class StudentSerializer(serializers.ModelSerializer):
         return {
             'id': obj.user.id,
             'username': obj.user.username,
+            'first_name': obj.user.first_name,
+            'last_name': obj.user.last_name,
             'email': obj.user.email
         }
 
@@ -455,7 +457,8 @@ class AttendanceSerializer(serializers.ModelSerializer):
         read_only_fields = ['login_time']
     
     def get_student_name(self, obj):
-        return obj.student.user.username
+        user = obj.student.user
+        return user.first_name if user.first_name else user.username
         
     def get_enrollment_id(self, obj):
         return obj.student.enrollment_id
@@ -492,7 +495,8 @@ class ProjectSubmissionSerializer(serializers.ModelSerializer):
         read_only_fields = ['submission_date', 'student_name', 'enrollment_id']
     
     def get_student_name(self, obj):
-        return obj.student.user.username
+        user = obj.student.user
+        return user.first_name if user.first_name else user.username
     
     def get_enrollment_id(self, obj):
         return obj.student.enrollment_id
@@ -526,7 +530,8 @@ class StudentFeeSerializer(serializers.ModelSerializer):
         read_only_fields = ['assigned_date', 'status']
     
     def get_student_name(self, obj):
-        return obj.student.user.username
+        user = obj.student.user
+        return user.first_name if user.first_name else user.username
     
     def get_fee_structure_name(self, obj):
         return obj.fee_structure.name
@@ -542,7 +547,8 @@ class FeePaymentSerializer(serializers.ModelSerializer):
         read_only_fields = ['receipt_number']
     
     def get_student_name(self, obj):
-        return obj.student_fee.student.user.username
+        user = obj.student_fee.student.user
+        return user.first_name if user.first_name else user.username
     
     def create(self, validated_data):
         # Generate receipt number
@@ -595,7 +601,10 @@ if AdminNotification:
             read_only_fields = ['created_at']
         
         def get_student_name(self, obj):
-            return obj.student.user.username if obj.student else None
+            if obj.student:
+                user = obj.student.user
+                return user.first_name if user.first_name else user.username
+            return None
         
         def get_time_ago(self, obj):
             from django.utils import timezone
@@ -617,6 +626,54 @@ if AdminNotification:
 else:
     # Dummy serializer if AdminNotification doesn't exist
     class AdminNotificationSerializer(serializers.Serializer):
+        pass
+
+# Try to import Assignment models
+try:
+    from .models import Assignment, AssignmentSubmission
+    
+    class AssignmentSerializer(serializers.ModelSerializer):
+        submission_count = serializers.SerializerMethodField()
+        is_overdue = serializers.SerializerMethodField()
+        
+        class Meta:
+            model = Assignment
+            fields = ['id', 'title', 'description', 'batch', 'difficulty', 'due_date', 
+                     'status', 'created_at', 'submission_count', 'is_overdue']
+            read_only_fields = ['created_at']
+        
+        def get_submission_count(self, obj):
+            return obj.submissions.count()
+        
+        def get_is_overdue(self, obj):
+            from django.utils import timezone
+            return timezone.now() > obj.due_date
+    
+    class AssignmentSubmissionSerializer(serializers.ModelSerializer):
+        student_name = serializers.SerializerMethodField()
+        enrollment_id = serializers.SerializerMethodField()
+        assignment_title = serializers.SerializerMethodField()
+        
+        class Meta:
+            model = AssignmentSubmission
+            fields = ['id', 'assignment', 'assignment_title', 'student', 'student_name', 
+                     'enrollment_id', 'submission_text', 'file_url', 'status', 'grade', 
+                     'feedback', 'submission_date', 'updated_at']
+            read_only_fields = ['submission_date', 'updated_at']
+        
+        def get_student_name(self, obj):
+            user = obj.student.user
+            return user.first_name if user.first_name else user.username
+        
+        def get_enrollment_id(self, obj):
+            return obj.student.enrollment_id
+        
+        def get_assignment_title(self, obj):
+            return obj.assignment.title
+except ImportError:
+    class AssignmentSerializer(serializers.Serializer):
+        pass
+    class AssignmentSubmissionSerializer(serializers.Serializer):
         pass
 
 # Try to import StudentNotification

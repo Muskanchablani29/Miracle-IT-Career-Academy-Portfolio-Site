@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { fetchUserQuizAchievements, fetchEnrolledCourseQuizzes } from '../../api';
 import './StudentAchievements.css';
 
 const StudentAchievements = () => {
   const [achievements, setAchievements] = useState([]);
   const [skills, setSkills] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
+  const [quizAchievements, setQuizAchievements] = useState([]);
+  const [enrolledQuizzes, setEnrolledQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('achievements');
   const [studentRank, setStudentRank] = useState(null);
@@ -55,6 +58,22 @@ const StudentAchievements = () => {
         
         if (studentIndex !== -1) {
           setStudentRank(studentIndex + 1);
+        }
+        
+        // Fetch quiz achievements
+        try {
+          const quizAchievementsResponse = await fetchUserQuizAchievements();
+          setQuizAchievements(quizAchievementsResponse);
+        } catch (quizError) {
+          console.error('Error fetching quiz achievements:', quizError);
+        }
+        
+        // Fetch enrolled course quizzes
+        try {
+          const enrolledQuizzesResponse = await fetchEnrolledCourseQuizzes();
+          setEnrolledQuizzes(enrolledQuizzesResponse);
+        } catch (quizError) {
+          console.error('Error fetching enrolled quizzes:', quizError);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -106,6 +125,12 @@ const StudentAchievements = () => {
           Skills Tree
         </button>
         <button 
+          className={activeTab === 'quizzes' ? 'active' : ''}
+          onClick={() => setActiveTab('quizzes')}
+        >
+          Quiz Achievements
+        </button>
+        <button 
           className={activeTab === 'leaderboard' ? 'active' : ''}
           onClick={() => setActiveTab('leaderboard')}
         >
@@ -117,8 +142,12 @@ const StudentAchievements = () => {
         <div className="achievements-section">
           <div className="stats-cards">
             <div className="stat-card">
-              <div className="stat-value">{achievements.length}</div>
-              <div className="stat-label">Achievements</div>
+              <div className="stat-value">{achievements.length + quizAchievements.length}</div>
+              <div className="stat-label">Total Achievements</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value">{quizAchievements.length}</div>
+              <div className="stat-label">Quiz Badges</div>
             </div>
             <div className="stat-card">
               <div className="stat-value">{skills.length}</div>
@@ -140,12 +169,13 @@ const StudentAchievements = () => {
           
           <h3>My Achievements</h3>
           
-          {achievements.length === 0 ? (
-            <p>You haven't earned any achievements yet. Complete projects to earn badges!</p>
+          {achievements.length === 0 && quizAchievements.length === 0 ? (
+            <p>You haven't earned any achievements yet. Complete projects and quizzes to earn badges!</p>
           ) : (
             <div className="achievements-grid">
+              {/* Project Achievements */}
               {achievements.map(achievement => (
-                <div key={achievement.id} className="achievement-card">
+                <div key={`project-${achievement.id}`} className="achievement-card">
                   <div className="achievement-icon">
                     <i className={achievement.achievement_details.icon}></i>
                   </div>
@@ -158,6 +188,30 @@ const StudentAchievements = () => {
                       </span>
                       <span className="earned-date">
                         Earned: {new Date(achievement.earned_date).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Quiz Achievements */}
+              {quizAchievements.map(achievement => (
+                <div key={`quiz-${achievement.id}`} className="achievement-card quiz-achievement">
+                  <div className="achievement-icon">
+                    <i className="fas fa-trophy" style={{color: achievement.badge_type === 'gold' ? '#f1c40f' : '#95a5a6'}}></i>
+                  </div>
+                  <div className="achievement-info">
+                    <h4>{achievement.quiz_title}</h4>
+                    <p>{achievement.course_title} - {achievement.language}</p>
+                    <div className="achievement-meta">
+                      <span className="badge-type">
+                        {achievement.badge_type.charAt(0).toUpperCase() + achievement.badge_type.slice(1)} Badge
+                      </span>
+                      <span className="quiz-score">
+                        Score: {achievement.score}/{achievement.total_questions}
+                      </span>
+                      <span className="earned-date">
+                        Earned: {new Date(achievement.earned_at).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
@@ -202,6 +256,50 @@ const StudentAchievements = () => {
                       </div>
                     ))}
                   </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      
+      {activeTab === 'quizzes' && (
+        <div className="quizzes-section">
+          <h3>Quiz Progress</h3>
+          
+          {enrolledQuizzes.length === 0 ? (
+            <p>No quizzes available for your enrolled courses.</p>
+          ) : (
+            <div className="quizzes-grid">
+              {enrolledQuizzes.map(quiz => (
+                <div key={quiz.id} className={`quiz-card ${quiz.completed ? 'completed' : 'pending'}`}>
+                  <div className="quiz-header">
+                    <h4>{quiz.title}</h4>
+                    <span className={`quiz-status ${quiz.completed ? 'completed' : 'pending'}`}>
+                      {quiz.completed ? 'Completed' : 'Available'}
+                    </span>
+                  </div>
+                  <div className="quiz-details">
+                    <p><strong>Course:</strong> {quiz.course_title}</p>
+                    <p><strong>Language:</strong> {quiz.language}</p>
+                    <p><strong>Questions:</strong> {quiz.total_questions}</p>
+                    <p><strong>Time Limit:</strong> {quiz.time_limit} minutes</p>
+                    <p><strong>Passing Score:</strong> {quiz.passing_score}/{quiz.total_questions}</p>
+                  </div>
+                  {quiz.completed && (
+                    <div className="quiz-result">
+                      <div className="score-display">
+                        <span className="score">{quiz.score}/{quiz.total_questions}</span>
+                        <span className="percentage">({quiz.percentage.toFixed(1)}%)</span>
+                      </div>
+                      {quiz.badge_earned && (
+                        <div className="badge-earned">
+                          <i className="fas fa-trophy" style={{color: '#f1c40f'}}></i>
+                          <span>Gold Badge Earned!</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

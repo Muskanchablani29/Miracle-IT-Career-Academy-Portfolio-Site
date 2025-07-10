@@ -128,7 +128,7 @@ const StudentList = () => {
         
         return {
           id: student.id,
-          name: student.user.username,
+          name: student.user.first_name || student.user.username,
           email: student.user.email,
           enrollmentId: student.enrollment_id,
           dateOfBirth: student.date_of_birth,

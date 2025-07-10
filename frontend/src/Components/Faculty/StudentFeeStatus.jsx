@@ -7,6 +7,7 @@ import {
   FaDownload, FaFileExport, FaChartLine
 } from 'react-icons/fa';
 import './StudentFeeStatus.css';
+import ReceiptModal from '../Common/ReceiptModal';
 
 const StudentFeeStatus = () => {
   const { batchId } = useParams();
@@ -18,6 +19,8 @@ const StudentFeeStatus = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [batches, setBatches] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState(batchId || '');
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [currentReceipt, setCurrentReceipt] = useState(null);
 
   // Mock data for development
   const mockBatches = [
@@ -290,11 +293,35 @@ const StudentFeeStatus = () => {
                         </span>
                       </td>
                       <td className="payment-date">
-                        {student.last_payment_date ? new Date(student.last_payment_date).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        }) : 'No payment yet'}
+                        {student.last_payment_date ? (
+                          <div>
+                            {new Date(student.last_payment_date).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                            <button 
+                              className="btn-small btn-secondary"
+                              onClick={() => {
+                                setCurrentReceipt({
+                                  receipt_number: `REC-${student.student_id}`,
+                                  payment_date: student.last_payment_date,
+                                  student_name: student.student_name,
+                                  enrollment_id: student.enrollment_id,
+                                  course: 'N/A',
+                                  amount: student.amount_paid,
+                                  payment_mode: 'online',
+                                  transaction_id: 'N/A',
+                                  status: 'success'
+                                });
+                                setShowReceiptModal(true);
+                              }}
+                              style={{marginLeft: '10px', padding: '2px 6px', fontSize: '11px'}}
+                            >
+                              📄 View
+                            </button>
+                          </div>
+                        ) : 'No payment yet'}
                       </td>
                     </tr>
                   ))
@@ -313,6 +340,14 @@ const StudentFeeStatus = () => {
           </div>
         </div>
       </div>
+      
+      {showReceiptModal && (
+        <ReceiptModal 
+          payment={currentReceipt}
+          onClose={() => setShowReceiptModal(false)}
+          canDownload={false}
+        />
+      )}
     </div>
   );
 };

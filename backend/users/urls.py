@@ -7,8 +7,16 @@ from .views import (
     WorkshopRegistrationViewSet, CertificateViewSet, IntegratedDashboardView,
     AttendanceViewSet, get_user_enrollments, AttendanceAPIView,
     mark_attendance, get_student_attendance_dates, get_student_attendance_stats,
-    student_dashboard_data, student_profile
+    student_dashboard_data, student_profile, student_assignments
 )
+
+# Try to import assignment views
+try:
+    from .views import AssignmentViewSet, AssignmentSubmissionViewSet
+    ASSIGNMENTS_AVAILABLE = True
+except ImportError:
+    ASSIGNMENTS_AVAILABLE = False
+from .performance_views import student_performance_analytics
 from .views_projects import (
     ProjectViewSet, ProjectSubmissionViewSet, StudentAchievementViewSet,
     current_user_view, project_technologies
@@ -31,6 +39,11 @@ router.register(r'attendance', AttendanceViewSet, basename='attendance')
 router.register(r'projects', ProjectViewSet, basename='project')
 router.register(r'project-submissions', ProjectSubmissionViewSet, basename='project-submission')
 router.register(r'student-achievements', StudentAchievementViewSet, basename='student-achievement')
+
+# Add assignment routes if available
+if ASSIGNMENTS_AVAILABLE:
+    router.register(r'assignments', AssignmentViewSet, basename='assignment')
+    router.register(r'assignment-submissions', AssignmentSubmissionViewSet, basename='assignment-submission')
 
 # Fee Management System routes
 router.register(r'fee-structures', FeeStructureViewSet, basename='fee-structure')
@@ -85,9 +98,13 @@ urlpatterns = [
     path('student-dashboard/', student_dashboard_data, name='student-dashboard'),
     # Student profile endpoint
     path('student-profile/', student_profile, name='student-profile'),
+    # Student performance analytics endpoint
+    path('student-performance-analytics/', student_performance_analytics, name='student-performance-analytics'),
     # Student notification endpoints
     path('student-notifications/', student_notifications, name='student-notifications'),
     path('student-notifications/<int:notification_id>/mark-read/', mark_notification_read, name='mark-notification-read'),
     # Fee payment receipt download
     path('fee-payments/download-receipt/', download_receipt_view, name='fee-payment-download-receipt'),
+    # Assignment endpoints
+    path('student-assignments/', student_assignments, name='student-assignments'),
 ]

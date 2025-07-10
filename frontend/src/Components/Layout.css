@@ -9,9 +9,15 @@ position: relative;
 .dashboard-container {
   flex-grow: 1;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   position: relative;
   width: auto;
-  margin-top: 40px;
+  margin-top: 80px;
+}
+
+.dashboard-container::-webkit-scrollbar {
+  display: none;
 }
 
 .dashboard-content {

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { UserContext } from '../UserContext';
 import axios from 'axios';
 import './AdminDashboard.css';
+import ReceiptModal from '../Common/ReceiptModal';
 import { 
   FaBook, FaUsers, FaCalendarAlt, FaBullhorn, 
   FaPlus, FaChartLine, FaArrowRight, FaLayerGroup, 
@@ -25,6 +26,8 @@ const AdminDashboard = () => {
     notifications: []
   });
   const [loading, setLoading] = useState(true);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [currentReceipt, setCurrentReceipt] = useState(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -53,6 +56,8 @@ const AdminDashboard = () => {
         recentPayments: feeData.recent_payments || [],
         notifications: []
       });
+      
+      await fetchNotifications();
       setLoading(false);
     } catch (err) {
       console.error('Error:', err);
@@ -61,7 +66,22 @@ const AdminDashboard = () => {
   };
 
   const fetchNotifications = async () => {
-    // Notifications will be empty for now
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const response = await axios.get('http://localhost:8000/api/admin-notifications/', { headers });
+      
+      setDashboardData(prev => ({
+        ...prev,
+        notifications: response.data || []
+      }));
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+      setDashboardData(prev => ({
+        ...prev,
+        notifications: []
+      }));
+    }
   };
 
   const markNotificationAsRead = async (notificationId) => {
@@ -77,6 +97,20 @@ const AdminDashboard = () => {
       }));
     } catch (err) {
       console.error('Error marking notification as read:', err);
+    }
+  };
+  
+  const markAllNotificationsAsRead = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      await axios.post('http://localhost:8000/api/admin-notifications/mark_all_read/', {}, { headers });
+      setDashboardData(prev => ({
+        ...prev,
+        notifications: prev.notifications.map(notif => ({ ...notif, is_read: true }))
+      }));
+    } catch (err) {
+      console.error('Error marking all notifications as read:', err);
     }
   };
 
@@ -108,97 +142,144 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      <div className="dashboard-stats admin-stats">
-        <div className="stat-card admin-stat-card">
-          <div className="stat-icon students-icon admin-icon">
-            <HiAcademicCap size={28} />
-          </div>
-          <div className="stat-details">
-            <h3>{dashboardData.totalStudents}</h3>
-            <p>Total Students</p>
-            <span className="stat-trend">+12% this month</span>
-          </div>
+      <div className="dashboard-section-wrapper">
+        <div className="section-header-main">
+          <h2><HiChartBar /> Dashboard Overview</h2>
+          <p>Real-time statistics and key metrics</p>
         </div>
-        <div className="stat-card admin-stat-card">
-          <div className="stat-icon faculty-icon admin-icon">
-            <HiCollection size={28} />
+        <div className="dashboard-stats admin-stats">
+          <div className="stat-card admin-stat-card">
+            <div className="stat-header">
+              <span className="stat-category">Students</span>
+            </div>
+            <div className="stat-icon students-icon admin-icon">
+              <HiAcademicCap size={28} />
+            </div>
+            <div className="stat-details">
+              <h3>{dashboardData.totalStudents}</h3>
+              <p>Total Students</p>
+              <span className="stat-trend">+12% this month</span>
+            </div>
           </div>
-          <div className="stat-details">
-            <h3>{dashboardData.totalFaculty}</h3>
-            <p>Faculty Members</p>
-            <span className="stat-trend">+2 new hires</span>
+          <div className="stat-card admin-stat-card">
+            <div className="stat-header">
+              <span className="stat-category">Faculty</span>
+            </div>
+            <div className="stat-icon faculty-icon admin-icon">
+              <HiCollection size={28} />
+            </div>
+            <div className="stat-details">
+              <h3>{dashboardData.totalFaculty}</h3>
+              <p>Faculty Members</p>
+              <span className="stat-trend">+2 new hires</span>
+            </div>
           </div>
-        </div>
-        <div className="stat-card admin-stat-card">
-          <div className="stat-icon courses-icon admin-icon">
-            <HiCube size={28} />
+          <div className="stat-card admin-stat-card">
+            <div className="stat-header">
+              <span className="stat-category">Courses</span>
+            </div>
+            <div className="stat-icon courses-icon admin-icon">
+              <HiCube size={28} />
+            </div>
+            <div className="stat-details">
+              <h3>{dashboardData.activeCourses}</h3>
+              <p>Active Courses</p>
+              <span className="stat-trend">3 new courses</span>
+            </div>
           </div>
-          <div className="stat-details">
-            <h3>{dashboardData.activeCourses}</h3>
-            <p>Active Courses</p>
-            <span className="stat-trend">3 new courses</span>
+          <div className="stat-card admin-stat-card">
+            <div className="stat-header">
+              <span className="stat-category">Revenue</span>
+            </div>
+            <div className="stat-icon revenue-icon admin-icon">
+              <HiChartBar size={28} />
+            </div>
+            <div className="stat-details">
+              <h3>₹{(dashboardData.feeCollection / 100000).toFixed(1)}L</h3>
+              <p>Fee Collection</p>
+              <span className="stat-trend">+8% vs last month</span>
+            </div>
           </div>
-        </div>
-        <div className="stat-card admin-stat-card">
-          <div className="stat-icon revenue-icon admin-icon">
-            <HiChartBar size={28} />
-          </div>
-          <div className="stat-details">
-            <h3>₹{(dashboardData.feeCollection / 100000).toFixed(1)}L</h3>
-            <p>Fee Collection</p>
-            <span className="stat-trend">+8% vs last month</span>
-          </div>
-        </div>
-        <div className="stat-card admin-stat-card">
-          <div className="stat-icon notifications-icon admin-icon">
-            <HiLightningBolt size={28} />
-          </div>
-          <div className="stat-details">
-            <h3>{dashboardData.notifications.filter(n => !n.is_read).length}</h3>
-            <p>Pending Alerts</p>
-            <span className="stat-trend">Requires attention</span>
+          <div className="stat-card admin-stat-card">
+            <div className="stat-header">
+              <span className="stat-category">Alerts</span>
+            </div>
+            <div className="stat-icon notifications-icon admin-icon">
+              <HiLightningBolt size={28} />
+            </div>
+            <div className="stat-details">
+              <h3>{dashboardData.notifications ? dashboardData.notifications.filter(n => !n.is_read).length : 0}</h3>
+              <p>Pending Alerts</p>
+              <span className="stat-trend">Requires attention</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="dashboard-quick-actions admin-actions">
-        <h2>🚀 Administrative Actions</h2>
-        <div className="quick-actions-grid admin-grid">
-          <Link to="/admin/add-course" className="quick-action-card admin-action-card">
-            <HiOutlineSparkles className="action-icon" size={24} />
-            <span>Add Course</span>
-            <small>Create new programs</small>
-          </Link>
-          <Link to="/admin/add-workshop" className="quick-action-card admin-action-card">
-            <HiCube className="action-icon" size={24} />
-            <span>Add Workshop</span>
-            <small>Schedule events</small>
-          </Link>
-          <Link to="/admin/fee-management" className="quick-action-card admin-action-card">
-            <FaDollarSign className="action-icon" size={24} />
-            <span>Fee Management</span>
-            <small>Handle payments</small>
-          </Link>
-          <Link to="/admin/create-student" className="quick-action-card admin-action-card">
-            <HiAcademicCap className="action-icon" size={24} />
-            <span>Add Student</span>
-            <small>Enroll new students</small>
-          </Link>
-          <Link to="/admin/create-faculty" className="quick-action-card admin-action-card">
-            <HiCollection className="action-icon" size={24} />
-            <span>Add Faculty</span>
-            <small>Hire instructors</small>
-          </Link>
-          <Link to="/admin/user-management" className="quick-action-card admin-action-card">
-            <HiClock className="action-icon" size={24} />
-            <span>User Management</span>
-            <small>Manage accounts</small>
-          </Link>
-          <Link to="/admin/system-settings" className="quick-action-card admin-action-card">
-            <HiLightningBolt className="action-icon" size={24} />
-            <span>System Settings</span>
-            <small>Configure system</small>
-          </Link>
+      <div className="dashboard-section-wrapper">
+        <div className="section-header-main">
+          <h2><HiLightningBolt /> Quick Actions</h2>
+          <p>Administrative tools and management options</p>
+        </div>
+        <div className="dashboard-quick-actions-admin admin-actions-dashboard">
+          <div className="quick-actions-grid admin-grid">
+            <Link to="/admin/add-course" className="quick-action-card admin-action-card">
+              <div className="action-header">
+                <span className="action-category">Academic</span>
+              </div>
+              <HiOutlineSparkles className="action-icon" size={24} />
+              <span>Add Course</span>
+              <small>Create new programs</small>
+            </Link>
+            <Link to="/admin/add-workshop" className="quick-action-card admin-action-card">
+              <div className="action-header">
+                <span className="action-category">Events</span>
+              </div>
+              <HiCube className="action-icon" size={24} />
+              <span>Add Workshop</span>
+              <small>Schedule events</small>
+            </Link>
+            <Link to="/admin/fee-management" className="quick-action-card admin-action-card">
+              <div className="action-header">
+                <span className="action-category">Finance</span>
+              </div>
+              <FaDollarSign className="action-icon" size={24} />
+              <span>Fee Management</span>
+              <small>Handle payments</small>
+            </Link>
+            <Link to="/admin/create-student" className="quick-action-card admin-action-card">
+              <div className="action-header">
+                <span className="action-category">Students</span>
+              </div>
+              <HiAcademicCap className="action-icon" size={24} />
+              <span>Add Student</span>
+              <small>Enroll new students</small>
+            </Link>
+            <Link to="/admin/create-faculty" className="quick-action-card admin-action-card">
+              <div className="action-header">
+                <span className="action-category">Staff</span>
+              </div>
+              <HiCollection className="action-icon" size={24} />
+              <span>Add Faculty</span>
+              <small>Hire instructors</small>
+            </Link>
+            <Link to="/admin/user-management" className="quick-action-card admin-action-card">
+              <div className="action-header">
+                <span className="action-category">Users</span>
+              </div>
+              <HiClock className="action-icon" size={24} />
+              <span>User Management</span>
+              <small>Manage accounts</small>
+            </Link>
+            <Link to="/admin/system-settings" className="quick-action-card admin-action-card">
+              <div className="action-header">
+                <span className="action-category">System</span>
+              </div>
+              <HiLightningBolt className="action-icon" size={24} />
+              <span>System Settings</span>
+              <small>Configure system</small>
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -229,6 +310,28 @@ const AdminDashboard = () => {
                     </div>
                     <div className="course-list-actions">
                       <span className="view-course-btn success">Paid <FaArrowRight /></span>
+                      {payment.receipt_number && (
+                        <button 
+                          className="btn-small btn-primary"
+                          onClick={() => {
+                            setCurrentReceipt({
+                              receipt_number: payment.receipt_number,
+                              payment_date: payment.date,
+                              student_name: payment.student_name,
+                              enrollment_id: 'N/A',
+                              course: 'N/A',
+                              amount: payment.amount,
+                              payment_mode: 'online',
+                              transaction_id: 'N/A',
+                              status: 'success'
+                            });
+                            setShowReceiptModal(true);
+                          }}
+                          style={{marginTop: '5px', padding: '2px 6px', fontSize: '11px'}}
+                        >
+                          📄 View Receipt
+                        </button>
+                      )}
                     </div>
                   </li>
                 ))}
@@ -245,9 +348,13 @@ const AdminDashboard = () => {
         <div className="dashboard-section">
           <div className="section-header">
             <h2><FaBell /> Notifications</h2>
-            <div className="notification-badge">
-              {dashboardData.notifications.filter(n => !n.is_read).length} unread
-            </div>
+            <button 
+              onClick={markAllNotificationsAsRead}
+              className="notification-badge"
+              style={{background: 'none', border: 'none', color: '#3399cc', cursor: 'pointer'}}
+            >
+              Mark All Read ({dashboardData.notifications ? dashboardData.notifications.filter(n => !n.is_read).length : 0} unread)
+            </button>
           </div>
           <div className="activities-list">
             {dashboardData.notifications && dashboardData.notifications.length > 0 ? (
@@ -327,6 +434,14 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+      
+      {showReceiptModal && (
+        <ReceiptModal 
+          payment={currentReceipt}
+          onClose={() => setShowReceiptModal(false)}
+          canDownload={true}
+        />
+      )}
     </div>
   );
 };

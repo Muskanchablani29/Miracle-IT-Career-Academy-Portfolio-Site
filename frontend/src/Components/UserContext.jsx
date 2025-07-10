@@ -22,7 +22,13 @@ export const UserProvider = ({ children }) => {
       
       // Immediately set user from localStorage to prevent flashing of login page
       if (access && role && username) {
-        setUser({ role, username });
+        setUser({ 
+          role, 
+          username,
+          first_name: localStorage.getItem('first_name'),
+          last_name: localStorage.getItem('last_name'),
+          email: localStorage.getItem('email')
+        });
       }
       
       if (access) {
@@ -38,12 +44,21 @@ export const UserProvider = ({ children }) => {
           // Store in localStorage for future use
           localStorage.setItem('role', fetchedRole);
           localStorage.setItem('username', fetchedUsername);
+          localStorage.setItem('first_name', profile.data.first_name || '');
+          localStorage.setItem('last_name', profile.data.last_name || '');
+          localStorage.setItem('email', profile.data.email || '');
           
           // Update adminAxiosInstance with the token
           adminAxiosInstance.defaults.headers.common['Authorization'] = `Bearer ${access}`;
           
           if (isMounted) {
-            setUser({ role: fetchedRole, username: fetchedUsername });
+            setUser({ 
+              role: fetchedRole, 
+              username: fetchedUsername,
+              first_name: profile.data.first_name,
+              last_name: profile.data.last_name,
+              email: profile.data.email
+            });
             console.log('User updated in context:', { role: fetchedRole, username: fetchedUsername });
           }
         } catch (error) {

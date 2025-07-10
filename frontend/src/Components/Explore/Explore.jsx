@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import { Routes, Route, Link, useLocation, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar-explore';
 import Certificates from './Certificates';
 import Workshops from './Workshops';
@@ -46,6 +46,7 @@ import AIML from './Courses/Job-linked/AIML';
 
 const Explore = () => {
   const location = useLocation();
+  const params = useParams();
   const [activeCategory, setActiveCategory] = useState(null);
   
   useEffect(() => {
@@ -58,6 +59,23 @@ const Explore = () => {
       setActiveCategory(null);
     }
   }, [location]);
+  
+  // Check if this is a direct course route (not under /explore)
+  const isDirectCourseRoute = location.pathname.startsWith('/course/');
+  
+  // If it's a direct course route, render CourseDetail directly
+  if (isDirectCourseRoute) {
+    return (
+      <div className="explore-container">
+        <div className="sidebar-wrapper">
+          <Sidebar />
+        </div>
+        <div className="explore-content">
+          <CourseDetail />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="explore-container">
@@ -252,7 +270,7 @@ const CategoryCourses = () => {
                   <span>{course.duration}</span>
                   <span>{course.level}</span>
                 </div>
-                <Link to={`/explore/course/${course.id}`} className="enroll-btn">View Course</Link>
+                <Link to={`/course/${course.id}`} className="enroll-btn">View Course</Link>
               </div>
             </div>
           ))

@@ -86,7 +86,7 @@
   transform: scale(1.05);
 }
 
-.category-slider-container {
+.category-slider-container-explore {
   position: relative;
   overflow: hidden;
   padding: 10px 0;
@@ -106,7 +106,7 @@
   display: none; /* Chrome, Safari, Opera */
 }
 
-.course-card {
+.course-card-explore {
   min-width: 300px;
   max-width: 300px;
   border-radius: 12px;
@@ -124,13 +124,13 @@
   border-color: #e0e0e0;
 }
 
-.course-image {
+.course-image-explore {
   height: 180px;
   overflow: hidden;
   position: relative;
 }
 
-.course-image img {
+.course-image-explore img {
   width: 100%;
   height: 100%;
   object-fit: cover;

@@ -170,7 +170,14 @@ class ProfileView(APIView):
     def get(self, request):
         try:
             user = request.user
-            data = UserSerializer(user).data
+            data = {
+                'id': user.id,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'email': user.email,
+                'role': user.role
+            }
             
             if user.role == 'student':
                 student_data = StudentSerializer(user.student_profile).data
@@ -1155,3 +1162,145 @@ def student_dashboard_data(request):
             {"detail": f"Error retrieving dashboard data: {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+# Assignment Views
+try:
+    from .models import Assignment, AssignmentSubmission
+    from .serializers import AssignmentSerializer, AssignmentSubmissionSerializer
+    
+    class AssignmentViewSet(viewsets.ModelViewSet):
+        serializer_class = AssignmentSerializer
+        permission_classes = [permissions.IsAuthenticated]
+        
+        def get_queryset(self):
+            user = self.request.user
+            if user.role == 'student':
+                try:
+                    student = Student.objects.get(user=user)
+                    if student.batch:
+                        return Assignment.objects.filter(batch=student.batch, status='active').order_by('-created_at')
+                    return Assignment.objects.none()
+                except Student.DoesNotExist:
+                    return Assignment.objects.none()
+            else:
+                batch_id = self.request.query_params.get('batch_id', None)
+                if batch_id:
+                    return Assignment.objects.filter(batch_id=batch_id).order_by('-created_at')
+                return Assignment.objects.all().order_by('-created_at')
+        
+        def create(self, request, *args, **kwargs):
+            request.data['created_by'] = request.user.id
+            return super().create(request, *args, **kwargs)
+        
+        @action(detail=True, methods=['get'])
+        def submissions(self, request, pk=None):
+            assignment = self.get_object()
+            submissions = AssignmentSubmission.objects.filter(assignment=assignment)
+            serializer = AssignmentSubmissionSerializer(submissions, many=True)
+            return Response(serializer.data)
+    
+    class AssignmentSubmissionViewSet(viewsets.ModelViewSet):
+        serializer_class = AssignmentSubmissionSerializer
+        permission_classes = [permissions.IsAuthenticated]
+        
+        def get_queryset(self):
+            user = self.request.user
+            if user.role == 'student':
+                try:
+                    student = Student.objects.get(user=user)
+                    return AssignmentSubmission.objects.filter(student=student).order_by('-submission_date')
+                except Student.DoesNotExist:
+                    return AssignmentSubmission.objects.none()
+            else:
+                assignment_id = self.request.query_params.get('assignment_id', None)
+                if assignment_id:
+                    return AssignmentSubmission.objects.filter(assignment_id=assignment_id).order_by('-submission_date')
+                return AssignmentSubmission.objects.all().order_by('-submission_date')
+        
+        def create(self, request, *args, **kwargs):
+            if request.user.role != 'student':
+                return Response(
+                    {"detail": "Only students can submit assignments."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            try:
+                student = Student.objects.get(user=request.user)
+                request.data['student'] = student.id
+                return super().create(request, *args, **kwargs)
+            except Student.DoesNotExist:
+                return Response(
+                    {"detail": "Student profile not found."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+    @api_view(['GET'])
+    @permission_classes([permissions.IsAuthenticated])
+    def student_assignments(request):
+        if request.user.role != 'student':
+            return Response(
+                {"detail": "Only students can access assignments."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        try:
+            student = Student.objects.get(user=request.user)
+            if not student.batch:
+                return Response({
+                    'assignments': [],
+                    'message': 'No batch assigned to student'
+                })
+            
+            assignments = Assignment.objects.filter(
+                batch=student.batch, 
+                status='active'
+            ).order_by('-created_at')
+            
+            submissions = AssignmentSubmission.objects.filter(student=student)
+            submission_dict = {sub.assignment_id: sub for sub in submissions}
+            
+            assignment_data = []
+            for assignment in assignments:
+                submission = submission_dict.get(assignment.id)
+                assignment_info = {
+                    'id': assignment.id,
+                    'title': assignment.title,
+                    'description': assignment.description,
+                    'difficulty': assignment.difficulty,
+                    'due_date': assignment.due_date,
+                    'created_at': assignment.created_at,
+                    'is_overdue': timezone.now() > assignment.due_date,
+                    'submission': None
+                }
+                
+                if submission:
+                    assignment_info['submission'] = {
+                        'id': submission.id,
+                        'status': submission.status,
+                        'grade': submission.grade,
+                        'feedback': submission.feedback,
+                        'submission_date': submission.submission_date
+                    }
+                
+                assignment_data.append(assignment_info)
+            
+            return Response({
+                'assignments': assignment_data,
+                'total_assignments': len(assignment_data),
+                'submitted_count': len([a for a in assignment_data if a['submission']]),
+                'pending_count': len([a for a in assignment_data if not a['submission']])
+            })
+            
+        except Student.DoesNotExist:
+            return Response(
+                {"detail": "Student profile not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error in student_assignments: {str(e)}")
+            return Response(
+                {"detail": f"Error retrieving assignments: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+except ImportError:
+    pass

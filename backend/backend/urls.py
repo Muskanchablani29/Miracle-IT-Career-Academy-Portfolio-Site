@@ -14,6 +14,7 @@ urlpatterns = [
     path('api/', include('users.urls')),
     path('api/courses/', include('courses.urls')),
     path('api/chatbot/', include('chatbot.urls')),
+    path('api/quizzes/', include('quizzes.urls')),
     path('create-order/', views.create_order),
     path('verify-payment/', views.verify_payment),
 ]

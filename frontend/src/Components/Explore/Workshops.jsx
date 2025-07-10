@@ -637,54 +637,7 @@ const Workshops = () => {
         </div>
       </section>
       
-      {/* Latest Courses Section - Keeping this from the original code but with enhanced styling */}
-      <section className="latest-courses-section">
-        <div className="section-header">
-          <h2><FaBook className="section-icon" /> Latest Courses</h2>
-          <div className="section-underline"></div>
-        </div>
-        <p className="section-description">Check out our newest courses and learning opportunities</p>
-        
-        <div className="latest-courses-list">
-          {latestCourses.length > 0 ? (
-            latestCourses.map((course) => (
-              <div className="course-card" key={course.id}>
-                <div className="course-image">
-                  <img src={course.image || 'https://via.placeholder.com/300x200?text=Course'} alt={course.title} />
-                  <div className="course-overlay">
-                    <Link to={`/explore/courses/${course.id}`} className="view-details-btn">
-                      View Details
-                    </Link>
-                  </div>
-                </div>
-                <div className="course-details">
-                  <h3>{course.title}</h3>
-                  <p className="course-description">{course.description.substring(0, 120)}...</p>
-                  <div className="course-meta">
-                    <div className="course-duration">
-                      <FaClock className="meta-icon" /> {course.duration}
-                    </div>
-                    <div className="course-level">
-                      <FaChalkboardTeacher className="meta-icon" /> {course.level}
-                    </div>
-                  </div>
-                  <Link to={`/explore/courses/${course.id}`} className="view-course-btn">
-                    View Course
-                  </Link>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="no-courses">
-              <div className="empty-state-icon">
-                <FaBook />
-              </div>
-              <p>No new courses available at the moment.</p>
-              <p className="empty-state-subtext">Check back soon for new learning opportunities!</p>
-            </div>
-          )}
-        </div>
-      </section>
+      
     </div>
   );
 };

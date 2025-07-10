@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'courses',
     'chatbot',
+    'quizzes',
 ]
 
 MIDDLEWARE = [

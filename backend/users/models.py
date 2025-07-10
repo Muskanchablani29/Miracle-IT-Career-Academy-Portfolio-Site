@@ -366,11 +366,53 @@ class AdminNotification(models.Model):
             self.expires_at = self.created_at + timedelta(hours=48) if self.created_at else timezone.now() + timedelta(hours=48)
         super().save(*args, **kwargs)
 
+class Assignment(models.Model):
+    DIFFICULTY_CHOICES = (
+        ('easy', 'Easy'),
+        ('medium', 'Medium'),
+        ('hard', 'Hard'),
+    )
+    STATUS_CHOICES = (
+        ('active', 'Active'),
+        ('archived', 'Archived'),
+    )
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='assignments')
+    difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, default='medium')
+    due_date = models.DateTimeField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='created_assignments')
+    
+    def __str__(self):
+        return f"{self.title} - {self.batch.name}"
+
+class AssignmentSubmission(models.Model):
+    STATUS_CHOICES = (
+        ('submitted', 'Submitted'),
+        ('reviewed', 'Reviewed'),
+        ('graded', 'Graded'),
+    )
+    assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name='submissions')
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='assignment_submissions')
+    submission_text = models.TextField(blank=True, null=True)
+    file_url = models.URLField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='submitted')
+    grade = models.IntegerField(null=True, blank=True)
+    feedback = models.TextField(blank=True, null=True)
+    submission_date = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.student.enrollment_id} - {self.assignment.title}"
+
 class StudentNotification(models.Model):
     NOTIFICATION_TYPES = (
         ('fee_reminder', 'Fee Reminder'),
         ('installment_due', 'Installment Due'),
         ('payment_success', 'Payment Success'),
+        ('assignment', 'Assignment'),
         ('general', 'General'),
     )
     

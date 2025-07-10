@@ -52,6 +52,11 @@ const Sidebar = () => {
             <FaUserCircle className="icon" /> Registered Users
           </Link>
         </li>
+        <li className={isActive('/admin/attendance') ? 'active' : ''}>
+          <Link to="/admin/attendance">
+            <FaCalendarAlt className="icon" /> Attendance
+          </Link>
+        </li>
         <li className={isActive('/admin/attendance-logs') ? 'active' : ''}>
           <Link to="/admin/attendance-logs">
             <FaCalendarAlt className="icon" /> Attendance Logs

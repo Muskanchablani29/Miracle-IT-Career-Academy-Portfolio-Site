@@ -162,6 +162,27 @@ const ChatWidget = () => {
     if (message.data?.type === 'quiz') {
       return renderQuizQuestions(message.data);
     }
+    if (message.data?.type === 'fees' && message.data?.upcoming_due) {
+      return (
+        <div className="fee-alert">
+          <div className="fee-alert-header">
+            🔔 Upcoming Payment Due
+          </div>
+          <div className="fee-alert-content">
+            <p><strong>Installment #{message.data.upcoming_due.sequence}</strong></p>
+            <p>Amount: ₹{message.data.upcoming_due.amount.toLocaleString()}</p>
+            <p>Due: {new Date(message.data.upcoming_due.due_date).toLocaleDateString()}</p>
+            <p>Days Left: {message.data.upcoming_due.days_left}</p>
+          </div>
+          <button 
+            className="fee-pay-btn"
+            onClick={() => window.location.href = '/student/fee-management'}
+          >
+            💳 Pay Now
+          </button>
+        </div>
+      );
+    }
     if (message.data?.download_link) {
       return (
         <div className="action-link">
@@ -214,6 +235,7 @@ const ChatWidget = () => {
                     <span className="badge">🎤 Voice</span>
                     <span className="badge">🌐 Hindi</span>
                     <span className="badge">🧠 Smart</span>
+                    <span className="badge">💰 Fee Alerts</span>
                   </div>
                 </div>
                 

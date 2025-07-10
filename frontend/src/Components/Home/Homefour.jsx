@@ -17,7 +17,6 @@ export default function Homefour() {
       category: 'Web Development',
       instructor: 'John Smith',
       rating: 4.8,
-      price: '$89.99',
       image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8d2ViJTIwZGV2ZWxvcG1lbnR8ZW58MHx8MHx8&auto=format&fit=crop&w=500&q=60'
     },
     {
@@ -26,7 +25,6 @@ export default function Homefour() {
       category: 'Mobile Development',
       instructor: 'Sarah Johnson',
       rating: 4.7,
-      price: '$79.99',
       image: 'https://images.unsplash.com/photo-1526498460520-4c246339dccb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8bW9iaWxlJTIwZGV2ZWxvcG1lbnR8ZW58MHx8MHx8&auto=format&fit=crop&w=500&q=60'
     },
     {
@@ -35,7 +33,6 @@ export default function Homefour() {
       category: 'Data Science',
       instructor: 'Michael Chen',
       rating: 4.9,
-      price: '$94.99',
       image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8M3x8ZGF0YSUyMHNjaWVuY2V8ZW58MHx8MHx8&auto=format&fit=crop&w=500&q=60'
     },
     {
@@ -44,7 +41,6 @@ export default function Homefour() {
       category: 'UI/UX Design',
       instructor: 'Emma Wilson',
       rating: 4.6,
-      price: '$69.99',
       image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8M3x8dWklMjB1eHxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=500&q=60'
     },
     {
@@ -53,7 +49,6 @@ export default function Homefour() {
       category: 'Cloud Computing',
       instructor: 'David Miller',
       rating: 4.8,
-      price: '$99.99',
       image: image
     },
     {
@@ -62,7 +57,6 @@ export default function Homefour() {
       category: 'Web Development',
       instructor: 'Alex Turner',
       rating: 4.7,
-      price: '$84.99',
       image: 'https://images.unsplash.com/photo-1579468118864-1b9ea3c0db4a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8amF2YXNjcmlwdHxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=500&q=60'
     },
     {
@@ -71,7 +65,6 @@ export default function Homefour() {
       category: 'Mobile Development',
       instructor: 'Jessica Lee',
       rating: 4.8,
-      price: '$89.99',
       image: 'https://images.unsplash.com/photo-1551650975-87deedd944c3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Nnx8bW9iaWxlJTIwYXBwfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=500&q=60'
     },
     {
@@ -80,7 +73,6 @@ export default function Homefour() {
       category: 'DevOps',
       instructor: 'Robert Johnson',
       rating: 4.9,
-      price: '$109.99',
       image: 'https://images.unsplash.com/photo-1607743386760-88ac62b89b8a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8OHx8ZGV2b3BzfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=500&q=60'
     },
     {
@@ -89,7 +81,6 @@ export default function Homefour() {
       category: 'Blockchain',
       instructor: 'Thomas Wilson',
       rating: 4.6,
-      price: '$99.99',
       image: 'https://images.unsplash.com/photo-1639322537228-f710d846310a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NXx8YmxvY2tjaGFpbnxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=500&q=60'
     },
     {
@@ -98,7 +89,6 @@ export default function Homefour() {
       category: 'Security',
       instructor: 'Olivia Martinez',
       rating: 4.9,
-      price: '$119.99',
       image: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8M3x8Y3liZXJzZWN1cml0eXxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=500&q=60'
     }
   ];
@@ -158,7 +148,7 @@ export default function Homefour() {
   return (
     <section className="popular-courses-section">
       <div className="container">
-        <div className="section-header">
+        <div className="section-header-explore">
           <h2>Popular Courses</h2>
           <p>Discover our collection of 20+ professional courses to boost your career</p>
         </div>

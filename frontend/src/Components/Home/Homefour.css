@@ -29,14 +29,14 @@
   z-index: 1;
 }
 
-.section-header {
+.section-header-explore {
   text-align: center;
   margin-bottom: 60px;
   position: relative;
   padding: 0 15px;
 }
 
-.section-header h2 {
+.section-header-explore h2 {
   font-size: 38px;
   color: var(--text-primary);
   margin-bottom: 15px;

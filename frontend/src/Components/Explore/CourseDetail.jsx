@@ -363,31 +363,66 @@ const CourseDetail = () => {
   };
 
   if (loading) {
-    return <div className="loading">Loading course details...</div>;
+    return (
+      <div className="course-detail-container">
+        <div className="loading">
+          <div className="loading-spinner"></div>
+          <p>Loading course details...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="error-message">{error}</div>;
+    return (
+      <div className="course-detail-container">
+        <div className="error-message">
+          <h2>⚠️ Error Loading Course</h2>
+          <p>{error}</p>
+          <button onClick={() => window.location.reload()} className="retry-button">
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (!course) {
-    return <div className="error-message">Course not found</div>;
+    return (
+      <div className="course-detail-container">
+        <div className="error-message">
+          <h2>📚 Course Not Found</h2>
+          <p>The course you're looking for doesn't exist or has been removed.</p>
+          <button onClick={() => navigate('/explore')} className="retry-button">
+            Browse All Courses
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="course-detail-container">
-      <div className="course-header">
-        <h1>{course.title}</h1>
-        <div className="course-meta">
-          <span className="course-level">{course.level}</span>
-          <span className="course-duration">{course.duration}</span>
+      {/* Hero Section with Background Image */}
+      <div className="course-hero" style={{
+        backgroundImage: course.image 
+          ? `linear-gradient(135deg, rgba(74, 108, 247, 0.6), rgba(58, 91, 217, 0.6)), url(http://localhost:8000${course.image})`
+          : 'linear-gradient(135deg, var(--primary-color), var(--primary-hover)), url("data:image/svg+xml,%3Csvg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Cpath d="M50 20L60 40H40L50 20zM20 50L40 60V40L20 50zM80 50L60 40V60L80 50zM50 80L40 60H60L50 80z"/%3E%3C/g%3E%3C/svg%3E")'
+      }}>
+        <div className="course-hero-overlay">
+          <div className="course-hero-content">
+            <h1 className="course-hero-title">{course.title}</h1>
+            <div className="course-hero-meta">
+              <span className="course-level">{course.level}</span>
+              <span className="course-duration">{course.duration}</span>
+              {course.is_certified && <span className="course-certified">🏆 Certified</span>}
+            </div>
+            <p className="course-hero-description">{course.description}</p>
+          </div>
         </div>
       </div>
 
-      <div className="course-description">
-        <h2>About this Course</h2>
-        <p>{course.description}</p>
-      </div>
+
 
       <div className="course-features">
         <div className="feature-card">
@@ -575,15 +610,48 @@ const CourseDetail = () => {
         </div>
       </div>
 
+      {/* Fee Structure Section */}
+      {course.fee_structure && (
+        <div className="fee-structure-section">
+          <h2>💰 Course Fee Structure</h2>
+          <div className="fee-structure-card">
+            <div className="fee-header">
+              <h3>{course.fee_structure.name}</h3>
+            </div>
+            <div className="fee-breakdown">
+              <div className="fee-item">
+                <span className="fee-label">Registration Fee:</span>
+                <span className="fee-amount">₹{course.fee_structure.registration_fee}</span>
+              </div>
+              <div className="fee-item">
+                <span className="fee-label">Tuition Fee:</span>
+                <span className="fee-amount">₹{course.fee_structure.tuition_fee}</span>
+              </div>
+              <div className="fee-total">
+                <span className="fee-label">Total Amount:</span>
+                <span className="fee-amount total">₹{course.fee_structure.total_amount}</span>
+              </div>
+              <div className="installment-info">
+                <span className="installment-text">
+                  💳 Available in {course.fee_structure.installments} installments
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {isEnrolled ? (
         <div className="enrolled-badge">You are enrolled in this course</div>
       ) : (
         <div className="enrollment-section">
-          {course && course.price > 0 ? (
+          {course && (course.price > 0 || course.fee_structure) ? (
             <div className="course-pricing">
-              <h3>Course Fee</h3>
+              <h3>Enroll Now</h3>
               <div className="price-display">
-                {course.discount_price ? (
+                {course.fee_structure ? (
+                  <span className="fee-structure-price">₹{course.fee_structure.total_amount}</span>
+                ) : course.discount_price ? (
                   <>
                     <span className="original-price">₹{course.price}</span>
                     <span className="discount-price">₹{course.discount_price}</span>
@@ -592,6 +660,11 @@ const CourseDetail = () => {
                   <span className="regular-price">₹{course.price}</span>
                 )}
               </div>
+              {course.fee_structure && (
+                <p className="installment-note">
+                  Pay in {course.fee_structure.installments} easy installments
+                </p>
+              )}
               <button 
                 className="enroll-button" 
                 onClick={handleEnroll}

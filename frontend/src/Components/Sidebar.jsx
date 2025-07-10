@@ -27,8 +27,6 @@ const Sidebar = () => {
           { to: '/admin/manage-courses', label: 'Course Management', icon: <FaBook /> },
           { to: '/admin/attendance-logs', label: 'Attendance Logs', icon: <FaCalendarAlt /> },
           { to: '/admin/fee-tracking', label: 'Fee Tracking', icon: <FaMoneyBillWave /> },
-          { to: '/admin/certificates', label: 'Certificates', icon: <FaCertificate /> },
-          { to: '/admin/system-settings', label: 'System Settings', icon: <FaCog /> },
         ];
       case 'faculty':
         return [
@@ -36,8 +34,6 @@ const Sidebar = () => {
           { to: '/faculty/courses', label: 'Manage Courses', icon: <FaBook /> },
           { to: '/faculty/attendance', label: 'Student Attendance', icon: <FaCalendarAlt /> },
           { to: '/faculty/projects', label: 'Projects', icon: <FaListAlt /> },
-          { to: '/faculty/gradebook', label: 'Gradebook', icon: <FaClipboardList /> },
-          { to: '/faculty/announcements', label: 'Faculty Announcements', icon: <FaBullhorn /> },
           { to: '/faculty/students', label: 'Student List', icon: <FaUserGraduate /> },
           { to: '/faculty/registered-users', label: 'Registered Users', icon: <FaUserCircle /> },
         ];
@@ -45,10 +41,10 @@ const Sidebar = () => {
         return [
           { to: '/student', label: 'Dashboard', icon: <FaHome /> },
           { to: '/student/courses', label: 'Courses', icon: <FaBook /> },
+          { to: '/student/projects', label: 'Assignments', icon: <FaListAlt /> },
           { to: '/student/attendance', label: 'Attendance', icon: <FaCalendarAlt /> },
           { to: '/student/performance', label: 'Performance Report', icon: <FaChartLine /> },
           { to: '/student/fees', label: 'Fee Management', icon: <FaMoneyBillWave /> },
-          { to: '/student/documents', label: 'Documents & Certificates', icon: <FaFileAlt /> },
           { to: '/student/profile', label: 'Student Profile', icon: <FaUserCircle /> },
         ];
       default:

@@ -228,3 +228,149 @@
 .leaderboard-table tr.current-user:hover {
   background-color: #bbdefb;
 }
+
+/* Quiz Achievements Styles */
+.quiz-achievement {
+  border-left: 4px solid #f1c40f;
+}
+
+.badge-type {
+  background: linear-gradient(135deg, #f1c40f, #f39c12);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.quiz-score {
+  background: #e8f5e8;
+  color: #27ae60;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Quizzes Section */
+.quizzes-section {
+  margin-top: 2rem;
+}
+
+.quizzes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.quiz-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.quiz-card.completed {
+  border-left: 4px solid #27ae60;
+  background: #f8fff8;
+}
+
+.quiz-card.pending {
+  border-left: 4px solid #f39c12;
+}
+
+.quiz-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.quiz-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.quiz-header h4 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.1rem;
+}
+
+.quiz-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.quiz-status.completed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.quiz-status.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.quiz-details {
+  margin-bottom: 1rem;
+}
+
+.quiz-details p {
+  margin: 0.5rem 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.quiz-result {
+  border-top: 1px solid #e0e0e0;
+  padding-top: 1rem;
+}
+
+.score-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.score-display .score {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #27ae60;
+}
+
+.score-display .percentage {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.badge-earned {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #f1c40f;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.badge-earned i {
+  font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+  .quizzes-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .quiz-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}

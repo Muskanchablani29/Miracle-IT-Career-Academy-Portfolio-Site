@@ -38,13 +38,14 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     videos = VideoSerializer(many=True, read_only=True)
     students_count = serializers.SerializerMethodField()
     preview_video = serializers.SerializerMethodField()
+    fee_structure = serializers.SerializerMethodField()
     
     class Meta:
         model = Course
         fields = ['id', 'title', 'description', 'image', 'duration', 'level', 
                  'created_at', 'internship_duration', 'is_certified', 'last_updated',
                  'syllabus_modules', 'videos', 'price', 'discount_price', 'students_count',
-                 'preview_video_url', 'preview_duration', 'preview_video']
+                 'preview_video_url', 'preview_duration', 'preview_video', 'fee_structure']
                  
     def get_students_count(self, obj):
         # Count students directly from Student model
@@ -53,6 +54,20 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     
     def get_preview_video(self, obj):
         return obj.get_first_video_as_preview()
+    
+    def get_fee_structure(self, obj):
+        from users.models import FeeStructure
+        fee_structure = FeeStructure.objects.filter(course=obj).first()
+        if fee_structure:
+            return {
+                'id': fee_structure.id,
+                'name': fee_structure.name,
+                'total_amount': fee_structure.total_amount,
+                'registration_fee': fee_structure.registration_fee,
+                'tuition_fee': fee_structure.tuition_fee,
+                'installments': fee_structure.installments
+            }
+        return None
 
 class QuizSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(required=False)

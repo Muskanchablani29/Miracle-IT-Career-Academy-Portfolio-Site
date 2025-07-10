@@ -15,11 +15,12 @@ import StudentAttendance from './Components/Student/StudentAttendance';
 import StudentPerformance from './Components/Student/StudentPerformance';
 import StudentProfile from './Components/Student/StudentProfile';
 import StudentProjects from './Components/Student/StudentProjects';
-import StudentFees from './Components/Student/StudentFees';
+import StudentFees from './Components/Student/StudentFeeManagement';
 import StudentFeeManagement from './Components/Student/StudentFeeManagement';
 import StudentFeeDetails from './Components/Student/StudentFeeDetails';
 import StudentDocuments from './Components/Student/StudentDocuments';
 import StudentAchievements from './Components/Student/StudentAchievements';
+import StudentAssignments from './Components/Student/StudentAssignments';
 import Notifications from './Components/Student/Notifications';
 import AttendanceView from './Components/Student/AttendanceView';
 import AddCourse from './Components/Admin/AddCourse';
@@ -31,7 +32,7 @@ import CourseManagement from './Components/Admin/CourseManagement';
 import ManageCourses from './Components/Admin/ManageCourses';
 import RegisteredUsers from './Components/Admin/RegisteredUsers';
 import WorkshopRegistrations from './Components/Admin/WorkshopRegistrations';
-import AttendanceLogs from './Components/Admin/AttendanceLogs';
+import AttendanceLogs from './Components/Admin/AdminAttendance';
 import SyllabusEditor from './Components/Admin/SyllabusEditor';
 import SystemSettings from './Components/Admin/SystemSettings';
 import Certificates from './Components/Admin/Certificates';
@@ -104,6 +105,9 @@ function App() {
             <Route index element={<Home />} />
             <Route path="about" element={<About />} />
             <Route path="login" element={<Login />} />
+            
+            {/* Direct Course Route */}
+            <Route path="course/:courseId" element={<Explore />} />
             
             {/* Explore Routes */}
             <Route path="explore/*" element={<Explore />}>
@@ -207,6 +211,7 @@ function App() {
             <Route path="fee-details" element={<StudentFeeDetails />} />
             <Route path="documents" element={<StudentDocuments />} />
             <Route path="achievements" element={<StudentAchievements />} />
+            <Route path="assignments" element={<StudentAssignments />} />
             <Route path="notifications" element={<Notifications />} />
             <Route path="attendance/:date" element={<AttendanceView />} />
           </Route>
