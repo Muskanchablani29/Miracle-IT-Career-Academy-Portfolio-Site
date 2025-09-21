@@ -663,6 +663,25 @@ class AttendanceViewSet(viewsets.ModelViewSet):
             return queryset.order_by('-date')
     
     @action(detail=False, methods=['get'])
+    def overall_stats(self, request):
+        """Get overall attendance statistics"""
+        try:
+            # Return mock data for now
+            return Response({
+                'total_students': 150,
+                'present_today': 128,
+                'absent_today': 22,
+                'average_attendance': 85.3,
+                'attendance_trend': 'increasing'
+            })
+        except Exception as e:
+            logger.error(f"Error in overall_stats: {str(e)}")
+            return Response(
+                {"detail": f"Error retrieving overall stats: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['get'])
     def my_attendance(self, request):
         """Get attendance for the logged-in student"""
         # Allow any authenticated user for testing

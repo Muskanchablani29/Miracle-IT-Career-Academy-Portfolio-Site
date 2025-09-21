@@ -58,8 +58,18 @@ def start_quiz(request, quiz_id):
     """Start a new quiz attempt"""
     quiz = get_object_or_404(CourseQuiz, id=quiz_id)
     
-    # Create demo attempt for anonymous users
-    attempt_id = f"demo_{quiz_id}_{int(timezone.now().timestamp())}"
+    if request.user.is_authenticated:
+        # Create actual attempt for authenticated users
+        attempt = QuizAttempt.objects.create(
+            user=request.user,
+            quiz=quiz,
+            total_questions=quiz.total_questions,
+            status='in_progress'
+        )
+        attempt_id = attempt.id
+    else:
+        # Create demo attempt for anonymous users
+        attempt_id = f"demo_{quiz_id}_{int(timezone.now().timestamp())}"
     
     # Get quiz questions
     questions = QuizQuestion.objects.filter(quiz=quiz).prefetch_related('options').order_by('order')
@@ -77,9 +87,54 @@ def start_quiz(request, quiz_id):
     })
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([])
 def submit_quiz(request, attempt_id):
     """Submit quiz answers and calculate score"""
+    # Handle demo attempts (for anonymous users)
+    if str(attempt_id).startswith('demo_'):
+        try:
+            # Extract quiz_id from demo attempt_id format: demo_{quiz_id}_{timestamp}
+            parts = str(attempt_id).split('_')
+            quiz_id = int(parts[1])
+            quiz = get_object_or_404(CourseQuiz, id=quiz_id)
+        except (ValueError, IndexError):
+            return Response({'error': 'Invalid demo attempt ID'}, 
+                           status=status.HTTP_400_BAD_REQUEST)
+        
+        answers_data = request.data.get('answers', [])
+        score = 0
+        total_questions = quiz.total_questions
+        
+        # Calculate score for demo attempt
+        for answer_data in answers_data:
+            question_id = answer_data.get('question_id')
+            selected_option_id = answer_data.get('selected_option_id')
+            
+            if selected_option_id:
+                try:
+                    selected_option = QuizOption.objects.get(id=selected_option_id)
+                    if selected_option.is_correct:
+                        score += 1
+                except QuizOption.DoesNotExist:
+                    pass
+        
+        percentage = (score / total_questions * 100) if total_questions > 0 else 0
+        passed = score >= quiz.passing_score
+        badge_earned = passed
+        
+        return Response({
+            'score': score,
+            'total_questions': total_questions,
+            'percentage': percentage,
+            'badge_earned': badge_earned,
+            'passed': passed
+        })
+    
+    # Handle authenticated user attempts
+    if not request.user.is_authenticated:
+        return Response({'error': 'Authentication required for registered attempts'}, 
+                       status=status.HTTP_401_UNAUTHORIZED)
+    
     attempt = get_object_or_404(QuizAttempt, id=attempt_id, user=request.user)
     
     if attempt.status == 'completed':

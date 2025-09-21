@@ -3,11 +3,12 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     CourseViewSet, QuizViewSet, CourseSyllabusViewSet, 
     SyllabusItemViewSet, NotificationViewSet, CourseEnquiryViewSet,
-    VideoViewSet,
+    VideoViewSet, AnnouncementViewSet,
     enroll_in_course, mark_notification_read, get_user_enrollments,
     get_latest_courses, get_course_by_id, create_course,
     create_payment_order, verify_payment, submit_course_enquiry,
-    check_enrollment_status, get_youtube_playlist_videos, import_youtube_playlist
+    check_enrollment_status, get_youtube_playlist_videos, import_youtube_playlist,
+    get_student_announcements, get_student_notifications, get_my_courses, get_admin_notifications
 )
 
 router = DefaultRouter()
@@ -18,6 +19,7 @@ router.register(r'syllabus', CourseSyllabusViewSet, basename='syllabus')
 router.register(r'syllabus-items', SyllabusItemViewSet, basename='syllabusitem')
 router.register(r'notifications', NotificationViewSet, basename='notification')
 router.register(r'enquiries', CourseEnquiryViewSet, basename='enquiry')
+router.register(r'announcements', AnnouncementViewSet, basename='announcement')
 
 
 urlpatterns = [
@@ -34,4 +36,8 @@ urlpatterns = [
     path('check-enrollment/<int:course_id>/', check_enrollment_status, name='check-enrollment'),
     path('youtube-playlist/<str:playlist_id>/', get_youtube_playlist_videos, name='youtube-playlist'),
     path('import-youtube-playlist/', import_youtube_playlist, name='import-youtube-playlist'),
+    path('student-announcements/', get_student_announcements, name='student-announcements'),
+    path('my-courses/', get_my_courses, name='my-courses'),
+    path('notifications/', get_student_notifications, name='notifications'),
+    path('admin-notifications/', get_admin_notifications, name='admin-notifications'),
 ]

@@ -184,6 +184,28 @@ def notify_syllabus_update(sender, instance, **kwargs):
             message=message
         )
 
+class Announcement(models.Model):
+    PRIORITY_CHOICES = (
+        ('normal', 'Normal'),
+        ('important', 'Important'),
+        ('urgent', 'Urgent'),
+    )
+    
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='announcements', null=True, blank=True)
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal')
+    attachment = models.FileField(upload_to='announcements/', null=True, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_announcements')
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.title} - {self.course.title if self.course else 'All Courses'}"
+
 @receiver(post_save, sender=SyllabusItem)
 def notify_syllabus_item_update(sender, instance, **kwargs):
     module = instance.module
@@ -204,3 +226,29 @@ def notify_syllabus_item_update(sender, instance, **kwargs):
             title=title,
             message=message
         )
+
+@receiver(post_save, sender=Announcement)
+def notify_announcement_created(sender, instance, created, **kwargs):
+    if created:
+        # Get enrolled students for the course or all students if no specific course
+        if instance.course:
+            enrollments = CourseEnrollment.objects.filter(course=instance.course)
+        else:
+            enrollments = CourseEnrollment.objects.all()
+        
+        # Create notifications for all relevant students
+        for enrollment in enrollments:
+            Notification.objects.create(
+                user=enrollment.user,
+                title=f"New Announcement: {instance.title}",
+                message=instance.message
+            )
+        
+        # Create admin notification for new announcement
+        admin_users = User.objects.filter(is_staff=True, is_superuser=True)
+        for admin in admin_users:
+            Notification.objects.create(
+                user=admin,
+                title=f"Faculty Posted: {instance.title}",
+                message=f"New announcement by {instance.created_by.username} for {instance.course.title if instance.course else 'All Courses'}: {instance.message[:100]}{'...' if len(instance.message) > 100 else ''}"
+            )

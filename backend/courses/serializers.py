@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Course, Video, Quiz, CourseSyllabus, SyllabusItem, CourseEnrollment, Notification, CourseEnquiry, Payment
+from .models import Course, Video, Quiz, CourseSyllabus, SyllabusItem, CourseEnrollment, Notification, CourseEnquiry, Payment, Announcement
 
 class SyllabusItemSerializer(serializers.ModelSerializer):
     class Meta:
@@ -108,3 +108,22 @@ class PaymentSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'user_email', 'course', 'course_title', 'amount', 
                  'payment_id', 'order_id', 'status', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
+
+class AnnouncementSerializer(serializers.ModelSerializer):
+    course_title = serializers.ReadOnlyField(source='course.title')
+    created_by_name = serializers.ReadOnlyField(source='created_by.username')
+    attachment_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Announcement
+        fields = ['id', 'title', 'message', 'course', 'course_title', 'priority', 
+                 'attachment', 'attachment_url', 'created_by', 'created_by_name', 
+                 'created_at', 'is_active']
+        read_only_fields = ['created_at', 'created_by']
+    
+    def get_attachment_url(self, obj):
+        if obj.attachment:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.attachment.url)
+        return None

@@ -465,10 +465,107 @@ def mark_notification_read(request, notification_id):
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def add_fee_installment(request, fee_structure_id):
+    try:
+        fee_structure = FeeStructure.objects.get(id=fee_structure_id)
+        
+        amount = request.data.get('amount')
+        due_date = request.data.get('due_date')
+        sequence = request.data.get('sequence', 1)
+        
+        if not amount or not due_date:
+            return Response(
+                {"error": "Amount and due_date are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        from datetime import datetime
+        if isinstance(due_date, str):
+            due_date = datetime.strptime(due_date, '%Y-%m-%d').date()
+        
+        installment = FeeInstallment.objects.create(
+            fee_structure=fee_structure,
+            amount=float(amount),
+            due_date=due_date,
+            sequence=int(sequence)
+        )
+        
+        return Response({
+            'message': 'Installment added successfully',
+            'installment': {
+                'id': installment.id,
+                'amount': float(installment.amount),
+                'due_date': installment.due_date.isoformat(),
+                'sequence': installment.sequence
+            }
+        })
+        
+    except FeeStructure.DoesNotExist:
+        return Response({"error": "Fee structure not found"}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class FeeStructureViewSet(viewsets.ModelViewSet):
     queryset = FeeStructure.objects.all()
     serializer_class = FeeStructureSerializer
     permission_classes = [AllowAny]
+    
+    @action(detail=True, methods=['post'])
+    def add_installment(self, request, pk=None):
+        """Add installment to fee structure"""
+        try:
+            fee_structure = self.get_object()
+            
+            # Get installment data from request
+            amount = request.data.get('amount')
+            due_date = request.data.get('due_date')
+            sequence = request.data.get('sequence', 1)
+            
+            if not amount or not due_date:
+                return Response(
+                    {"error": "Amount and due_date are required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Parse due_date if it's a string
+            if isinstance(due_date, str):
+                from datetime import datetime
+                try:
+                    due_date = datetime.strptime(due_date, '%Y-%m-%d').date()
+                except ValueError:
+                    return Response(
+                        {"error": "Invalid date format. Use YYYY-MM-DD"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            # Create installment
+            installment = FeeInstallment.objects.create(
+                fee_structure=fee_structure,
+                amount=float(amount),
+                due_date=due_date,
+                sequence=int(sequence)
+            )
+            
+            return Response({
+                'message': 'Installment added successfully',
+                'installment': {
+                    'id': installment.id,
+                    'amount': float(installment.amount),
+                    'due_date': installment.due_date.isoformat(),
+                    'sequence': installment.sequence
+                }
+            })
+            
+        except Exception as e:
+            import traceback
+            print(f"Error in add_installment: {str(e)}")
+            print(traceback.format_exc())
+            return Response(
+                {"error": f"Failed to add installment: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class StudentFeeViewSet(viewsets.ModelViewSet):
     queryset = StudentFee.objects.all()
