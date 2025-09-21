@@ -1325,4 +1325,95 @@ export const updateStudentProfile = async (profileData) => {
   }
 };
 
+// Announcement API
+export const fetchAnnouncements = async () => {
+  try {
+    const response = await userAxiosInstance.get('courses/announcements/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching announcements:', error);
+    throw error;
+  }
+};
+
+export const createAnnouncement = async (announcementData) => {
+  try {
+    const response = await userAxiosInstance.post('courses/announcements/', announcementData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating announcement:', error);
+    throw error;
+  }
+};
+
+export const updateAnnouncement = async (id, announcementData) => {
+  try {
+    const response = await userAxiosInstance.put(`courses/announcements/${id}/`, announcementData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating announcement:', error);
+    throw error;
+  }
+};
+
+export const deleteAnnouncement = async (id) => {
+  try {
+    const response = await userAxiosInstance.delete(`courses/announcements/${id}/`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting announcement:', error);
+    throw error;
+  }
+};
+
+export const fetchRecentAnnouncements = async () => {
+  try {
+    const response = await userAxiosInstance.get('courses/announcements/recent/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching recent announcements:', error);
+    throw error;
+  }
+};
+
+export const fetchStudentAnnouncements = async () => {
+  try {
+    const response = await userAxiosInstance.get('courses/student-announcements/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching student announcements:', error);
+    throw error;
+  }
+};
+
+// Fetch all notifications for student
+export const fetchStudentNotifications = async () => {
+  try {
+    const response = await userAxiosInstance.get('notifications/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching student notifications:', error);
+    return [];
+  }
+};
+
+// Get real enrollment status with progress
+export const fetchMyEnrollments = async () => {
+  try {
+    const response = await userAxiosInstance.get('courses/my-courses/');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching my enrollments:', error);
+    return [];
+  }
+};
+
 export { userAxiosInstance, adminAxiosInstance };

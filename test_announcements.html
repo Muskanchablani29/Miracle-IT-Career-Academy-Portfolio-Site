@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Announcements</title>
+</head>
+<body>
+    <h1>Testing Admin Dashboard Notifications</h1>
+    <div id="result"></div>
+    
+    <script>
+        // Test the announcements API
+        async function testAPI() {
+            try {
+                const response = await fetch('http://localhost:8000/api/courses/announcements/');
+                const result = document.getElementById('result');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    result.innerHTML = `
+                        <h2>Success! Found ${data.length} announcements</h2>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <h2>API Error: ${response.status}</h2>
+                        <p>${await response.text()}</p>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <h2>Network Error</h2>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+        
+        // Test when page loads
+        testAPI();
+    </script>
+</body>
+</html>

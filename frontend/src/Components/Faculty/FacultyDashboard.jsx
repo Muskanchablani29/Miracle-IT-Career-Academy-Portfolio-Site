@@ -81,7 +81,7 @@ const FacultyDashboard = () => {
         
         const averageAttendance = attendanceCount > 0 
           ? (totalAttendance / attendanceCount).toFixed(1) 
-          : 0;
+          : 85; // Mock data: 85% average attendance
         
         // Use courses from the courses API if available, otherwise fallback to dashboard data
         const courses = coursesResponse || [];
@@ -102,7 +102,7 @@ const FacultyDashboard = () => {
           activeStudents: activeStudents,
           completionRate: students.length > 0 ? 
             ((students.filter(s => s.completion_status === 'Completed').length / students.length) * 100).toFixed(1) : 0,
-          averageAttendance: averageAttendance || 0,
+          averageAttendance: averageAttendance || 85, // Mock data fallback
           workshopsCount: workshops.length
         });
         
@@ -207,10 +207,6 @@ const FacultyDashboard = () => {
             <Link to="/faculty/attendance" className="quick-action-card">
               <HiClock className="action-icon" />
               <span>Take Attendance</span>
-            </Link>
-            <Link to="/faculty/gradebook" className="quick-action-card">
-              <HiAcademicCap className="action-icon" />
-              <span>Update Grades</span>
             </Link>
             <Link to="/faculty/fee-status" className="quick-action-card">
               <HiOutlineSparkles className="action-icon" />

@@ -56,6 +56,7 @@ const CourseDetail = () => {
         const courseData = await fetchCourseById(courseId);
         setCourse(courseData);
         
+        // Set preview video - use first video from playlist or explicit preview URL
         let preview = null;
         if (courseData.preview_video) {
           preview = courseData.preview_video;
@@ -79,6 +80,7 @@ const CourseDetail = () => {
           const videosData = await fetchVideosByCourseId(courseId);
           setVideos(videosData);
           
+          // If no explicit preview is set, use first video as preview
           if (!preview && videosData.length > 0) {
             const firstVideo = videosData.find(v => v.order === 0) || videosData[0];
             const firstVideoPreview = {
@@ -100,6 +102,7 @@ const CourseDetail = () => {
         const syllabusData = await fetchCourseSyllabus(courseId);
         setSyllabus(syllabusData);
         
+        // Initialize first module as open
         if (syllabusData.length > 0) {
           setOpenModules({ [syllabusData[0].id]: true });
         }
@@ -125,6 +128,7 @@ const CourseDetail = () => {
           setIsEnrolled(response.is_enrolled);
         } catch (err) {
           console.error('Error checking enrollment status:', err);
+          // Fallback to old method if the new endpoint fails
           try {
             const enrollments = await getUserEnrollments();
             const enrolled = enrollments.some(enrollment => enrollment.course === parseInt(courseId));
@@ -139,6 +143,7 @@ const CourseDetail = () => {
     checkUserEnrollmentStatus();
   }, [courseId, user]);
 
+  // Start preview timer for preview video only
   useEffect(() => {
     if (selectedVideo && !isEnrolled && selectedVideo.id === 'preview' && selectedVideo.preview_duration) {
       if (previewTimerRef.current) {
@@ -158,20 +163,27 @@ const CourseDetail = () => {
   }, [selectedVideo, isEnrolled]);
 
   const handleVideoSelect = (video) => {
+    console.log('Video selected:', video);
+    
+    // Validate video before selection
     if (!video || !video.url) {
       console.error('Invalid video selected:', video);
       return;
     }
     
+    // For non-enrolled users, allow first video (order 0) as preview, lock others
     if (!isEnrolled && video.order !== 0) {
+      console.log('Video locked, showing payment prompt');
       setShowPaymentPrompt(true);
       return;
     }
     
+    // Clear existing preview timer
     if (previewTimerRef.current) {
       clearTimeout(previewTimerRef.current);
     }
     
+    // If non-enrolled user selects first video, convert it to preview mode
     if (!isEnrolled && video.order === 0) {
       const previewVideo = {
         ...video,
@@ -189,11 +201,13 @@ const CourseDetail = () => {
     setShowPaymentPrompt(false);
   };
   
+  // Handle video time update to enforce preview limits
   const handleTimeUpdate = (e) => {
     if (!isEnrolled && selectedVideo && (selectedVideo.id === 'preview' || selectedVideo.order === 0)) {
       const currentTime = e.target.currentTime;
       setVideoTime(currentTime);
       
+      // Check if preview time limit is reached
       const previewDuration = selectedVideo.preview_duration || 300;
       if (currentTime >= previewDuration) {
         if (videoRef.current) {
@@ -213,6 +227,7 @@ const CourseDetail = () => {
 
   const handleEnroll = async () => {
     if (!user) {
+      // Redirect to login or show login modal
       alert('Please log in to enroll in this course');
       return;
     }
@@ -220,9 +235,12 @@ const CourseDetail = () => {
     try {
       setEnrolling(true);
       
+      // Check if course has a price
       if (course.price > 0) {
+        // Show payment form
         initiatePayment();
       } else {
+        // Free course, direct enrollment
         await enrollInCourse(courseId);
         setIsEnrolled(true);
       }
@@ -230,6 +248,7 @@ const CourseDetail = () => {
       console.error('Error enrolling in course:', err);
       setEnrolling(false);
       
+      // Check if payment required error
       if (err.response && err.response.status === 402) {
         initiatePayment();
       }
@@ -241,16 +260,19 @@ const CourseDetail = () => {
       setPaymentProcessing(true);
       setPaymentError(null);
       
+      // Create order on server
       const orderData = await createPaymentOrder(courseId);
       
+      // Initialize Razorpay
       const options = {
-        key: 'rzp_test_your_key_id',
-        amount: orderData.amount * 100,
+        key: 'rzp_test_your_key_id', // Replace with your actual key
+        amount: orderData.amount * 100, // Amount in paisa
         currency: orderData.currency,
         name: 'Course Enrollment',
         description: `Enrollment for ${course.title}`,
         order_id: orderData.order_id,
         handler: function(response) {
+          // Handle successful payment
           handlePaymentSuccess(response, orderData.order_id);
         },
         prefill: {
@@ -281,6 +303,7 @@ const CourseDetail = () => {
   
   const handlePaymentSuccess = async (response, orderId) => {
     try {
+      // Verify payment on server
       await verifyPayment({
         payment_id: response.razorpay_payment_id,
         order_id: response.razorpay_order_id,
@@ -288,11 +311,13 @@ const CourseDetail = () => {
         course_id: courseId
       });
       
+      // Update enrollment status
       setIsEnrolled(true);
       setPaymentProcessing(false);
       setEnrolling(false);
       setShowPaymentPrompt(false);
       
+      // Show success message
       alert('Payment successful! You are now enrolled in this course.');
       
     } catch (err) {
@@ -307,13 +332,16 @@ const CourseDetail = () => {
     e.preventDefault();
     
     try {
+      // Add course ID to enquiry data
       const enquiryPayload = {
         ...enquiryData,
         course: courseId
       };
       
+      // Submit enquiry
       await submitCourseEnquiry(enquiryPayload);
       
+      // Reset form and show success message
       setEnquiryData({
         name: '',
         email: '',
@@ -379,106 +407,39 @@ const CourseDetail = () => {
 
   return (
     <div className="course-detail-container">
-      {/* Modern Header Section */}
-      <div className="course-header">
-        <div className="course-header-content">
-          <div className="course-info">
-            <div className="course-category">
-              <FaGraduationCap /> {course.category || 'Technology'}
+      {/* Hero Section with Background Image */}
+      <div className="course-hero" style={{
+        backgroundImage: course.image 
+          ? `linear-gradient(135deg, rgba(74, 108, 247, 0.6), rgba(58, 91, 217, 0.6)), url(http://localhost:8000${course.image})`
+          : 'linear-gradient(135deg, var(--primary-color), var(--primary-hover)), url("data:image/svg+xml,%3Csvg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Cpath d="M50 20L60 40H40L50 20zM20 50L40 60V40L20 50zM80 50L60 40V60L80 50zM50 80L40 60H60L50 80z"/%3E%3C/g%3E%3C/svg%3E")'
+      }}>
+        <div className="course-hero-overlay">
+          <div className="course-hero-content">
+            <h1 className="course-hero-title">{course.title}</h1>
+            <div className="course-hero-meta">
+              <span className="course-level">{course.level}</span>
+              <span className="course-duration">{course.duration}</span>
+              {course.is_certified && <span className="course-certified">🏆 Certified</span>}
             </div>
-            <h1 className="course-title">{course.title}</h1>
-            <p className="course-description">{course.description}</p>
-            
-            <div className="course-stats">
-              <div className="stat-item">
-                <FaClock className="stat-icon" />
-                <span>{course.duration}</span>
-              </div>
-              <div className="stat-item">
-                <FaUsers className="stat-icon" />
-                <span>{course.level}</span>
-              </div>
-              {course.is_certified && (
-                <div className="stat-item">
-                  <FaTrophy className="stat-icon" />
-                  <span>Certified</span>
-                </div>
-              )}
-              <div className="stat-item">
-                <FaStar className="stat-icon" />
-                <span>4.8 (2.1k reviews)</span>
-              </div>
-            </div>
-
-            <div className="course-actions">
-              {isEnrolled ? (
-                <div className="enrolled-status">
-                  <FaCheckCircle /> Enrolled
-                </div>
-              ) : (
-                <>
-                  <button className="primary-btn" onClick={handleEnroll} disabled={enrolling}>
-                    {course.price > 0 ? (
-                      <>
-                        <FaRupeeSign /> {course.discount_price || course.price}
-                        {enrolling ? ' Processing...' : ' Enroll Now'}
-                      </>
-                    ) : (
-                      enrolling ? 'Enrolling...' : 'Enroll Free'
-                    )}
-                  </button>
-                  <button className="secondary-btn" onClick={() => setShowEnquiryForm(true)}>
-                    Get Info
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-          
-          <div className="course-preview">
-            {course.image && (
-              <img src={`http://localhost:8000${course.image}`} alt={course.title} className="course-image" />
-            )}
+            <p className="course-hero-description">{course.description}</p>
           </div>
         </div>
       </div>
 
-      <div className="course-highlights">
-        <div className="highlight-card">
-          <div className="highlight-icon">
-            <FaClock />
-          </div>
-          <div className="highlight-content">
-            <h4>Duration</h4>
-            <p>{course.duration}</p>
-          </div>
+
+
+      <div className="course-features">
+        <div className="feature-card">
+          <h3><FaClock /> Course Duration</h3>
+          <p>{course.duration}</p>
         </div>
-        <div className="highlight-card">
-          <div className="highlight-icon">
-            <FaBriefcase />
-          </div>
-          <div className="highlight-content">
-            <h4>Internship</h4>
-            <p>{course.internship_duration || 'Not included'}</p>
-          </div>
+        <div className="feature-card">
+          <h3><FaBriefcase /> Internship</h3>
+          <p>{course.internship_duration || 'No internship included'}</p>
         </div>
-        <div className="highlight-card">
-          <div className="highlight-icon">
-            <FaCertificate />
-          </div>
-          <div className="highlight-content">
-            <h4>Certificate</h4>
-            <p>{course.is_certified ? 'Yes' : 'No'}</p>
-          </div>
-        </div>
-        <div className="highlight-card">
-          <div className="highlight-icon">
-            <FaInfinity />
-          </div>
-          <div className="highlight-content">
-            <h4>Access</h4>
-            <p>Lifetime</p>
-          </div>
+        <div className="feature-card">
+          <h3><FaCertificate /> Certification</h3>
+          <p>{course.is_certified ? 'Certified Course' : 'No certification'}</p>
         </div>
       </div>
 
@@ -551,6 +512,11 @@ const CourseDetail = () => {
                   </div>
                 ) : (
                   <div className="video-wrapper">
+                    <div className="debug-info" style={{position: 'absolute', top: '10px', left: '10px', background: 'rgba(0,0,0,0.7)', color: 'white', padding: '5px', fontSize: '12px', zIndex: 100}}>
+                      URL: {selectedVideo.url}<br/>
+                      Type: {selectedVideo.source_type}<br/>
+                      Order: {selectedVideo.order}
+                    </div>
                     {selectedVideo.source_type === 'youtube' ? (
                       <iframe
                         src={selectedVideo.url}
@@ -648,6 +614,7 @@ const CourseDetail = () => {
         </div>
       </div>
 
+      {/* Fee Structure Section */}
       {course.fee_structure && (
         <div className="fee-structure-section">
           <h2>💰 Course Fee Structure</h2>
@@ -728,6 +695,7 @@ const CourseDetail = () => {
         </div>
       )}
       
+      {/* Enquiry Form Modal */}
       {showEnquiryForm && (
         <div className="enquiry-modal">
           <div className="enquiry-modal-content">

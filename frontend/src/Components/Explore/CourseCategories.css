@@ -75,8 +75,9 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  color: #333;
-  font-size: 1rem;
+  color: #000;
+  font-size: 1.5rem;
+  font-weight: bold;
 }
 
 .slider-btn:hover {
@@ -118,7 +119,7 @@
   position: relative;
 }
 
-.course-card:hover {
+.course-card-explore:hover {
   transform: translateY(-8px);
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.12);
   border-color: #e0e0e0;
@@ -137,7 +138,7 @@
   transition: transform 0.6s ease;
 }
 
-.course-card:hover .course-image img {
+.course-card-explore:hover .course-image-explore img {
   transform: scale(1.08);
 }
 
@@ -155,11 +156,11 @@
   letter-spacing: 0.5px;
 }
 
-.course-details {
+.course-details-explore {
   padding: 20px;
 }
 
-.course-details h4 {
+.course-details-explore h4 {
   margin-bottom: 12px;
   color: #1a1a2e;
   font-size: 1.25rem;
@@ -172,7 +173,7 @@
   height: 2.8em;
 }
 
-.course-details p {
+.course-details-explore p {
   color: #555;
   margin-bottom: 18px;
   font-size: 0.95rem;
@@ -225,7 +226,7 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .course-card {
+  .course-card-explore {
     min-width: 260px;
     max-width: 260px;
   }

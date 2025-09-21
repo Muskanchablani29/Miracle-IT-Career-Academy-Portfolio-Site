@@ -1,165 +1,328 @@
-import React from 'react';
-import './FacultyDashboard.css';
+import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
+import { fetchAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement, fetchCourses } from '../../api';
+import { FaPlus, FaTimes, FaEdit, FaTrash, FaFilter, FaBullhorn, FaPaperclip, FaExclamationTriangle, FaInfoCircle, FaCheckCircle } from 'react-icons/fa';
+import './FacultyAnnouncements.css';
 
 const FacultyAnnouncements = () => {
+  const [announcements, setAnnouncements] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingAnnouncement, setEditingAnnouncement] = useState(null);
+  const [filterCourse, setFilterCourse] = useState('all');
+  const [formData, setFormData] = useState({
+    title: '',
+    message: '',
+    course: '',
+    priority: 'normal',
+    attachment: null
+  });
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const [announcementsData, coursesData] = await Promise.all([
+        fetchAnnouncements(),
+        fetchCourses()
+      ]);
+      setAnnouncements(announcementsData);
+      setCourses(coursesData);
+    } catch (error) {
+      toast.error('Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const submitData = new FormData();
+      submitData.append('title', formData.title);
+      submitData.append('message', formData.message);
+      submitData.append('priority', formData.priority);
+      if (formData.course) submitData.append('course', formData.course);
+      if (formData.attachment) submitData.append('attachment', formData.attachment);
+
+      if (editingAnnouncement) {
+        await updateAnnouncement(editingAnnouncement.id, submitData);
+        toast.success('Announcement updated successfully');
+      } else {
+        await createAnnouncement(submitData);
+        toast.success('Announcement created successfully');
+      }
+      
+      resetForm();
+      loadData();
+    } catch (error) {
+      toast.error('Failed to save announcement');
+    }
+  };
+
+  const handleEdit = (announcement) => {
+    setEditingAnnouncement(announcement);
+    setFormData({
+      title: announcement.title,
+      message: announcement.message,
+      course: announcement.course || '',
+      priority: announcement.priority,
+      attachment: null
+    });
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this announcement?')) {
+      try {
+        await deleteAnnouncement(id);
+        toast.success('Announcement deleted successfully');
+        loadData();
+      } catch (error) {
+        toast.error('Failed to delete announcement');
+      }
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({ title: '', message: '', course: '', priority: 'normal', attachment: null });
+    setEditingAnnouncement(null);
+    setShowForm(false);
+  };
+
+  const filteredAnnouncements = announcements.filter(announcement => 
+    filterCourse === 'all' || announcement.course == filterCourse
+  );
+
+  if (loading) return (
+    <div className="modern-loading">
+      <div className="loading-spinner"></div>
+      <p>Loading announcements...</p>
+    </div>
+  );
+
   return (
-    <div className="dashboard-container">
-      <h1>Faculty Announcements</h1>
-      <div className="dashboard-content">
-        <div className="announcement-actions">
-          <button className="btn-primary">Create Announcement</button>
-          <div className="filter-group">
-            <label>Filter By:</label>
-            <select className="filter-select">
+    <div className="modern-announcements-container">
+      <div className="announcements-header">
+        <div className="header-content">
+          <div className="header-title">
+            <FaBullhorn className="header-icon" />
+            <div>
+              <h1>Faculty Announcements</h1>
+              <p>Manage and broadcast important updates to your students</p>
+            </div>
+          </div>
+          <div className="header-actions">
+            <button 
+              className={`modern-btn ${showForm ? 'cancel' : 'primary'}`}
+              onClick={() => setShowForm(!showForm)}
+            >
+              {showForm ? <FaTimes /> : <FaPlus />}
+              <span>{showForm ? 'Cancel' : 'New Announcement'}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+        
+      {showForm && (
+        <div className="modern-form-container">
+          <div className="form-header">
+            <h2>{editingAnnouncement ? 'Edit Announcement' : 'Create New Announcement'}</h2>
+            <p>Share important updates with your students</p>
+          </div>
+          
+          <form onSubmit={handleSubmit} className="modern-form">
+            <div className="form-grid">
+              <div className="form-group full-width">
+                <label className="modern-label">Announcement Title</label>
+                <input 
+                  type="text" 
+                  placeholder="Enter a clear, descriptive title" 
+                  className="modern-input"
+                  value={formData.title}
+                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label className="modern-label">Target Course</label>
+                <select 
+                  className="modern-select"
+                  value={formData.course}
+                  onChange={(e) => setFormData({...formData, course: e.target.value})}
+                >
+                  <option value="">📢 All Courses</option>
+                  {courses.map(course => (
+                    <option key={course.id} value={course.id}>📚 {course.title}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="form-group">
+                <label className="modern-label">Priority Level</label>
+                <div className="priority-selector">
+                  {[
+                    { value: 'normal', label: 'Normal', icon: FaInfoCircle, color: '#3b82f6' },
+                    { value: 'important', label: 'Important', icon: FaExclamationTriangle, color: '#f59e0b' },
+                    { value: 'urgent', label: 'Urgent', icon: FaExclamationTriangle, color: '#ef4444' }
+                  ].map(priority => {
+                    const IconComponent = priority.icon;
+                    return (
+                      <label key={priority.value} className={`priority-option ${formData.priority === priority.value ? 'selected' : ''}`}>
+                        <input 
+                          type="radio" 
+                          name="priority" 
+                          value={priority.value}
+                          checked={formData.priority === priority.value}
+                          onChange={(e) => setFormData({...formData, priority: e.target.value})}
+                        />
+                        <div className="priority-content" style={{'--priority-color': priority.color}}>
+                          <IconComponent className="priority-icon" />
+                          <span>{priority.label}</span>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+            
+            <div className="form-group full-width">
+              <label className="modern-label">Message Content</label>
+              <textarea 
+                placeholder="Write your announcement message here..." 
+                className="modern-textarea" 
+                rows="6"
+                value={formData.message}
+                onChange={(e) => setFormData({...formData, message: e.target.value})}
+                required
+              ></textarea>
+              <div className="character-count">{formData.message.length} characters</div>
+            </div>
+            
+            <div className="form-group full-width">
+              <label className="modern-label">Attachment (Optional)</label>
+              <div className="file-upload-area">
+                <input 
+                  type="file" 
+                  id="attachment"
+                  className="file-input"
+                  onChange={(e) => setFormData({...formData, attachment: e.target.files[0]})}
+                />
+                <label htmlFor="attachment" className="file-upload-label">
+                  <FaPaperclip className="upload-icon" />
+                  <span>{formData.attachment ? formData.attachment.name : 'Choose file or drag here'}</span>
+                </label>
+              </div>
+            </div>
+            
+            <div className="form-actions">
+              <button type="button" className="modern-btn secondary" onClick={resetForm}>
+                <FaTimes />
+                <span>Cancel</span>
+              </button>
+              <button type="submit" className="modern-btn primary">
+                <FaCheckCircle />
+                <span>{editingAnnouncement ? 'Update Announcement' : 'Post Announcement'}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+      
+      <div className="announcements-list">
+        <div className="list-header">
+          <h3>Recent Announcements ({filteredAnnouncements.length})</h3>
+          <div className="filter-controls">
+            <select 
+              className="filter-select"
+              value={filterCourse}
+              onChange={(e) => setFilterCourse(e.target.value)}
+            >
               <option value="all">All Courses</option>
-              <option value="web">Web Development</option>
-              <option value="python">Python Programming</option>
-              <option value="data">Data Science Fundamentals</option>
-              <option value="ml">Machine Learning Basics</option>
-              <option value="js">JavaScript Fundamentals</option>
+              {courses.map(course => (
+                <option key={course.id} value={course.id}>{course.title}</option>
+              ))}
             </select>
           </div>
         </div>
         
-        <div className="create-announcement-form">
-          <h3>New Announcement</h3>
-          <div className="form-group">
-            <label>Title</label>
-            <input type="text" placeholder="Enter announcement title" className="form-control" />
+        {filteredAnnouncements.length === 0 ? (
+          <div className="empty-state">
+            <FaBullhorn className="empty-icon" />
+            <h3>No announcements yet</h3>
+            <p>Create your first announcement to communicate with students</p>
           </div>
-          <div className="form-group">
-            <label>Course</label>
-            <select className="form-control">
-              <option value="">Select course</option>
-              <option value="web">Web Development</option>
-              <option value="python">Python Programming</option>
-              <option value="data">Data Science Fundamentals</option>
-              <option value="ml">Machine Learning Basics</option>
-              <option value="js">JavaScript Fundamentals</option>
-              <option value="all">All Courses</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Message</label>
-            <textarea placeholder="Enter your announcement message" className="form-control" rows="5"></textarea>
-          </div>
-          <div className="form-group">
-            <label>Priority</label>
-            <select className="form-control">
-              <option value="normal">Normal</option>
-              <option value="important">Important</option>
-              <option value="urgent">Urgent</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Attachment</label>
-            <input type="file" className="form-control" />
-          </div>
-          <div className="form-actions">
-            <button className="btn-primary">Post Announcement</button>
-            <button className="btn-secondary">Cancel</button>
-          </div>
-        </div>
-        
-        <div className="announcements-list">
-          <h3>Recent Announcements</h3>
-          
-          <div className="announcement-card urgent">
-            <div className="announcement-header">
-              <h4>Midterm Exam Schedule Change</h4>
-              <span className="announcement-badge urgent">Urgent</span>
-            </div>
-            <div className="announcement-meta">
-              <p><strong>Course:</strong> Web Development</p>
-              <p><strong>Posted:</strong> July 15, 2023 - 10:30 AM</p>
-            </div>
-            <div className="announcement-content">
-              <p>Dear students, please note that the midterm exam for Web Development has been rescheduled from July 20 to July 22 due to unavoidable circumstances. The exam will now be held from 10:00 AM to 12:00 PM in Room 301. Please make a note of this change and prepare accordingly.</p>
-              <p>All other exam details remain the same. Please reach out if you have any questions.</p>
-            </div>
-            <div className="announcement-footer">
-              <span className="attachment-info">📎 1 attachment</span>
-              <div className="announcement-actions">
-                <button className="btn-icon">✏️</button>
-                <button className="btn-icon">🗑️</button>
+        ) : (
+          <div className="announcements-grid">
+            {filteredAnnouncements.map(announcement => (
+              <div key={announcement.id} className={`announcement-card priority-${announcement.priority}`}>
+                <div className="card-header">
+                  <div className="announcement-meta">
+                    <div className={`priority-badge priority-${announcement.priority}`}>
+                      {announcement.priority === 'urgent' && <FaExclamationTriangle />}
+                      {announcement.priority === 'important' && <FaExclamationTriangle />}
+                      {announcement.priority === 'normal' && <FaInfoCircle />}
+                      <span>{announcement.priority.toUpperCase()}</span>
+                    </div>
+                    <span className="course-tag">
+                      {announcement.course_title || 'All Courses'}
+                    </span>
+                  </div>
+                  <div className="card-actions">
+                    <button 
+                      className="action-btn edit"
+                      onClick={() => handleEdit(announcement)}
+                      title="Edit announcement"
+                    >
+                      <FaEdit />
+                    </button>
+                    <button 
+                      className="action-btn delete"
+                      onClick={() => handleDelete(announcement.id)}
+                      title="Delete announcement"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="card-content">
+                  <h4 className="announcement-title">{announcement.title}</h4>
+                  <p className="announcement-message">{announcement.message}</p>
+                  
+                  {announcement.attachment_url && (
+                    <div className="attachment-info">
+                      <FaPaperclip className="attachment-icon" />
+                      <a href={announcement.attachment_url} target="_blank" rel="noopener noreferrer">
+                        View Attachment
+                      </a>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="card-footer">
+                  <div className="author-info">
+                    <span className="author-name">By {announcement.created_by_name}</span>
+                    <span className="post-date">
+                      {new Date(announcement.created_at).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
-          
-          <div className="announcement-card important">
-            <div className="announcement-header">
-              <h4>Project Submission Deadline Extended</h4>
-              <span className="announcement-badge important">Important</span>
-            </div>
-            <div className="announcement-meta">
-              <p><strong>Course:</strong> Python Programming</p>
-              <p><strong>Posted:</strong> July 14, 2023 - 3:45 PM</p>
-            </div>
-            <div className="announcement-content">
-              <p>Dear students, based on multiple requests and considering the complexity of the final project, I have decided to extend the submission deadline by 3 days. The new deadline is July 25, 2023, at 11:59 PM.</p>
-              <p>Please use this additional time to refine your projects and ensure all requirements are met. Remember that quality is as important as completion.</p>
-            </div>
-            <div className="announcement-footer">
-              <span className="announcement-stats">👁️ 38 views</span>
-              <div className="announcement-actions">
-                <button className="btn-icon">✏️</button>
-                <button className="btn-icon">🗑️</button>
-              </div>
-            </div>
-          </div>
-          
-          <div className="announcement-card">
-            <div className="announcement-header">
-              <h4>Additional Study Resources Available</h4>
-              <span className="announcement-badge normal">Normal</span>
-            </div>
-            <div className="announcement-meta">
-              <p><strong>Course:</strong> Data Science Fundamentals</p>
-              <p><strong>Posted:</strong> July 12, 2023 - 11:20 AM</p>
-            </div>
-            <div className="announcement-content">
-              <p>I've uploaded additional study resources for the upcoming topics in data visualization and statistical analysis. These include practice datasets, example code, and reference guides that should help you better understand the concepts we'll be covering in the next few classes.</p>
-              <p>You can find these materials in the course repository under the "Additional Resources" folder.</p>
-            </div>
-            <div className="announcement-footer">
-              <span className="attachment-info">📎 3 attachments</span>
-              <div className="announcement-actions">
-                <button className="btn-icon">✏️</button>
-                <button className="btn-icon">🗑️</button>
-              </div>
-            </div>
-          </div>
-          
-          <div className="announcement-card">
-            <div className="announcement-header">
-              <h4>Guest Lecture Next Week</h4>
-              <span className="announcement-badge normal">Normal</span>
-            </div>
-            <div className="announcement-meta">
-              <p><strong>Course:</strong> All Courses</p>
-              <p><strong>Posted:</strong> July 10, 2023 - 2:15 PM</p>
-            </div>
-            <div className="announcement-content">
-              <p>I'm pleased to announce that we will have a guest lecture next week by Dr. Amit Patel, a leading expert in AI and Machine Learning from Google. The lecture will be held on July 18, 2023, from 2:00 PM to 4:00 PM in the Main Auditorium.</p>
-              <p>This is a great opportunity to learn from an industry expert and network with professionals. Attendance is optional but highly recommended for all students.</p>
-            </div>
-            <div className="announcement-footer">
-              <span className="announcement-stats">👁️ 165 views</span>
-              <div className="announcement-actions">
-                <button className="btn-icon">✏️</button>
-                <button className="btn-icon">🗑️</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="pagination">
-          <button className="pagination-btn">Previous</button>
-          <button className="pagination-btn active">1</button>
-          <button className="pagination-btn">2</button>
-          <button className="pagination-btn">3</button>
-          <button className="pagination-btn">Next</button>
-        </div>
+        )}
       </div>
     </div>
   );

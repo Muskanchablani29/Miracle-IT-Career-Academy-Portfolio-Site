@@ -21,6 +21,8 @@ const AddCourse = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Check if user is authorized
   React.useEffect(() => {
@@ -76,12 +78,17 @@ const AddCourse = () => {
       });
 
       setLoading(false);
-      // Redirect based on user role
-      if (user.role === 'admin') {
-        navigate('/admin/courses');
-      } else if (user.role === 'faculty') {
-        navigate('/faculty/courses');
-      }
+      setSuccess(true);
+      setSuccessMessage(`Course "${formData.title}" created successfully!`);
+      
+      // Redirect after showing success message
+      setTimeout(() => {
+        if (user.role === 'admin') {
+          navigate('/admin/courses');
+        } else if (user.role === 'faculty') {
+          navigate('/faculty/courses');
+        }
+      }, 2000);
     } catch (err) {
       setLoading(false);
       setError(err.response?.data?.error || 'Failed to create course. Please try again.');
@@ -94,6 +101,7 @@ const AddCourse = () => {
       <h1>Add New Course</h1>
       
       {error && <div className="error-message">{error}</div>}
+      {success && <div className="success-message">{successMessage}</div>}
       
       <form onSubmit={handleSubmit} className="course-form">
         <div className="form-group">

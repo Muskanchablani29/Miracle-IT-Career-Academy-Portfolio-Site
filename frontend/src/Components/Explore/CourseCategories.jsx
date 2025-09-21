@@ -61,14 +61,14 @@ const CourseCategories = ({ courses }) => {
                 onClick={() => scroll(category, -1)} 
                 aria-label="Scroll left"
               >
-                <i className="fas fa-chevron-left"></i>
+                ‹
               </button>
               <button 
                 className="slider-btn" 
                 onClick={() => scroll(category, 1)} 
                 aria-label="Scroll right"
               >
-                <i className="fas fa-chevron-right"></i>
+                ›
               </button>
             </div>
           </div>
@@ -79,11 +79,16 @@ const CourseCategories = ({ courses }) => {
                 <div className="course-card-explore" key={course.id}>
                   <div className="course-image-explore">
                     <img 
-                      src={course.image ? `http://localhost:8000${course.image}` : '/placeholder-course.jpg'} 
+                      src={course.image ? 
+                        (course.image.startsWith('http') ? course.image : `http://localhost:8000${course.image.startsWith('/') ? course.image : '/' + course.image}`) : 
+                        'https://via.placeholder.com/300x180/6a11cb/ffffff?text=Course+Image'
+                      } 
                       alt={course.title} 
                       onError={(e) => {
-                        e.target.src = '/placeholder-course.jpg';
+                        console.log('Image failed to load:', e.target.src);
+                        e.target.src = 'https://via.placeholder.com/300x180/6a11cb/ffffff?text=Course+Image';
                       }}
+                      onLoad={() => console.log('Image loaded successfully:', course.image)}
                     />
                     <div className="course-badge">{course.level}</div>
                   </div>
