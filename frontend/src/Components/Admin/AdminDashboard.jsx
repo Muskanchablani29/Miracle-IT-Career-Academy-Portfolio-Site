@@ -59,15 +59,8 @@ const AdminDashboard = () => {
       let feeCollectionRate = 85; // Default fallback
       let courseCompletionRate = 78; // Default fallback
       
-      try {
-        // Try to fetch real attendance data
-        const attendanceResponse = await axios.get('http://localhost:8000/api/attendance/overall-stats/', { headers });
-        if (attendanceResponse.data && attendanceResponse.data.average_attendance) {
-          attendanceRate = Math.round(attendanceResponse.data.average_attendance);
-        }
-      } catch (attendanceErr) {
-        console.log('Using default attendance rate');
-      }
+      // Use default attendance rate since the endpoint doesn't exist
+      attendanceRate = 85; // Default value
       
       // Calculate fee collection rate
       if (feeData.total_students > 0 && feeData.total_fees_collected > 0) {

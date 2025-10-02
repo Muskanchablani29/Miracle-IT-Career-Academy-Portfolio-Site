@@ -7,10 +7,8 @@ import 'react-toastify/dist/ReactToastify.css';
 const AdminAttendance = () => {
   const [students, setStudents] = useState([]);
   const [batches, setBatches] = useState([]);
-  const [faculties, setFaculties] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('');
-  const [selectedFaculty, setSelectedFaculty] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
@@ -38,12 +36,7 @@ const AdminAttendance = () => {
         });
         setBatches(batchesResponse.data);
 
-        // Fetch faculties
-        const facultiesResponse = await axios.get('http://localhost:8000/api/users/', {
-          headers: { 'Authorization': `Bearer ${token}` },
-          params: { role: 'faculty' }
-        });
-        setFaculties(facultiesResponse.data);
+
       } catch (error) {
         console.error('Error fetching initial data:', error);
       }
@@ -52,8 +45,10 @@ const AdminAttendance = () => {
     fetchInitialData();
   }, []);
 
-  // Extract unique courses from batches
-  const courses = batches
+  // Since batches don't have faculty field, show all batches
+  const filteredBatches = batches;
+
+  const courses = filteredBatches
     .filter(batch => batch.course)
     .reduce((uniqueCourses, batch) => {
       const courseId = batch.course.id;
@@ -80,9 +75,11 @@ const AdminAttendance = () => {
       const token = localStorage.getItem('access');
       
       // Fetch students by batch
+      const params = batchId === 'all' ? {} : { batch_id: batchId };
+      
       const response = await axios.get(`http://localhost:8000/api/students/`, {
         headers: { 'Authorization': `Bearer ${token}` },
-        params: batchId === 'all' ? {} : { batch_id: batchId }
+        params
       });
       
       // Fetch attendance statistics for each student
@@ -108,11 +105,13 @@ const AdminAttendance = () => {
       // Get attendance records for the selected date and batch
       const attendanceRecords = {};
       try {
+        const attendanceParams = batchId === 'all'
+          ? { date: selectedDate }
+          : { date: selectedDate, batch: batchId };
+          
         const attendanceResponse = await axios.get(`http://localhost:8000/api/attendance/`, {
           headers: { 'Authorization': `Bearer ${token}` },
-          params: batchId === 'all'
-            ? { date: selectedDate }
-            : { date: selectedDate, batch: batchId }
+          params: attendanceParams
         });
         
         attendanceResponse.data.forEach(record => {
@@ -387,21 +386,7 @@ const AdminAttendance = () => {
       <div className="admin-attendance-content">
         <div className="admin-filters">
           <div className="filters-row">
-            <div className="filter-group">
-              <label>Faculty:</label>
-              <select 
-                className="filter-select"
-                value={selectedFaculty}
-                onChange={(e) => setSelectedFaculty(e.target.value)}
-              >
-                <option value="">All Faculties</option>
-                {faculties.map(faculty => (
-                  <option key={faculty.id} value={faculty.id}>
-                    {faculty.username}
-                  </option>
-                ))}
-              </select>
-            </div>
+
             
             <div className="filter-group">
               <label>Course:</label>
@@ -433,7 +418,7 @@ const AdminAttendance = () => {
               >
                 <option value="">Select Batch</option>
                 {selectedCourse && <option value="all">All Students</option>}
-                {batches
+                {filteredBatches
                   .filter(batch => batch.course && String(batch.course.id) === String(selectedCourse))
                   .map(batch => (
                     <option key={batch.id} value={batch.id}>
