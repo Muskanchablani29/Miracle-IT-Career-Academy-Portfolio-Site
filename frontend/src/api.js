@@ -1097,7 +1097,7 @@ export const fetchQuizByCourseLanguage = async (courseId, language) => {
 
 export const startQuiz = async (quizId) => {
   try {
-    const response = await userAxiosInstance.get(`quizzes/start/${quizId}/`);
+    const response = await axios.get(`${API_URL}/quizzes/start/${quizId}/`);
     return response.data;
   } catch (error) {
     console.error('Error starting quiz:', error);
@@ -1107,7 +1107,7 @@ export const startQuiz = async (quizId) => {
 
 export const submitQuiz = async (attemptId, answers, timeTaken) => {
   try {
-    const response = await userAxiosInstance.post(`quizzes/submit/${attemptId}/`, {
+    const response = await axios.post(`${API_URL}/quizzes/submit/${attemptId}/`, {
       answers,
       time_taken: timeTaken
     });
