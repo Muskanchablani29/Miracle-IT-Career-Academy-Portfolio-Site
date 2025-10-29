@@ -19,6 +19,71 @@
   border-bottom-right-radius: 15px;
 }
 
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .sidebar-explore {
+    position: relative;
+    width: 100%;
+    height: auto;
+    border-radius: 0;
+    border-right: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 10px;
+  }
+  
+  .sidebar-explore h2 {
+    font-size: 1.4rem;
+    margin-bottom: 15px;
+  }
+  
+  .category-heading {
+    font-size: 1rem;
+    margin-top: 20px;
+    margin-bottom: 10px;
+  }
+  
+  .sidebar-menu-explore li a,
+  .category-menu li a,
+  .course-link-button {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar-explore {
+    padding: 8px;
+  }
+  
+  .sidebar-explore h2 {
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+  }
+  
+  .category-heading {
+    font-size: 0.95rem;
+    margin-top: 15px;
+    margin-bottom: 8px;
+    padding: 6px 10px;
+  }
+  
+  .sidebar-menu-explore li a,
+  .category-menu li a,
+  .course-link-button {
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+  
+  .courses-count {
+    margin-bottom: 15px;
+  }
+  
+  .count-badge {
+    font-size: 0.75rem;
+    padding: 3px 10px;
+  }
+}
+
 .sidebar-explore h2 {
   color: #1a1a2e;
   margin-bottom: 25px;

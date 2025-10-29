@@ -18,3 +18,29 @@
   box-sizing: border-box;
   overflow-x: hidden;
 }
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .explore-container {
+    flex-direction: column;
+  }
+  
+  .sidebar-wrapper {
+    width: 100%;
+    position: relative;
+    top: 0;
+    height: auto;
+    order: 2;
+  }
+  
+  .explore-content {
+    order: 1;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .explore-container {
+    margin-top: 70px;
+  }
+}
