@@ -22,7 +22,6 @@ position: relative;
 
 .dashboard-content {
   background-color: #f5f5f5;
-  margin-top: 60px;
   /* Remove padding here as it's handled by individual dashboard components */
 }
 
