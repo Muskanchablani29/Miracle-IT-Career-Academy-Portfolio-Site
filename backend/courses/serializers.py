@@ -19,7 +19,7 @@ class VideoSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'url', 'order', 'preview_duration']
 
 class CourseSerializer(serializers.ModelSerializer):
-    image = serializers.ImageField(required=False)
+    image = serializers.SerializerMethodField()
     students_count = serializers.SerializerMethodField()
     
     class Meta:
@@ -27,9 +27,16 @@ class CourseSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'description', 'image', 'duration', 'level', 
                  'created_at', 'internship_duration', 'is_certified', 'last_updated',
                  'price', 'discount_price', 'students_count']
+
+    def get_image(self, obj):
+        if not obj.image:
+            return None
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.image.url)
+        return obj.image.url
                  
     def get_students_count(self, obj):
-        # Count students directly from Student model
         from users.models import Student
         return Student.objects.filter(course=obj).count()
 

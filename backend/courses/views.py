@@ -30,7 +30,7 @@ def get_my_courses(request):
             'id': enrollment.id,
             'course': enrollment.course.id,
             'course_title': enrollment.course.title,
-            'course_image': enrollment.course.image.url if enrollment.course.image else None,
+            'course_image': request.build_absolute_uri(enrollment.course.image.url) if enrollment.course.image else None,
             'instructor_name': 'Faculty Team',
             'progress_percentage': 45,  # Sample progress
             'completed_videos': 6,
@@ -72,15 +72,18 @@ class CourseViewSet(viewsets.ModelViewSet):
         if self.action == 'retrieve':
             return CourseDetailSerializer
         return CourseSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
         
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [permissions.AllowAny()]
-        # Only admin and faculty can create/update courses
         return [permissions.IsAuthenticated()]
         
     def perform_create(self, serializer):
-        # Allow any authenticated user for now
         serializer.save()
 
 class VideoViewSet(viewsets.ModelViewSet):
@@ -258,7 +261,7 @@ def get_user_enrollments(request):
 def get_latest_courses(request):
     """Get the latest courses added or updated"""
     courses = Course.objects.all().order_by('-created_at')[:5]
-    serializer = CourseSerializer(courses, many=True)
+    serializer = CourseSerializer(courses, many=True, context={'request': request})
     return Response(serializer.data)
     
 @api_view(['GET'])
@@ -267,6 +270,7 @@ def get_course_by_id(request, course_id):
     """Get a specific course by ID"""
     try:
         course = Course.objects.get(id=course_id)
+        
         
         # Check if course has YouTube playlist but no videos
         if course.youtube_playlist_id and Video.objects.filter(course=course).count() == 0:
@@ -304,7 +308,7 @@ def get_course_by_id(request, course_id):
             except Exception as e:
                 print(f"Error auto-importing YouTube playlist: {str(e)}")
         
-        serializer = CourseDetailSerializer(course)
+        serializer = CourseDetailSerializer(course, context={'request': request})
         return Response(serializer.data)
     except Course.DoesNotExist:
         return Response({'error': 'Course not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -313,10 +317,7 @@ def get_course_by_id(request, course_id):
 @permission_classes([IsAuthenticated])
 def create_course(request):
     """Create a new course"""
-    # Allow any authenticated user for now (can be restricted later)
-    user = request.user
-    
-    serializer = CourseSerializer(data=request.data)
+    serializer = CourseSerializer(data=request.data, context={'request': request})
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)

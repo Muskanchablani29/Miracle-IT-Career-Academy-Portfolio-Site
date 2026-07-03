@@ -87,7 +87,7 @@ const BatchStudentList = ({ batchId, batchName, onClose }) => {
                         <td>{student.user.username}</td>
                         <td>{student.enrollment_id}</td>
                         <td>{student.user.email}</td>
-                        <td>{new Date(student.date_of_birth).toLocaleDateString()}</td>
+                        <td>{student.date_of_birth ? new Date(student.date_of_birth).toLocaleDateString() : 'N/A'}</td>
                       </tr>
                     ))}
                   </tbody>

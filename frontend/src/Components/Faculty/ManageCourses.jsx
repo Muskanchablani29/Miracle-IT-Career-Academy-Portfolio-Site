@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { userAxiosInstance } from '../../api';
 import { Link } from 'react-router-dom';
 import './ManageCourses.css';
-import { FaEdit, FaBook, FaPlus, FaUsers, FaEye, FaArrowLeft, FaLayerGroup } from 'react-icons/fa';
+import {
+  FaEdit, FaBook, FaPlus, FaUsers, FaArrowLeft,
+  FaLayerGroup, FaClock, FaSignal, FaSearch,
+  FaGraduationCap, FaSitemap, FaChalkboardTeacher
+} from 'react-icons/fa';
 import CourseBatchCreation from './CourseBatchCreation';
 import ViewBatches from './ViewBatches';
 import AddCourse from '../Admin/AddCourse';
@@ -15,36 +19,29 @@ const FacultyManageCourses = () => {
   const [syllabus, setSyllabus] = useState([]);
   const [editingSyllabus, setEditingSyllabus] = useState(null);
   const [editingSyllabusItem, setEditingSyllabusItem] = useState(null);
-  const [syllabusFormData, setSyllabusFormData] = useState({
-    title: '',
-    order: 1
-  });
+  const [syllabusFormData, setSyllabusFormData] = useState({ title: '', order: 1 });
   const [syllabusItemFormData, setSyllabusItemFormData] = useState({
-    title: '',
-    description: '',
-    order: 1,
-    module_id: null
+    title: '', description: '', order: 1, module_id: null
   });
   const [activeTab, setActiveTab] = useState('courses');
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [showViewBatches, setShowViewBatches] = useState(false);
   const [showAddCourseModal, setShowAddCourseModal] = useState(false);
   const [selectedCourseForBatch, setSelectedCourseForBatch] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    fetchCourses();
-  }, []);
+  useEffect(() => { fetchCourses(); }, []);
 
   const fetchCourses = async () => {
     try {
       setLoading(true);
       const response = await userAxiosInstance.get('courses/courses/');
       setCourses(response.data);
-      setLoading(false);
     } catch (err) {
       setError('Failed to load courses');
-      setLoading(false);
       console.error('Error fetching courses:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -63,46 +60,18 @@ const FacultyManageCourses = () => {
     setActiveTab('syllabus');
   };
 
-  const handleSyllabusInputChange = (e) => {
-    const { name, value } = e.target;
-    setSyllabusFormData({
-      ...syllabusFormData,
-      [name]: value
-    });
-  };
-
-  const handleSyllabusItemInputChange = (e) => {
-    const { name, value } = e.target;
-    setSyllabusItemFormData({
-      ...syllabusItemFormData,
-      [name]: value
-    });
-  };
-
   const handleUpdateSyllabus = async (e) => {
     e.preventDefault();
     try {
       await userAxiosInstance.put(`courses/syllabus/${editingSyllabus.id}/`, {
-        ...syllabusFormData,
-        course: selectedCourse.id
+        ...syllabusFormData, course: selectedCourse.id
       });
       fetchSyllabus(selectedCourse.id);
       setEditingSyllabus(null);
-      setSyllabusFormData({
-        title: '',
-        order: 1
-      });
+      setSyllabusFormData({ title: '', order: 1 });
     } catch (err) {
       console.error('Error updating syllabus module:', err);
     }
-  };
-
-  const handleEditSyllabus = (module) => {
-    setSyllabusFormData({
-      title: module.title,
-      order: module.order
-    });
-    setEditingSyllabus(module);
   };
 
   const handleUpdateSyllabusItem = async (e) => {
@@ -116,71 +85,45 @@ const FacultyManageCourses = () => {
       });
       fetchSyllabus(selectedCourse.id);
       setEditingSyllabusItem(null);
-      setSyllabusItemFormData({
-        title: '',
-        description: '',
-        order: 1,
-        module_id: null
-      });
+      setSyllabusItemFormData({ title: '', description: '', order: 1, module_id: null });
     } catch (err) {
       console.error('Error updating syllabus item:', err);
     }
   };
 
-  const handleEditSyllabusItem = (item) => {
-    setSyllabusItemFormData({
-      title: item.title,
-      description: item.description || '',
-      order: item.order,
-      module_id: item.module
-    });
-    setEditingSyllabusItem(item);
-  };
-  
-  const handleCreateBatch = (course) => {
-    setSelectedCourseForBatch(course);
-    setShowBatchModal(true);
-  };
-  
-  const handleViewBatches = (course) => {
-    setSelectedCourseForBatch(course);
-    setShowViewBatches(true);
-  };
-  
-  const handleBatchCreationSuccess = () => {
-    // Refresh course data if needed
-    fetchCourses();
+  const filteredCourses = courses.filter(c =>
+    c.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.level?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const getLevelColor = (level) => {
+    const l = level?.toLowerCase();
+    if (l === 'beginner') return 'level-beginner';
+    if (l === 'intermediate') return 'level-intermediate';
+    if (l === 'advanced') return 'level-advanced';
+    return 'level-default';
   };
 
-  if (loading) {
-    return (
-      <div className="loading">
-        <div className="loading-spinner"></div>
-        <div className="loading-text">Loading courses...</div>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="mc-loading">
+      <div className="mc-spinner"></div>
+      <span>Loading courses...</span>
+    </div>
+  );
 
-  if (error) {
-    return <div className="error-message">{error}</div>;
-  }
+  if (error) return <div className="mc-error"><span>⚠</span> {error}</div>;
 
   return (
-    <div className="manage-courses-container">
-      <h1>Manage Course Content</h1>
-      <div className="page-description">
-        Organize your courses, create batches, and manage syllabus content
-      </div>
-      
+    <div className="mc-container">
+      {/* ── Modals ── */}
       {showBatchModal && (
-        <CourseBatchCreation 
+        <CourseBatchCreation
           onClose={() => setShowBatchModal(false)}
-          onSuccess={handleBatchCreationSuccess}
+          onSuccess={fetchCourses}
           courseId={selectedCourseForBatch?.id}
           courseName={selectedCourseForBatch?.title}
         />
       )}
-      
       {showViewBatches && (
         <ViewBatches
           onClose={() => setShowViewBatches(false)}
@@ -188,303 +131,317 @@ const FacultyManageCourses = () => {
           courseName={selectedCourseForBatch?.title}
         />
       )}
-      
       {showAddCourseModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <button className="close-modal" onClick={() => setShowAddCourseModal(false)}>×</button>
+        <div className="mc-modal-overlay">
+          <div className="mc-modal-box">
+            <button className="mc-modal-close" onClick={() => setShowAddCourseModal(false)}>×</button>
             <AddCourse />
           </div>
         </div>
       )}
 
       {!selectedCourse ? (
-        <div className="courses-list">
-          <div className="courses-header">
-            <h2>Available Courses</h2>
-            <button onClick={() => setShowAddCourseModal(true)} className="add-course-btn">
+        <>
+          {/* ── Page Header ── */}
+          <div className="mc-page-header">
+            <div className="mc-page-header-left">
+              <div className="mc-header-icon"><FaChalkboardTeacher /></div>
+              <div>
+                <h1>Manage Courses</h1>
+                <p>Organize courses, create batches and manage syllabus content</p>
+              </div>
+            </div>
+            <button className="mc-add-btn" onClick={() => setShowAddCourseModal(true)}>
               <FaPlus /> Add New Course
             </button>
           </div>
-          <table className="courses-table">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Level</th>
-                <th>Duration</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {courses.map((course) => (
-                <tr key={course.id}>
-                  <td>{course.title}</td>
-                  <td>{course.level}</td>
-                  <td>{course.duration}</td>
-                  <td className="actions">
-                    <Link 
+
+          {/* ── Stats Bar ── */}
+          <div className="mc-stats-bar">
+            <div className="mc-stat">
+              <span className="mc-stat-value">{courses.length}</span>
+              <span className="mc-stat-label">Total Courses</span>
+            </div>
+            <div className="mc-stat-divider" />
+            <div className="mc-stat">
+              <span className="mc-stat-value">
+                {courses.filter(c => c.level?.toLowerCase() === 'beginner').length}
+              </span>
+              <span className="mc-stat-label">Beginner</span>
+            </div>
+            <div className="mc-stat-divider" />
+            <div className="mc-stat">
+              <span className="mc-stat-value">
+                {courses.filter(c => c.level?.toLowerCase() === 'intermediate').length}
+              </span>
+              <span className="mc-stat-label">Intermediate</span>
+            </div>
+            <div className="mc-stat-divider" />
+            <div className="mc-stat">
+              <span className="mc-stat-value">
+                {courses.filter(c => c.level?.toLowerCase() === 'advanced').length}
+              </span>
+              <span className="mc-stat-label">Advanced</span>
+            </div>
+          </div>
+
+          {/* ── Search ── */}
+          <div className="mc-search-bar">
+            <FaSearch className="mc-search-icon" />
+            <input
+              type="text"
+              placeholder="Search courses by name or level..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button className="mc-search-clear" onClick={() => setSearchTerm('')}>×</button>
+            )}
+          </div>
+
+          {/* ── Course Cards Grid ── */}
+          {filteredCourses.length === 0 ? (
+            <div className="mc-empty">
+              <FaGraduationCap />
+              <p>No courses found{searchTerm ? ` for "${searchTerm}"` : ''}.</p>
+            </div>
+          ) : (
+            <div className="mc-grid">
+              {filteredCourses.map((course, idx) => (
+                <div className="mc-card" key={course.id} style={{ animationDelay: `${idx * 0.05}s` }}>
+                  <div className="mc-card-image">
+                    {course.image
+                      ? <img src={course.image} alt={course.title} />
+                      : <div className="mc-card-image-placeholder"><FaGraduationCap /></div>
+                    }
+                    <span className={`mc-level-badge ${getLevelColor(course.level)}`}>
+                      <FaSignal /> {course.level || 'N/A'}
+                    </span>
+                  </div>
+
+                  <div className="mc-card-body">
+                    <h3 className="mc-card-title" title={course.title}>{course.title}</h3>
+                    <div className="mc-card-meta">
+                      <span><FaClock /> {course.duration || 'N/A'}</span>
+                    </div>
+                  </div>
+
+                  <div className="mc-card-actions">
+                    <Link
                       to={`/faculty/courses/${course.id}/syllabus`}
-                      className="action-btn syllabus-btn"
+                      className="mc-action-btn mc-btn-syllabus"
                       title="Edit Syllabus"
                     >
                       <FaBook />
+                      <span>Syllabus</span>
                     </Link>
-                    <button 
-                      className="action-btn batch-btn"
-                      onClick={() => handleCreateBatch(course)}
+                    <button
+                      className="mc-action-btn mc-btn-batch"
+                      onClick={() => { setSelectedCourseForBatch(course); setShowBatchModal(true); }}
                       title="Create Batch"
                     >
                       <FaPlus />
+                      <span>New Batch</span>
                     </button>
-                    <button 
-                      className="action-btn view-btn"
-                      onClick={() => handleViewBatches(course)}
+                    <button
+                      className="mc-action-btn mc-btn-view"
+                      onClick={() => { setSelectedCourseForBatch(course); setShowViewBatches(true); }}
                       title="View Batches"
                     >
                       <FaUsers />
+                      <span>Batches</span>
                     </button>
-                    <button 
-                      className="action-btn syllabus-btn"
+                    <button
+                      className="mc-action-btn mc-btn-edit"
                       onClick={() => handleCourseSelect(course)}
-                      title="Manage Syllabus"
+                      title="Manage Syllabus Modules"
                     >
                       <FaEdit />
+                      <span>Modules</span>
                     </button>
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          )}
+        </>
       ) : (
-        <div className="syllabus-management">
-          <div className="syllabus-header">
-            <h2>Update Syllabus: {selectedCourse.title}</h2>
-            <button
-              className="back-btn"
-              onClick={() => {
-                setSelectedCourse(null);
-                setActiveTab('courses');
-              }}
-            >
+        /* ── Syllabus Management View ── */
+        <div className="mc-syllabus-view">
+          <div className="mc-syllabus-topbar">
+            <button className="mc-back-btn" onClick={() => { setSelectedCourse(null); setActiveTab('courses'); }}>
               <FaArrowLeft /> Back to Courses
             </button>
+            <div className="mc-syllabus-course-info">
+              <FaGraduationCap />
+              <span>{selectedCourse.title}</span>
+            </div>
           </div>
 
-          <div className="tabs">
+          <div className="mc-tabs">
             <button
-              className={`tab ${activeTab === 'syllabus' ? 'active' : ''}`}
+              className={`mc-tab ${activeTab === 'syllabus' ? 'mc-tab-active' : ''}`}
               onClick={() => setActiveTab('syllabus')}
             >
-              <FaBook className="tab-icon" /> Syllabus Modules
+              <FaBook /> Syllabus Modules
             </button>
             <button
-              className={`tab ${activeTab === 'items' ? 'active' : ''}`}
+              className={`mc-tab ${activeTab === 'items' ? 'mc-tab-active' : ''}`}
               onClick={() => setActiveTab('items')}
             >
-              <FaLayerGroup className="tab-icon" /> Module Items
+              <FaLayerGroup /> Module Items
             </button>
           </div>
 
           {activeTab === 'syllabus' && (
-            <>
-              <div className="syllabus-list">
-                <h3>Syllabus Modules</h3>
-                {syllabus.length > 0 ? (
-                  <table className="syllabus-table">
-                    <thead>
-                      <tr>
-                        <th>Order</th>
-                        <th>Title</th>
-                        <th>Last Updated</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {syllabus.map((module) => (
-                        <tr key={module.id}>
-                          <td>{module.order}</td>
-                          <td>{module.title}</td>
-                          <td>{new Date(module.last_updated).toLocaleDateString()}</td>
-                          <td className="actions">
-                            <button
-                              className="action-btn edit-btn"
-                              onClick={() => handleEditSyllabus(module)}
-                              title="Edit Module"
-                            >
-                              <FaEdit />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <p>No syllabus modules found for this course.</p>
-                )}
+            <div className="mc-tab-content">
+              <div className="mc-section-title">
+                <FaSitemap /> <span>Syllabus Modules</span>
+                <span className="mc-count-pill">{syllabus.length}</span>
               </div>
+              {syllabus.length === 0 ? (
+                <div className="mc-empty"><FaBook /><p>No syllabus modules found.</p></div>
+              ) : (
+                <div className="mc-module-list">
+                  {syllabus.map((module) => (
+                    <div className="mc-module-row" key={module.id}>
+                      <div className="mc-module-order">{module.order}</div>
+                      <div className="mc-module-info">
+                        <span className="mc-module-title">{module.title}</span>
+                        <span className="mc-module-date">
+                          Updated {new Date(module.last_updated).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <button
+                        className="mc-icon-btn mc-icon-edit"
+                        onClick={() => {
+                          setSyllabusFormData({ title: module.title, order: module.order });
+                          setEditingSyllabus(module);
+                        }}
+                        title="Edit Module"
+                      >
+                        <FaEdit />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {editingSyllabus && (
-                <div className="syllabus-form">
-                  <h3>Edit Module</h3>
+                <div className="mc-form-card">
+                  <h3><FaEdit /> Edit Module</h3>
                   <form onSubmit={handleUpdateSyllabus}>
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label htmlFor="module-title">Module Title</label>
+                    <div className="mc-form-row">
+                      <div className="mc-form-group">
+                        <label>Module Title</label>
                         <input
                           type="text"
-                          id="module-title"
                           name="title"
                           value={syllabusFormData.title}
-                          onChange={handleSyllabusInputChange}
+                          onChange={e => setSyllabusFormData({ ...syllabusFormData, title: e.target.value })}
                           required
                         />
                       </div>
-
-                      <div className="form-group">
-                        <label htmlFor="module-order">Order</label>
+                      <div className="mc-form-group mc-form-group-sm">
+                        <label>Order</label>
                         <input
                           type="number"
-                          id="module-order"
                           name="order"
                           min="1"
                           value={syllabusFormData.order}
-                          onChange={handleSyllabusInputChange}
+                          onChange={e => setSyllabusFormData({ ...syllabusFormData, order: e.target.value })}
                           required
                         />
                       </div>
                     </div>
-
-                    <div className="form-actions">
-                      <button type="submit" className="submit-btn">
-                        Update Module
-                      </button>
-                      <button
-                        type="button"
-                        className="cancel-btn"
-                        onClick={() => {
-                          setEditingSyllabus(null);
-                          setSyllabusFormData({
-                            title: '',
-                            order: 1
-                          });
-                        }}
-                      >
-                        Cancel
-                      </button>
+                    <div className="mc-form-actions">
+                      <button type="submit" className="mc-btn-primary">Update Module</button>
+                      <button type="button" className="mc-btn-ghost" onClick={() => setEditingSyllabus(null)}>Cancel</button>
                     </div>
                   </form>
                 </div>
               )}
-            </>
+            </div>
           )}
 
           {activeTab === 'items' && (
-            <>
-              <div className="module-items">
-                <h3>Module Items</h3>
-                {syllabus.map((module) => (
-                  <div className="module-section" key={module.id}>
-                    <h4>
-                      Module {module.order}: {module.title}
-                    </h4>
-                    {module.items.length > 0 ? (
-                      <table className="items-table">
-                        <thead>
-                          <tr>
-                            <th>Order</th>
-                            <th>Title</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {module.items.map((item) => (
-                            <tr key={item.id}>
-                              <td>{item.order}</td>
-                              <td>{item.title}</td>
-                              <td className="actions">
-                                <button
-                                  className="action-btn edit-btn"
-                                  onClick={() => handleEditSyllabusItem(item)}
-                                  title="Edit Item"
-                                >
-                                  <FaEdit />
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    ) : (
-                      <p className="no-items">No items in this module</p>
-                    )}
-                  </div>
-                ))}
+            <div className="mc-tab-content">
+              <div className="mc-section-title">
+                <FaLayerGroup /> <span>Module Items</span>
               </div>
+              {syllabus.map((module) => (
+                <div className="mc-module-section" key={module.id}>
+                  <div className="mc-module-section-header">
+                    <span className="mc-module-num">Module {module.order}</span>
+                    <span className="mc-module-name">{module.title}</span>
+                    <span className="mc-items-count">{module.items?.length || 0} items</span>
+                  </div>
+                  {module.items?.length > 0 ? (
+                    <div className="mc-items-list">
+                      {module.items.map((item) => (
+                        <div className="mc-item-row" key={item.id}>
+                          <div className="mc-item-order">{item.order}</div>
+                          <span className="mc-item-title">{item.title}</span>
+                          <button
+                            className="mc-icon-btn mc-icon-edit"
+                            onClick={() => {
+                              setSyllabusItemFormData({
+                                title: item.title, description: item.description || '',
+                                order: item.order, module_id: item.module
+                              });
+                              setEditingSyllabusItem(item);
+                            }}
+                            title="Edit Item"
+                          >
+                            <FaEdit />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mc-no-items">No items in this module</p>
+                  )}
+                </div>
+              ))}
 
               {editingSyllabusItem && (
-                <div className="item-form">
-                  <h3>Edit Item</h3>
+                <div className="mc-form-card">
+                  <h3><FaEdit /> Edit Item</h3>
                   <form onSubmit={handleUpdateSyllabusItem}>
-                    <div className="form-group">
-                      <label htmlFor="item-title">Item Title</label>
+                    <div className="mc-form-group">
+                      <label>Item Title</label>
                       <input
                         type="text"
-                        id="item-title"
-                        name="title"
                         value={syllabusItemFormData.title}
-                        onChange={handleSyllabusItemInputChange}
+                        onChange={e => setSyllabusItemFormData({ ...syllabusItemFormData, title: e.target.value })}
                         required
                       />
                     </div>
-
-                    <div className="form-group">
-                      <label htmlFor="item-description">Description (Optional)</label>
+                    <div className="mc-form-group">
+                      <label>Description <span className="mc-optional">(optional)</span></label>
                       <textarea
-                        id="item-description"
-                        name="description"
                         value={syllabusItemFormData.description}
-                        onChange={handleSyllabusItemInputChange}
+                        onChange={e => setSyllabusItemFormData({ ...syllabusItemFormData, description: e.target.value })}
                       />
                     </div>
-
-                    <div className="form-group">
-                      <label htmlFor="item-order">Order</label>
+                    <div className="mc-form-group mc-form-group-sm">
+                      <label>Order</label>
                       <input
                         type="number"
-                        id="item-order"
-                        name="order"
                         min="1"
                         value={syllabusItemFormData.order}
-                        onChange={handleSyllabusItemInputChange}
+                        onChange={e => setSyllabusItemFormData({ ...syllabusItemFormData, order: e.target.value })}
                         required
                       />
                     </div>
-
-                    <div className="form-actions">
-                      <button type="submit" className="submit-btn">
-                        Update Item
-                      </button>
-                      <button
-                        type="button"
-                        className="cancel-btn"
-                        onClick={() => {
-                          setEditingSyllabusItem(null);
-                          setSyllabusItemFormData({
-                            title: '',
-                            description: '',
-                            order: 1,
-                            module_id: null
-                          });
-                        }}
-                      >
-                        Cancel
-                      </button>
+                    <div className="mc-form-actions">
+                      <button type="submit" className="mc-btn-primary">Update Item</button>
+                      <button type="button" className="mc-btn-ghost" onClick={() => setEditingSyllabusItem(null)}>Cancel</button>
                     </div>
                   </form>
                 </div>
               )}
-            </>
+            </div>
           )}
         </div>
       )}
