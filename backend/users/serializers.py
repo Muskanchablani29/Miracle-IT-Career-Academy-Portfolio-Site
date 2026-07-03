@@ -405,12 +405,47 @@ class WorkshopSerializer(serializers.ModelSerializer):
 
 class WorkshopRegistrationSerializer(serializers.ModelSerializer):
     workshop_id = serializers.IntegerField(write_only=True)
-    
+    workshop_title = serializers.SerializerMethodField()
+    workshop_date = serializers.SerializerMethodField()
+    is_completed = serializers.SerializerMethodField()
+
     class Meta:
         model = WorkshopRegistration
-        fields = ['id', 'workshop_id', 'name', 'email', 'phone', 'education', 
+        fields = ['id', 'workshop_id', 'workshop_title', 'workshop_date', 'is_completed',
+                  'name', 'email', 'phone', 'education',
                   'experience_level', 'special_requirements', 'registration_date']
         read_only_fields = ['id', 'registration_date']
+
+    def get_workshop_title(self, obj):
+        return obj.workshop.title if obj.workshop else None
+
+    def get_workshop_date(self, obj):
+        return obj.workshop.date if obj.workshop else None
+
+    def get_is_completed(self, obj):
+        """True when the workshop date has already passed."""
+        if not obj.workshop or not obj.workshop.date:
+            return False
+        try:
+            from datetime import date as date_cls
+            import re
+            raw = obj.workshop.date.strip()
+            # Try ISO format first (YYYY-MM-DD)
+            try:
+                workshop_date = date_cls.fromisoformat(raw)
+                return date_cls.today() > workshop_date
+            except ValueError:
+                pass
+            # Try common formats
+            for fmt in ('%B %d, %Y', '%d %B %Y', '%d/%m/%Y', '%m/%d/%Y', '%d-%m-%Y'):
+                try:
+                    workshop_date = datetime.strptime(raw, fmt).date()
+                    return date_cls.today() > workshop_date
+                except ValueError:
+                    continue
+            return False
+        except Exception:
+            return False
         
     def create(self, validated_data):
         workshop_id = validated_data.pop('workshop_id')
