@@ -118,7 +118,7 @@ const FacultyManageCourses = () => {
       {/* ── Modals ── */}
       {showBatchModal && (
         <CourseBatchCreation
-          onClose={() => setShowBatchModal(false)}
+          onClose={() => setShowBatchModal(false)} 
           onSuccess={fetchCourses}
           courseId={selectedCourseForBatch?.id}
           courseName={selectedCourseForBatch?.title}

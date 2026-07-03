@@ -258,6 +258,16 @@
   color: #004085;
 }
 
+.status-badge.completed {
+  background-color: #d1e7dd;
+  color: #0a3622;
+}
+
+.status-badge.registered {
+  background-color: #e2d9f3;
+  color: #3d1a78;
+}
+
 .action-buttons {
   display: flex;
   gap: 8px;
