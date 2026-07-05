@@ -264,7 +264,7 @@ const FacultyManageCourses = () => {
               ))}
             </div>
           )}
-        </>
+        </> 
       ) : (
         /* ── Syllabus Management View ── */
         <div className="mc-syllabus-view">

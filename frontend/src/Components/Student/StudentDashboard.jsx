@@ -29,7 +29,7 @@ export default function StudentDashboard() {
   const [notifications, setNotifications] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [enrollments, setEnrollments] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [attendanceStatus, setAttendanceStatus] = useState({ is_present: false });
   const [feeStatus, setFeeStatus] = useState(null);
   const [dashboardStats, setDashboardStats] = useState({
@@ -82,17 +82,9 @@ export default function StudentDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
-        console.log('Starting dashboard data fetch...');
-        
-        // Always try individual API calls for now to avoid loading issues
         await fetchIndividualData();
-        
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
-      } finally {
-        setLoading(false);
-        console.log('Dashboard loading completed');
       }
     };
     
@@ -333,10 +325,6 @@ export default function StudentDashboard() {
       console.log('Searching for courses:', courseSearchQuery);
     }
   };
-  
-  if (loading) {
-    return <LoadingDashboard />;
-  }
   
   return (
     <DashboardErrorBoundary>
